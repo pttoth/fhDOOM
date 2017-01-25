@@ -179,6 +179,8 @@ void idGLDrawableWorld::InitLight( const idVec3& position ) {
 	idDict spawnArgs;
 	spawnArgs.Set( "classname", "light" );
 	spawnArgs.Set( "name", "light_1" );
+	spawnArgs.Set( "shadowMode", "1" );
+	spawnArgs.Set( "light_radius", "1000 1000 1000" );
 	spawnArgs.SetVector( "origin", position );
 	idStr str;
 	sprintf( str, "%f %f %f", light, light, light );
@@ -191,6 +193,7 @@ void idGLDrawableWorld::mouseMove( float x, float y ) {
 	if (handleMove) {
 		Update();
 		if (button == MouseButton::Left) {
+#if 0
 			float cury = (float)(2 * x - rect.z) / rect.z;
 			float curx = (float)(2 * y - rect.w) / rect.w;
 			idVec3 to( -curx, -cury, 0.0f );
@@ -210,8 +213,25 @@ void idGLDrawableWorld::mouseMove( float x, float y ) {
 			rotation *= rot;
 			rotation.Normalize();
 
+			common->Printf( "mouseMove rotation= %f %f %f %f\n", rotation.x, rotation.y, rotation.z, rotation.w );
+
 			lastPress = to;
 			lastPress.z = 0.0f;
+#else
+			idRotation r1;
+			r1.SetVec( idVec3( 0, 0, 1 ) );
+			r1.SetAngle( x - pressX );
+			pressX = x;
+
+			idRotation r2;
+			r2.SetVec( idVec3( 0, 1, 0 ) );
+			r2.SetAngle( y - pressY );
+			pressY = y;
+
+			this->rotation *= r1.ToQuat();
+			this->rotation *= r2.ToQuat();
+			this->rotation.Normalize();
+#endif
 		}
 		else {
 			bool doScale = Sys_KeyDown( VK_MENU );
@@ -284,6 +304,9 @@ void idGLDrawableWorld::buttonDown( MouseButton button, float x, float y ) {
 void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 	const idMaterial *mat = material;
 	if (mat) {
+
+		rect.Set( x, y, w, h );
+
 		glViewport( x, y, w, h );
 		glScissor( x, y, w, h );
 
@@ -292,7 +315,7 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 
 		if (worldDirty) {
 			InitWorld();
-			InitLight( idVec3( 0, 0, 0 ) );
+			InitLight( idVec3( -256, 0, 128 ) );
 
 			idImage *img = (mat->GetNumStages() > 0) ? mat->GetStage( 0 )->texture.image : mat->GetEditorImage();
 
@@ -301,11 +324,13 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 				return;
 			}
 
-			int width = img->uploadWidth;
-			int height = img->uploadHeight;
+			int width = 128, height = 128;
 
-			width *= scale;
-			height *= scale;
+			if (img->uploadHeight > img->uploadWidth) {
+				width *= static_cast<float>(img->uploadWidth) / static_cast<float>(img->uploadHeight);
+			} else {
+				height *= static_cast<float>(img->uploadHeight) / static_cast<float>(img->uploadWidth);
+			}
 
 			srfTriangles_t *tris = worldModel->AllocSurfaceTriangles( 4, 6 );
 			tris->numVerts = 4;
@@ -318,27 +343,27 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 			tris->indexes[4] = 1;
 			tris->indexes[5] = 0;
 
-			tris->verts[0].xyz.x = 64;
-			tris->verts[0].xyz.y = -xOffset + 0 - width / 2;
-			tris->verts[0].xyz.z = yOffset + 0 - height / 2;
+			tris->verts[0].xyz.x = 0;
+			tris->verts[0].xyz.y = - width / 2;
+			tris->verts[0].xyz.z = - height / 2;
 			tris->verts[0].st.x = 1;
 			tris->verts[0].st.y = 1;
 
-			tris->verts[1].xyz.x = 64;
-			tris->verts[1].xyz.y = -xOffset + width / 2;
-			tris->verts[1].xyz.z = yOffset + height / 2;
+			tris->verts[1].xyz.x = 0;
+			tris->verts[1].xyz.y = width / 2;
+			tris->verts[1].xyz.z = height / 2;
 			tris->verts[1].st.x = 0;
 			tris->verts[1].st.y = 0;
 
-			tris->verts[2].xyz.x = 64;
-			tris->verts[2].xyz.y = -xOffset + 0 - width / 2;
-			tris->verts[2].xyz.z = yOffset + height / 2;
+			tris->verts[2].xyz.x = 0;
+			tris->verts[2].xyz.y = - width / 2;
+			tris->verts[2].xyz.z = height / 2;
 			tris->verts[2].st.x = 1;
 			tris->verts[2].st.y = 0;
 
-			tris->verts[3].xyz.x = 64;
-			tris->verts[3].xyz.y = -xOffset + width / 2;
-			tris->verts[3].xyz.z = yOffset + 0 - height / 2;
+			tris->verts[3].xyz.x = 0;
+			tris->verts[3].xyz.y = width / 2;
+			tris->verts[3].xyz.z = - height / 2;
 			tris->verts[3].st.x = 0;
 			tris->verts[3].st.y = 1;
 
@@ -360,7 +385,10 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 			worldEntity.shaderParms[1] = 1;
 			worldEntity.shaderParms[2] = 1;
 			worldEntity.shaderParms[3] = 1;
+			worldEntity.axis = rotation.ToMat3();
+			worldEntity.origin = idVec3( 0, -xOffset, yOffset );
 			modelDef = world->AddEntityDef( &worldEntity );
+			world->UpdateEntityDef( modelDef, &worldEntity );
 
 			worldDirty = false;
 		}
@@ -369,7 +397,7 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 		// render it
 		renderSystem->BeginFrame( w, h );
 		memset( &refdef, 0, sizeof( refdef ) );
-		refdef.vieworg.Set( viewAngle, 0, 0 );
+		refdef.vieworg.Set( viewAngle * scale, 0, 0 );
 
 		refdef.viewaxis = idAngles( 0, 0, 0 ).ToMat3();
 		refdef.shaderParms[0] = 1;
@@ -390,7 +418,6 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 
 		GL_ModelViewMatrix.LoadIdentity();
 	}
-
 }
 
 void idGLDrawableMaterial::setMedia( const char *name ) {
@@ -410,19 +437,13 @@ void idGLDrawableMaterial::setMedia( const char *name ) {
 	else {
 		material = NULL;
 	}
-	// set scale to get a good fit
 
-	if (material && img) {
-
-		float size = (img->uploadWidth > img->uploadHeight) ? img->uploadWidth : img->uploadHeight;
-		// use 128 as base scale of 1.0
-		scale = 128.0 / size;
-	}
-	else {
-		scale = 1.0;
-	}
+	scale = 1.0;
 	xOffset = 0.0;
 	yOffset = 0.0;
+	rotation.Set( 0.0f, 0.0f, 0.0f, 1.0f );
+	radius = 2.6f;
+	lastPress.Zero();
 	worldDirty = true;
 }
 

@@ -652,10 +652,6 @@ void Select_InitializeRotation() {
 	select_orgDeg = 0.0;
 }
 
-void Select_FinalizeRotation() {
-
-}
-
 bool Select_OnlyModelsSelected() {
 	for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		if (!b->modelHandle) {
@@ -1847,13 +1843,6 @@ void Select_FitTexture(float height, float width) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void Select_AxialTexture() {
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void Select_Hide(bool invert) {
 
 	if (invert) {
@@ -2068,7 +2057,6 @@ void Select_UpdateTextureName(const char *name) {
  =======================================================================================================================
  */
 void Select_FlipTexture(bool y) {
-
 	int faceCount = g_selectedFaces.Num();
 
 	Undo_Start("Select_FlipTexture");
@@ -2160,10 +2148,6 @@ void Select_SetPatchFit(float dim1, float dim2, float srcWidth, float srcHeight,
 		}
 	}
 }
-
-void Select_SetPatchST(float s1, float t1, float s2, float t2) {
-}
-
 
 void Select_AllTargets() {
 	for (brush_t * b = selected_brushes.next; b && b != &selected_brushes; b = b->next) {

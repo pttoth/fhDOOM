@@ -27,11 +27,14 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #include "dialogs/LightEditor.h"
+#include "dialogs/MaterialBrowser.h"
 
 #include <qstylefactory.h>
 
 static QApplication * app = nullptr;
 static fhLightEditor * lightEditor = nullptr;
+static fhMaterialBrowser * materialBrowser = nullptr;
+static fhContentBrowser* contentBrowser = nullptr;
 
 void QtRun()
 {
@@ -85,3 +88,20 @@ void QtLightEditorInit( const idDict* spawnArgs ) {
 	lightEditor->show();
 	lightEditor->setFocus();
 }
+
+void QtMaterialBrowserInit() {
+#if 1
+	if (!contentBrowser) {
+		contentBrowser = new fhContentBrowser();
+	}
+
+	contentBrowser->show();
+#else
+	if (!materialBrowser) {
+		materialBrowser = new fhMaterialBrowser( nullptr );
+	}
+
+	materialBrowser->show();
+#endif
+}
+

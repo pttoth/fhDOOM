@@ -632,6 +632,7 @@ void CDialogTextures::OnSelchangedTreeTextures(NMHDR *pNMHDR, LRESULT *pResult) 
  =======================================================================================================================
  =======================================================================================================================
  */
+
 void CDialogTextures::addMaterials( bool rootItems ) {
 	idStrList textures(1024);
 	idStrList materials(1024);

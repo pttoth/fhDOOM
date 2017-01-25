@@ -259,7 +259,6 @@ idImage *idMaterial::GetEditorImage( void ) const {
 	return editorImage;
 }
 
-
 // info parms
 typedef struct {
 	const char	*name;
@@ -1604,6 +1603,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			}
 			continue;
 		}
+#if 0
 		if (!token.Icmp( "megaTexture" )) {
 			if (src.ReadTokenOnLine( &token )) {
 				assert( false && "this is not ported to GLSL yet" );
@@ -1618,6 +1618,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 				continue;
 			}
 		}
+#endif
 		if (!token.Icmp( "shaderParm" )) {
 			ParseShaderParm( src, &glslStage );
 			continue;

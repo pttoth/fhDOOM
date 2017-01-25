@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "../renderer/Image.h"
+#include "../qteditors/qteditors_public.h"
 
 #define	MAX_PRINT_MSG_SIZE	4096
 #define MAX_WARNING_LIST	256
@@ -1232,6 +1233,17 @@ static void PrintMemInfo_f( const idCmdArgs &args ) {
 	fileSystem->CloseFile( f );
 }
 
+#ifdef ID_ALLOW_QT
+/*
+==================
+Com_EditLights_f
+==================
+*/
+static void Com_BrowseMaterials_f( const idCmdArgs &args ) {
+	QtMaterialBrowserInit();
+}
+#endif
+
 #ifdef ID_ALLOW_TOOLS
 /*
 ==================
@@ -2339,6 +2351,10 @@ void idCommonLocal::InitCommands( void ) {
 	cmdSystem->AddCommand( "runAASDir", RunAASDir_f, CMD_FL_TOOL, "compiles AAS files for all maps in a folder", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "runReach", RunReach_f, CMD_FL_TOOL, "calculates reachability for an AAS file", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "roq", RoQFileEncode_f, CMD_FL_TOOL, "encodes a roq file" );
+#endif
+
+#ifdef ID_ALLOW_QT
+	cmdSystem->AddCommand( "browseMaterials", Com_BrowseMaterials_f, CMD_FL_TOOL, "launches the material browser" );
 #endif
 
 #ifdef ID_ALLOW_TOOLS

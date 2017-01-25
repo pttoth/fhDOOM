@@ -2,17 +2,20 @@
 set(SOURCES
   qteditors_public.h
   precompiled.h
-  common/common.cpp  
+  common/common.cpp
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp
+  dialogs/MaterialBrowser.h
+  dialogs/DeclModel.h
+  dialogs/MaterialBrowser.cpp
   widgets/RenderWidget.h
-  widgets/RenderWidget.cpp  
+  widgets/RenderWidget.cpp
   widgets/NumEdit.h
   widgets/NumEdit.cpp
   widgets/SliderNumEdit.h
-  widgets/SliderNumEdit.cpp  
+  widgets/SliderNumEdit.cpp
   widgets/ColorEdit.h
-  widgets/ColorEdit.cpp  
+  widgets/ColorEdit.cpp
   widgets/Vec3Edit.h
   widgets/Vec3Edit.cpp)
 
@@ -38,5 +41,5 @@ IF(UNIX)
   IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
   ENDIF()
-ENDIF()  
+ENDIF()
 

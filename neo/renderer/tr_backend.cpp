@@ -351,6 +351,7 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
+
 void  GL_UseProgram( const fhRenderProgram* program ) {
 	if (backEnd.currentProgram == program) {
 		return;

@@ -578,6 +578,7 @@ public:
 
 						// gets an image for the editor to use
 	idImage *			GetEditorImage( void ) const;
+	const char*         GetEditorImageName( void ) const;
 	int					GetImageWidth( void ) const;
 	int					GetImageHeight( void ) const;
 

@@ -110,7 +110,6 @@ void Select_AllOfType();
 void Select_Reselect();
 void Select_FitTexture(float height = 1.0, float width = 1.0);
 void Select_InitializeRotation();
-void Select_FinalizeRotation();
 
 // absolute texture coordinates
 // TTimo NOTE: this is stuff for old brushes format and rotation texture lock .. sort of in-between with bush primitives
@@ -126,7 +125,6 @@ void Select_UpdateTextureName(const char *name);
 
 void Select_FlipTexture(bool y);
 void Select_SetPatchFit(float dim1, float dim2, float srcWidth, float srcHeight, float rot);
-void Select_SetPatchST(float s1, float t1, float s2, float t2);
 void Select_ProjectFaceOntoPatch( face_t *face );
 void Select_CopyPatchTextureCoords( patchMesh_t *p );
 void Select_AllTargets();

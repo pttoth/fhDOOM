@@ -3683,7 +3683,6 @@ bool CXYWnd::SetRotateMode(bool bMode) {
 		}
 
 		g_bRotateMode = false;
-		Select_FinalizeRotation();
 	}
 
 	RedrawWindow();
