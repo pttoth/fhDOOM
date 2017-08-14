@@ -123,12 +123,12 @@ SET(SOURCES
   Token.h
 )
 
-source_group(idlib .*)  
-source_group(idlib\\BV bv/.*)  
-source_group(idlib\\Containers containers/.*)  
-source_group(idlib\\Geometry geometry/.*)  
-source_group(idlib\\Hashing hashing/.*)  
-source_group(idlib\\Math math/.*) 
+source_group(idlib .*)
+source_group(idlib\\BV bv/.*)
+source_group(idlib\\Containers containers/.*)
+source_group(idlib\\Geometry geometry/.*)
+source_group(idlib\\Hashing hashing/.*)
+source_group(idlib\\Math math/.*)
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -138,7 +138,6 @@ add_msvc_precompiled_header(precompiled.h SOURCES)
 
 add_library(idlib ${SOURCES})
 SET_PROPERTY(TARGET idlib                PROPERTY FOLDER libs)
-
-IF(UNIX)
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
   set_target_properties(idlib PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-ENDIF()  
+ENDIF()

@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ static idStr				Maya_Error;
 
 static exporterInterface_t	Maya_ConvertModel = NULL;
 static exporterShutdown_t	Maya_Shutdown = NULL;
-static int					importDLL = 0;
+static sysDllHandle_t		importDLL = sysDllHandle_t();
 
 bool idModelExport::initialized = false;
 
@@ -69,7 +69,7 @@ void idModelExport::Shutdown( void ) {
 		sys->DLL_Unload( importDLL );
 	}
 
-	importDLL = 0;
+	importDLL = sysDllHandle_t();
 	Maya_Shutdown = NULL;
 	Maya_ConvertModel = NULL;
 	Maya_Error.Clear();
@@ -105,7 +105,7 @@ bool idModelExport::CheckMayaInstall( void ) {
 	}
 	return true;
 #else
-	HKEY	hKey;	
+	HKEY	hKey;
 
 	// only check the non-version specific key so that we only have to update the maya dll when new versions are released
 	const long aliasMaya = RegOpenKeyA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Alias|Wavefront\\Maya", &hKey );
@@ -156,7 +156,7 @@ void idModelExport::LoadMayaDll( void ) {
 	}
 
 	// look up the dll interface functions
-	dllEntry = ( exporterDLLEntry_t )sys->DLL_GetProcAddress( importDLL, "dllEntry" ); 
+	dllEntry = ( exporterDLLEntry_t )sys->DLL_GetProcAddress( importDLL, "dllEntry" );
 	Maya_ConvertModel = ( exporterInterface_t )sys->DLL_GetProcAddress( importDLL, "Maya_ConvertModel" );
 	Maya_Shutdown = ( exporterShutdown_t )sys->DLL_GetProcAddress( importDLL, "Maya_Shutdown" );
 	if ( !Maya_ConvertModel || !dllEntry || !Maya_Shutdown ) {
@@ -179,7 +179,7 @@ void idModelExport::LoadMayaDll( void ) {
 		Maya_ConvertModel = NULL;
 		Maya_Shutdown = NULL;
 		sys->DLL_Unload( importDLL );
-		importDLL = 0;
+		importDLL = sysDllHandle_t();
 		gameLocal.Error( "Export DLL init failed." );
 		return;
 	}
@@ -189,12 +189,12 @@ void idModelExport::LoadMayaDll( void ) {
 =====================
 idModelExport::ConvertMayaToMD5
 
-Checks if a Maya model should be converted to an MD5, and converts if if the time/date or 
+Checks if a Maya model should be converted to an MD5, and converts if if the time/date or
 version number has changed.
 =====================
 */
 bool idModelExport::ConvertMayaToMD5( void ) {
-	ID_TIME_T		
+	ID_TIME_T
 		sourceTime;
 	ID_TIME_T		destTime;
 	int			version;
@@ -277,7 +277,7 @@ bool idModelExport::ConvertMayaToMD5( void ) {
 	if ( Maya_Error != "Ok" ) {
 		return false;
 	}
-	
+
 	// conversion succeded
 	return true;
 }

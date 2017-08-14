@@ -5,13 +5,15 @@ DIRECTORY="gcc"
 BUILDTYPE="debug"
 CMAKE_BUILD_TYPE="Debug"
 CMAKE_GENERATOR="Sublime Text 2 - Unix Makefiles"
+FORCE32BIT=ON
+DIRSUFFIX=""
 
-if [ "$#" -ne "2" ]; then
-  echo "Usage run_cmake.sh <gcc|clang|clang-libc++> <debug|release|reldeb>"
+if [ "$#" -lt "2" ]; then
+  echo "Usage run_cmake.sh <gcc|clang|clang-libc++> <debug|release|reldeb> [x64]"
   exit 1
-fi  
+fi
 
-if [ "$#" -ge "1" ]; then 
+if [ "$#" -ge "1" ]; then
 
   if [ "$1" = "gcc" ]; then
     export CXX="g++"
@@ -21,20 +23,20 @@ if [ "$#" -ge "1" ]; then
 
   if [ "$1" = "clang" ]; then
     export CXX="clang++"
-    export CC="clang"   
+    export CC="clang"
     DIRECTORY="clang"
     CMAKE_CXX_FLAGS="-stdlib=libstdc++"
-  fi 
+  fi
 
   if [ "$1" = "clang-libc++" ]; then
     export CXX="clang++"
-    export CC="clang"   
+    export CC="clang"
     DIRECTORY="clang-libc++"
     CMAKE_CXX_FLAGS="-stdlib=libc++"
-  fi  
+  fi
 fi
 
-if [ "$#" -ge "2" ]; then 
+if [ "$#" -ge "2" ]; then
 
   if [ "$2" = "debug" ]; then
     BUILDTYPE="debug"
@@ -44,17 +46,24 @@ if [ "$#" -ge "2" ]; then
   if [ "$2" = "release" ]; then
     BUILDTYPE="release"
     CMAKE_BUILD_TYPE="Release"
-  fi  
+  fi
 
   if [ "$2" = "reldeb" ]; then
     BUILDTYPE="relwithdebinfo"
     CMAKE_BUILD_TYPE="relwithdebinfo"
-  fi    
+  fi
 fi
 
-BUILDDIR=build/$DIRECTORY/$BUILDTYPE
+if [ "$#" -ge "3" ]; then
+  if [ "$3" = "x64" ]; then
+    FORCE32BIT=OFF
+    DIRSUFFIX="64"
+  fi
+fi
+
+BUILDDIR=build/$DIRECTORY$DIRSUFFIX/$BUILDTYPE
 
 mkdir -p $BUILDDIR
 cd $BUILDDIR
 
-cmake -G"$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS" ../../..
+cmake -G"$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS" -DID_FORCE_32BIT="$FORCE32BIT" ../../..

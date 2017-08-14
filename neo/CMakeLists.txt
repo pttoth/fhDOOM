@@ -2,22 +2,17 @@
 ###############################################################################
 ######################## GLEW #################################################
 ###############################################################################
-SET(SOURCES 
+SET(SOURCES
   renderer/GL/glew.h
   renderer/GL/glxew.h
   renderer/GL/wglew.h
   renderer/glew.c
 )
 add_library(glew STATIC ${SOURCES})
-IF(MSVC)
-  SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
-ENDIF()  
-
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(glew PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()  
+SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
+  set_target_properties(glew PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+ENDIF()
 
 
 ###############################################################################
@@ -89,35 +84,33 @@ SET(SOURCES
 )
 add_library(jpeg-6 STATIC ${SOURCES})
 SET_PROPERTY(TARGET jpeg-6 PROPERTY FOLDER 3rdParty)
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(jpeg-6 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF() 
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
+  set_target_properties(jpeg-6 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+ENDIF()
 
 ###############################################################################
 ######################## OGG VORBIS ###########################################
 ###############################################################################
 SET(SOURCES
   sound/OggVorbis/ogg/ogg.h
-  sound/OggVorbis/ogg/os_types.h  
+  sound/OggVorbis/ogg/os_types.h
   sound/OggVorbis/oggsrc/bitwise.c
-  sound/OggVorbis/oggsrc/framing.c  
-  
+  sound/OggVorbis/oggsrc/framing.c
+
   sound/OggVorbis/vorbis/codec.h
   sound/OggVorbis/vorbis/vorbisenc.h
   sound/OggVorbis/vorbis/vorbisfile.h
-  
+
   sound/OggVorbis/vorbissrc/analysis.c
   sound/OggVorbis/vorbissrc/backends.h
   sound/OggVorbis/vorbissrc/barkmel.c
   sound/OggVorbis/vorbissrc/bitrate.c
   sound/OggVorbis/vorbissrc/bitrate.h
   sound/OggVorbis/vorbissrc/block.c
-  
-  
+
+
   sound/OggVorbis/vorbissrc/books/coupled/res_books_stereo.h
-  sound/OggVorbis/vorbissrc/books/floor/floor_books.h  
+  sound/OggVorbis/vorbissrc/books/floor/floor_books.h
   sound/OggVorbis/vorbissrc/books/uncoupled/res_books_uncoupled.h
 
   sound/OggVorbis/vorbissrc/codebook.c
@@ -142,7 +135,7 @@ SET(SOURCES
   sound/OggVorbis/vorbissrc/mdct.c
   sound/OggVorbis/vorbissrc/mdct.h
   sound/OggVorbis/vorbissrc/misc.h
-  
+
   sound/OggVorbis/vorbissrc/modes/floor_all.h
   sound/OggVorbis/vorbissrc/modes/psych_11.h
   sound/OggVorbis/vorbissrc/modes/psych_16.h
@@ -181,12 +174,9 @@ SET(SOURCES
 add_library(oggvorbis STATIC ${SOURCES})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/sound/OggVorbis/vorbissrc")
 SET_PROPERTY(TARGET oggvorbis PROPERTY FOLDER 3rdParty)
-
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(oggvorbis PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF() 
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
+  set_target_properties(oggvorbis PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+ENDIF()
 
 ###############################################################################
 ######################## QT TOOLS #############################################
@@ -217,8 +207,8 @@ if(Qt5Widgets_FOUND)
     ${QtGui_location}
   )
 
-  
-  add_custom_target(Qt5CopyBinaries 
+
+  add_custom_target(Qt5CopyBinaries
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Debug"
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Debug/platforms"
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Cored.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
@@ -329,7 +319,7 @@ SET(SOURCES
   renderer/Cinematic.h
   renderer/draw_common.cpp
   renderer/draw_glsl.cpp
-  
+
   renderer/GuiModel.cpp
   renderer/GuiModel.h
   renderer/Image.h
@@ -391,7 +381,7 @@ SET(SOURCES
   renderer/RenderWorld.cpp
   renderer/RenderWorld.h
   renderer/RenderProgram.cpp
-  renderer/RenderProgram.h  
+  renderer/RenderProgram.h
   renderer/RenderWorld_demo.cpp
   renderer/RenderWorld_load.cpp
   renderer/RenderWorld_local.h
@@ -438,7 +428,7 @@ SET(SOURCES
   sound/sound.h
 
   #sys/gllog/gl.api
-  #sys/gllog/glX.api  
+  #sys/gllog/glX.api
 
 
   tools/compilers/aas/AASBuild.cpp
@@ -546,11 +536,11 @@ SET(SOURCES
 
   sys/sys_local.cpp
   sys/sys_local.h
-  sys/sys_public.h    
+  sys/sys_public.h
 )
 
 IF(UNIX)
-  SET(SOURCES ${SOURCES}  
+  SET(SOURCES ${SOURCES}
     sys/posix/posix_net.cpp
     sys/posix/posix_main.cpp
     sys/posix/posix_signal.cpp
@@ -560,7 +550,7 @@ IF(UNIX)
     sys/stub/util_stub.cpp
     sys/linux/glimp.cpp
     sys/posix/posix_input.cpp
-    sys/linux/input.cpp    
+    sys/linux/input.cpp
     sys/linux/libXNVCtrl/NVCtrl.c
     tools/guied/GEWindowWrapper_stub.cpp
     sys/linux/sound_alsa.cpp
@@ -570,7 +560,7 @@ ENDIF()
 
 IF(WIN32)
   SET(SOURCES ${SOURCES}
-    sys/win32/eax.h      
+    sys/win32/eax.h
     #sys/win32/rc/AFEditor.rc
     sys/win32/rc/AFEditor_resource.h
     #sys/win32/rc/Common.rc
@@ -605,7 +595,7 @@ IF(WIN32)
     sys/win32/win_input.cpp
     sys/win32/win_local.h
     sys/win32/win_main.cpp
-    sys/win32/win_net.cpp    
+    sys/win32/win_net.cpp
     sys/win32/win_shared.cpp
     sys/win32/win_snd.cpp
     sys/win32/win_syscon.cpp
@@ -668,7 +658,7 @@ IF(WIN32)
       tools/common/OpenFileDialog.h
       tools/common/PropertyGrid.cpp
       tools/common/PropertyGrid.h
-      
+
       tools/common/PropTree/PropTree.cpp
       tools/common/PropTree/PropTree.h
       tools/common/PropTree/PropTreeInfo.cpp
@@ -962,43 +952,43 @@ IF(WIN32)
       tools/sound/DialogSound.cpp
       tools/sound/DialogSound.h
       tools/sound/DialogSoundGroup.cpp
-      tools/sound/DialogSoundGroup.h  
-    ) 
+      tools/sound/DialogSoundGroup.h
+    )
   ENDIF()
 ENDIF()
 
 
 
 IF(MSVC)
-  source_group(CM cm/.*)  
-  source_group(Framework framework/.*)  
-  source_group(Framework\\async framework/async/.*)  
-  source_group(Renderer renderer/.*)  
-  source_group(Renderer\\jpeg6 renderer/jpeg-6/.*)  
-  source_group(Renderer\\GL renderer/GL/.*)  
-  source_group(Sound sound/.*)  
-  source_group(Sound\\ogg sound/OggVorbis/ogg/.*)  
-  source_group(Sound\\oggsrc sound/OggVorbis/oggsrc/.*)  
-  source_group(Sound\\vorbis sound/OggVorbis/vorbis/.*)  
-  source_group(Sound\\vorbissrc sound/OggVorbis/vorbissrc/.*)  
-  source_group(Sys sys/.*)  
-  source_group(Sys\\win32 sys/win32/.*)  
-  source_group(Tools tools/.*)  
-  source_group(Tools\\AF tools/af/.*)  
-  source_group(Tools\\ComAfx tools/comafx/.*)  
-  source_group(Tools\\Common tools/common/.*)  
-  source_group(Tools\\Compilers tools/compilers/.*)  
-  source_group(Tools\\Debugger tools/debugger/.*)  
-  source_group(Tools\\Decl tools/decl/.*)  
-  source_group(Tools\\Guied tools/guied/.*)  
-  source_group(Tools\\MaterialEditor tools/materialeditor/.*)  
-  source_group(Tools\\Particle tools/particle/.*)  
-  source_group(Tools\\PDA tools/pda/.*)  
-  source_group(Tools\\Radiant tools/radiant/.*)  
-  source_group(Tools\\Script tools/script/.*)  
-  source_group(Tools\\Sound tools/sound/.*)  
-  source_group(Ui ui/.*)  
-    
+  source_group(CM cm/.*)
+  source_group(Framework framework/.*)
+  source_group(Framework\\async framework/async/.*)
+  source_group(Renderer renderer/.*)
+  source_group(Renderer\\jpeg6 renderer/jpeg-6/.*)
+  source_group(Renderer\\GL renderer/GL/.*)
+  source_group(Sound sound/.*)
+  source_group(Sound\\ogg sound/OggVorbis/ogg/.*)
+  source_group(Sound\\oggsrc sound/OggVorbis/oggsrc/.*)
+  source_group(Sound\\vorbis sound/OggVorbis/vorbis/.*)
+  source_group(Sound\\vorbissrc sound/OggVorbis/vorbissrc/.*)
+  source_group(Sys sys/.*)
+  source_group(Sys\\win32 sys/win32/.*)
+  source_group(Tools tools/.*)
+  source_group(Tools\\AF tools/af/.*)
+  source_group(Tools\\ComAfx tools/comafx/.*)
+  source_group(Tools\\Common tools/common/.*)
+  source_group(Tools\\Compilers tools/compilers/.*)
+  source_group(Tools\\Debugger tools/debugger/.*)
+  source_group(Tools\\Decl tools/decl/.*)
+  source_group(Tools\\Guied tools/guied/.*)
+  source_group(Tools\\MaterialEditor tools/materialeditor/.*)
+  source_group(Tools\\Particle tools/particle/.*)
+  source_group(Tools\\PDA tools/pda/.*)
+  source_group(Tools\\Radiant tools/radiant/.*)
+  source_group(Tools\\Script tools/script/.*)
+  source_group(Tools\\Sound tools/sound/.*)
+  source_group(Ui ui/.*)
+
   SET(WINSDK_LIB_DIR "$ENV{ProgramFiles}/Windows Kits/8.1/Lib/winv6.3/um/x86")
   IF(NOT IS_DIRECTORY ${WINSDK_LIB_DIR})
 	message("Windows 8.1 SDK not found: ${WINSDK_LIB_DIR}")
@@ -1006,14 +996,14 @@ IF(MSVC)
 	SET(WINSDK_LIB_DIR "$ENV{${PROGRAM_FILES_X86}}/Windows Kits/8.1/Lib/winv6.3/um/x86")
 
 	IF(NOT IS_DIRECTORY ${WINSDK_LIB_DIR})
-		message("Windows 8.1 SDK not found either: ${WINSDK_LIB_DIR}")		
+		message("Windows 8.1 SDK not found either: ${WINSDK_LIB_DIR}")
 		message( FATAL_ERROR "Please install Windows 8.1 SDK" )
 	ENDIF()
   ENDIF()
 
 
   SET(EXTERNAL_LIBS
-    opengl32.lib 
+    opengl32.lib
     Glu32.lib
     Dbghelp.lib
     wsock32.lib
@@ -1023,7 +1013,7 @@ IF(MSVC)
     "${WINSDK_LIB_DIR}/dinput8.lib"
     "${WINSDK_LIB_DIR}/dsound.lib"
     "${WINSDK_LIB_DIR}/dxguid.lib")
-ENDIF()  
+ENDIF()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
@@ -1033,20 +1023,20 @@ if(UNIX)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sys/linux/oss/include)
    add_definitions(-Dlinux)
    add_definitions(-DXTHREADS)
-   FIND_PACKAGE(OpenGL REQUIRED)   
-   FIND_PACKAGE(OpenAL REQUIRED)   
+   FIND_PACKAGE(OpenGL REQUIRED)
+   FIND_PACKAGE(OpenAL REQUIRED)
 
    SET(EXTERNAL_LIBS
     pthread
     dl
     X11
-    Xext  
-    Xxf86vm 
+    Xext
+    Xxf86vm
     ${OPENAL_LIBRARY}
     ${OPENGL_gl_LIBRARY})
 
   set(LINK_LIBS
-    idlib 
+    idlib
 #    curl
     glew
     jpeg-6
@@ -1054,13 +1044,13 @@ if(UNIX)
     ${EXTERNAL_LIBS})
 else()
   set(LINK_LIBS
-    idlib 
+    idlib
     curl
     glew
     jpeg-6
     oggvorbis
-    ${EXTERNAL_LIBS})  
-endif()  
+    ${EXTERNAL_LIBS})
+endif()
 
 if(Qt5Widgets_FOUND)
   set(LINK_LIBS ${LINK_LIBS} qteditors)
@@ -1073,25 +1063,20 @@ target_link_libraries(${TARGET_NAME} ${LINK_LIBS})
 add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
 
 if(Qt5Widgets_FOUND)
-  add_dependencies(${TARGET_NAME} Qt5CopyBinaries)  
+  add_dependencies(${TARGET_NAME} Qt5CopyBinaries)
 endif()
 
 if(MSVC)
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
-  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
-  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")  
+  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
+  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")
 
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER exes)
 endif()
 
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()  
-
-
-
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
+  set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+ENDIF()
 
 IF(WIN32)
   SET(DIST_DIR ${CMAKE_BINARY_DIR}/dist/fhDOOM)
@@ -1114,7 +1099,7 @@ IF(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak006.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak007.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak008.pk4" "${DIST_DIR}/base/"
-    COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/default.cfg" "${DIST_DIR}/base/"   
+    COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/default.cfg" "${DIST_DIR}/base/"
 
     COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_DIR}/fhGame-x86.dll" "${DIST_DIR}/base/fhGame-x86.dll"
     COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_DIR}/fhGame-roe-x86.dll" "${DIST_DIR}/d3xp/fhGame-x86.dll"

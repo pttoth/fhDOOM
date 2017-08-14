@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -2129,7 +2129,7 @@ int lwGetPolygons5( idFile *fp, int cksize, lwPolygonList *plist, int ptoffset )
    lwPolygon *pp;
    lwPolVert *pv;
    unsigned char *buf, *bp;
-   int i, j, nv, nverts, npols;
+   int i, nv, nverts, npols;
 
 
    if ( cksize == 0 ) return 1;
@@ -2170,9 +2170,10 @@ int lwGetPolygons5( idFile *fp, int cksize, lwPolygonList *plist, int ptoffset )
       pp->nverts = nv;
       pp->type = ID_FACE;
       if ( !pp->v ) pp->v = pv;
-      for ( j = 0; j < nv; j++ )
+      for ( int j = 0; j < nv; j++ )
          pv[ j ].index = sgetU2( &bp ) + ptoffset;
-      j = sgetI2( &bp );
+
+      ptrdiff_t j = sgetI2( &bp );
       if ( j < 0 ) {
          j = -j;
          bp += 2;
@@ -2676,14 +2677,13 @@ int lwResolvePolySurfaces( lwPolygonList *polygon, lwTagList *tlist,
    lwSurface **surf, int *nsurfs )
 {
    lwSurface **s, *st;
-   int i, index;
 
    if ( tlist->count == 0 ) return 1;
 
    s = (lwSurface**)Mem_ClearedAlloc( tlist->count * sizeof( lwSurface * ) );
    if ( !s ) return 0;
 
-   for ( i = 0; i < tlist->count; i++ ) {
+   for ( int i = 0; i < tlist->count; i++ ) {
       st = *surf;
       while ( st ) {
          if ( !strcmp( st->name, tlist->tag[ i ] )) {
@@ -2694,8 +2694,8 @@ int lwResolvePolySurfaces( lwPolygonList *polygon, lwTagList *tlist,
       }
    }
 
-   for ( i = 0; i < polygon->count; i++ ) {
-      index = ( int ) polygon->pol[ i ].surf;
+   for ( int i = 0; i < polygon->count; i++ ) {
+      ptrdiff_t index = ( ptrdiff_t ) polygon->pol[ i ].surf;
       if ( index < 0 || index > tlist->count ) return 0;
       if ( !s[ index ] ) {
          s[ index ] = lwDefaultSurface();
@@ -2855,12 +2855,10 @@ Read polygon tags from a PTAG chunk in an LWO2 file.
 
 int lwGetPolygonTags( idFile *fp, int cksize, lwTagList *tlist, lwPolygonList *plist )
 {
-	unsigned int type;
-	int rlen = 0, i, j;
-
 	set_flen( 0 );
-	type = getU4( fp );
-	rlen = get_flen();
+	unsigned int type = getU4( fp );
+	int rlen = get_flen();
+
 	if ( rlen < 0 ) return 0;
 
 	if ( type != ID_SURF && type != ID_PART && type != ID_SMGP ) {
@@ -2869,8 +2867,8 @@ int lwGetPolygonTags( idFile *fp, int cksize, lwTagList *tlist, lwPolygonList *p
 	}
 
 	while ( rlen < cksize ) {
-		i = getVX( fp ) + plist->offset;
-		j = getVX( fp ) + tlist->offset;
+		int i = getVX( fp ) + plist->offset;
+		ptrdiff_t j = getVX( fp ) + tlist->offset;
 		rlen = get_flen();
 		if ( rlen < 0 || rlen > cksize ) return 0;
 

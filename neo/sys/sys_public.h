@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifdef __linux__
 
 #if defined(__i386__) || defined(__amd64__)
-  static_assert(sizeof(void*) == 4, "need 32bit pointers");
+  //static_assert(sizeof(void*) == 4, "need 32bit pointers");
 	#define	BUILD_STRING				"linux-x86"
 	#define BUILD_OS_ID					2
 	#define CPUSTRING					"x86"
@@ -137,7 +137,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifdef __GNUC__
 #define id_attribute(x) __attribute__(x)
 #else
-#define id_attribute(x)  
+#define id_attribute(x)
 #endif
 
 typedef enum {
@@ -231,6 +231,12 @@ typedef struct sysMemoryStats_s {
 	int availVirtual;
 	int availExtendedVirtual;
 } sysMemoryStats_t;
+
+struct sysDllHandle_t {
+	sysDllHandle_t() : value(nullptr) {}
+	operator bool() const { return value != nullptr; }
+	void* value;
+};
 
 typedef unsigned long address_t;
 typedef unsigned long long uint64;
@@ -329,16 +335,16 @@ const char *	Sys_GetCallStackCurAddressStr( int depth );
 void			Sys_ShutdownSymbols( void );
 
 // DLL loading, the path should be a fully qualified OS path to the DLL file to be loaded
-int				Sys_DLL_Load( const char *dllName );
-void *			Sys_DLL_GetProcAddress( int dllHandle, const char *procName );
-void			Sys_DLL_Unload( int dllHandle );
+sysDllHandle_t	Sys_DLL_Load( const char *dllName );
+void *			Sys_DLL_GetProcAddress( sysDllHandle_t dllHandle, const char *procName );
+void			Sys_DLL_Unload( sysDllHandle_t dllHandle );
 
 // event generation
 void			Sys_GenerateEvents( void );
 sysEvent_t		Sys_GetEvent( void );
 void			Sys_ClearEvents( void );
 
-// input is tied to windows, so it needs to be started up and shut down whenever 
+// input is tied to windows, so it needs to be started up and shut down whenever
 // the main window is recreated
 void			Sys_InitInput( void );
 void			Sys_ShutdownInput( void );
@@ -507,7 +513,7 @@ void				Sys_DestroyThread( xthreadInfo& info ); // sets threadHandle back to 0
 // find the name of the calling thread
 // if index != NULL, set the index in g_threads array (use -1 for "main" thread)
 const char *		Sys_GetThreadName( int *index = 0 );
- 
+
 const int MAX_CRITICAL_SECTIONS		= 4;
 
 enum {
@@ -564,9 +570,9 @@ public:
 	virtual const char *	GetCallStackCurStr( int depth ) = 0;
 	virtual void			ShutdownSymbols( void ) = 0;
 
-	virtual int				DLL_Load( const char *dllName ) = 0;
-	virtual void *			DLL_GetProcAddress( int dllHandle, const char *procName ) = 0;
-	virtual void			DLL_Unload( int dllHandle ) = 0;
+	virtual sysDllHandle_t	DLL_Load( const char *dllName ) = 0;
+	virtual void *			DLL_GetProcAddress( sysDllHandle_t dllHandle, const char *procName ) = 0;
+	virtual void			DLL_Unload( sysDllHandle_t dllHandle ) = 0;
 	virtual void			DLL_GetFileName( const char *baseName, char *dllName, int maxLength ) = 0;
 
 	virtual sysEvent_t		GenerateMouseButtonEvent( int button, bool down ) = 0;

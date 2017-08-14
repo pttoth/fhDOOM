@@ -1,4 +1,4 @@
-SET(SOURCES 
+SET(SOURCES
   Actor.cpp
   Actor.h
   AF.cpp
@@ -50,7 +50,7 @@ SET(SOURCES
   gamesys/SysCmds.cpp
   gamesys/SysCmds.h
   gamesys/SysCvar.cpp
-  gamesys/SysCvar.h  
+  gamesys/SysCvar.h
   #gamesys/TypeInfo.cpp    <= will be added later to the source list, because it can't be compiled with pch (because it redefines some keywords)
   gamesys/TypeInfo.h
   Game_local.cpp
@@ -147,22 +147,19 @@ add_msvc_precompiled_header(precompiled.h SOURCES)
 SET(SOURCES ${SOURCES} gamesys/TypeInfo.cpp) #TypeInfo must be compiled without pch, so it can redefine some keywords
 
 
-source_group(game .*)  
-source_group(game\\AI ai/.*)  
-source_group(game\\Animation animation/.*)  
-source_group(game\\GameSys gamesys/.*)  
-source_group(game\\Physics physics/.*)  
-source_group(game\\Script script/.*)  
+source_group(game .*)
+source_group(game\\AI ai/.*)
+source_group(game\\Animation animation/.*)
+source_group(game\\GameSys gamesys/.*)
+source_group(game\\Physics physics/.*)
+source_group(game\\Script script/.*)
 
 
 set(TARGET_NAME "fhGame-x86")
 add_definitions(-D__DOOM__ -DGAME_DLL)
 add_library(${TARGET_NAME} SHARED ${SOURCES})
 target_link_libraries(${TARGET_NAME} idlib)
-set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER dlls)  
-
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()  
+set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER dlls)
+IF(UNIX AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND ID_FORCE_32BIT)
+  set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+ENDIF()

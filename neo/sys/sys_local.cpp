@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "sys_local.h"
 
 const char * sysLanguageNames[] = {
-	"english", "spanish", "italian", "german", "french", "russian", 
+	"english", "spanish", "italian", "german", "french", "russian",
 	"polish", "korean", "japanese", "chinese", NULL
 };
 
@@ -108,15 +108,15 @@ void idSysLocal::ShutdownSymbols( void ) {
 	Sys_ShutdownSymbols();
 }
 
-int idSysLocal::DLL_Load( const char *dllName ) {
+sysDllHandle_t idSysLocal::DLL_Load( const char *dllName ) {
 	return Sys_DLL_Load( dllName );
 }
 
-void *idSysLocal::DLL_GetProcAddress( int dllHandle, const char *procName ) {
+void *idSysLocal::DLL_GetProcAddress( sysDllHandle_t dllHandle, const char *procName ) {
 	return Sys_DLL_GetProcAddress( dllHandle, procName );
 }
 
-void idSysLocal::DLL_Unload( int dllHandle ) {
+void idSysLocal::DLL_Unload( sysDllHandle_t dllHandle ) {
 	Sys_DLL_Unload( dllHandle );
 }
 
@@ -207,7 +207,7 @@ const char *Sys_TimeStampToStr( ID_TIME_T timeStamp ) {
 
 	tm*	time = localtime( &timeStamp );
 	idStr out;
-	
+
 	idStr lang = cvarSystem->GetCVarString( "sys_lang" );
 	if ( lang.Icmp( "english" ) == 0 ) {
 		// english gets "month/day/year  hour:min" + "am" or "pm"
