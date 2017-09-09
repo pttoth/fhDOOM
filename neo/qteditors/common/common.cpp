@@ -27,11 +27,13 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #include "dialogs/LightEditor.h"
+#include "dialogs/EfxEditor.h"
 
 #include <qstylefactory.h>
 
 static QApplication * app = nullptr;
 static fhLightEditor * lightEditor = nullptr;
+static fhEfxEditor * efxEditor = nullptr;
 
 void QtRun()
 {
@@ -41,7 +43,6 @@ void QtRun()
 		char** argv = &name;
 		int argc = 1;
 		app = new QApplication(argc, argv);
-
 
 		app->setStyle( QStyleFactory::create( "Fusion" ) );
 
@@ -69,12 +70,14 @@ void QtRun()
 		app->setPalette( darkPalette );
 
 		app->setStyleSheet( "QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }" );
+	}
 
+	if ( efxEditor && efxEditor->isVisible() ) {
+		efxEditor->UpdateGui();
 	}
 
 	QApplication::processEvents();
 }
-
 
 void QtLightEditorInit( const idDict* spawnArgs ) {
 	if(!lightEditor) {
@@ -84,4 +87,14 @@ void QtLightEditorInit( const idDict* spawnArgs ) {
 	lightEditor->initFromSpawnArgs(spawnArgs);
 	lightEditor->show();
 	lightEditor->setFocus();
+}
+
+void EfxEditorInit() {
+	if ( !efxEditor ) {
+		efxEditor = new fhEfxEditor( nullptr );
+	}
+
+	efxEditor->Init();
+	efxEditor->show();
+	efxEditor->setFocus();
 }

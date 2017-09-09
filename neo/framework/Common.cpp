@@ -1255,6 +1255,16 @@ static void Com_EditSounds_f( const idCmdArgs &args ) {
 
 /*
 ==================
+Com_EditSounds_f
+==================
+*/
+static void Com_EditEfx_f( const idCmdArgs &args ) {
+	EfxEditorInit();
+}
+
+
+/*
+==================
 Com_EditDecls_f
 ==================
 */
@@ -2346,6 +2356,7 @@ void idCommonLocal::InitCommands( void ) {
 	cmdSystem->AddCommand( "editor", Com_Editor_f, CMD_FL_TOOL, "launches the level editor Radiant" );
 	cmdSystem->AddCommand( "editLights", Com_EditLights_f, CMD_FL_TOOL, "launches the in-game Light Editor" );
 	cmdSystem->AddCommand( "editSounds", Com_EditSounds_f, CMD_FL_TOOL, "launches the in-game Sound Editor" );
+	cmdSystem->AddCommand( "editEfx", Com_EditEfx_f, CMD_FL_TOOL, "launches the in-game Sound Editor" );
 	cmdSystem->AddCommand( "editDecls", Com_EditDecls_f, CMD_FL_TOOL, "launches the in-game Declaration Editor" );
 	cmdSystem->AddCommand( "editAFs", Com_EditAFs_f, CMD_FL_TOOL, "launches the in-game Articulated Figure Editor" );
 	cmdSystem->AddCommand( "editParticles", Com_EditParticles_f, CMD_FL_TOOL, "launches the in-game Particle Editor" );

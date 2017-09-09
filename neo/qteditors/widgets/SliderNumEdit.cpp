@@ -106,9 +106,14 @@ void fhSliderNumEdit::setRange(float minimum, float maximum, int steps) {
 	m_slider->setMaximum(steps);
 }
 
+void fhSliderNumEdit::setFixedEditWidth( int w ) {
+	m_numEdit->setFixedWidth( w );
+}
+
 bool fhSliderNumEdit::isOutOfSync() const {
 	const float currentNumEditValue = m_numEdit->getFloat();
-	const float currentSliderValue = ((float)m_slider->value() / (float)m_slider->maximum()) * m_numEdit->maximumValue();
+
+	const float currentSliderValue = m_numEdit->minimumValue() + ((float)m_slider->value() / (float)m_slider->maximum()) * (m_numEdit->maximumValue() - m_numEdit->minimumValue());
 
 	if (qAbs( currentNumEditValue - currentSliderValue ) > 0.00001)
 		return true;

@@ -42,12 +42,6 @@ class idGLDrawableMaterial;
 class fhColorEdit;
 class fhSliderNumEdit;
 
-class fhEditing {
-public:
-	virtual ~fhEditing() {}
-
-};
-
 class fhLightEditor : public QDialog {
 	Q_OBJECT
 

@@ -48,6 +48,8 @@ public:
 	void setPrecision(int n);
 	void setEnabled(bool enabled);
 
+	void setFixedEditWidth( int w );
+
 signals:
 	void valueChanged( float value );
 

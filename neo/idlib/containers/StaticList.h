@@ -74,6 +74,14 @@ public:
 	void				Swap( idStaticList<type,size> &other );				// swap the contents of the lists
 	void				DeleteContents( bool clear );						// delete the contents of the list
 
+	//compatibility with STL and range based for loop
+	type*			begin() { return list; }
+	type*			end() { return list + num; }
+	const type*		begin() const { return list; }
+	const type*		end() const { return list + num; }
+	const type*		cbegin() const { return list; }
+	const type*		cend() const { return list + num; }
+
 private:
 	int					num;
 	type 				list[ size ];

@@ -1655,7 +1655,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 	// actually purge/load the media
 	if ( !reloadingSameMap ) {
 		renderSystem->EndLevelLoad();
-		soundSystem->EndLevelLoad( mapString.c_str() );
+		soundSystem->EndLevelLoad();
 		declManager->EndLevelLoad();
 		SetBytesNeededForMapLoad( mapString.c_str(), fileSystem->GetReadCount() );
 	}
@@ -1714,6 +1714,17 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 	Sys_SetPhysicalWorkMemory( -1, -1 );
 
 	// set the game sound world for playback
+	{
+		static const int maxNameNum = 256;
+		const char* locations[maxNameNum];
+		int numLocations = game->GetAreaLocationNames( locations, maxNameNum );
+		if ( numLocations > maxNameNum ) {
+			common->Warning( "map '%s' has more than %d locations: %d\n", mapString.c_str(), maxNameNum, numLocations );
+		}
+
+		sw->LoadSoundEffects( mapString.c_str(), locations, numLocations );
+	}
+
 	soundSystem->SetPlayingSoundWorld( sw );
 
 	// when loading a save game the sound is paused

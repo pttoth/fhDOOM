@@ -4988,3 +4988,17 @@ idGameLocal::GetMapLoadingGUI
 */
 void idGameLocal::GetMapLoadingGUI( char gui[ MAX_STRING_CHARS ] ) { }
 
+/*
+===============
+idGameLocal::GetAreaLocationNames
+===============
+*/
+int idGameLocal::GetAreaLocationNames( const char** names, int namesSize ) {
+	const int num = gameRenderWorld->NumAreas();
+
+	for ( int i = 0; i < num && i < namesSize; ++i ) {
+		names[i] = locationEntities[i]->GetLocation();
+	}
+
+	return num;
+}

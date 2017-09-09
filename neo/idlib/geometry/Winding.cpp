@@ -1286,6 +1286,44 @@ float idWinding::PlaneDistance( const idPlane &plane ) const {
 
 /*
 =============
+idWinding::PointDistance
+=============
+*/
+float idWinding::PointDistance( const idVec3& point ) const {
+	idPlane plane;
+	GetPlane( plane );
+
+	const float planeDistance = plane.Distance( point );
+	const idVec3 planePoint = point + plane.Normal() * -planeDistance;
+
+	const float epsilon = 0.01f;
+	assert( plane.Distance( planePoint ) < epsilon );
+
+	if ( PointInside( plane.Normal(), planePoint, epsilon ) ) {
+		return planeDistance;
+	}
+
+	float distanceSqr;
+
+	assert( numPoints >= 3 );
+	for ( int i = 0; i <= numPoints; ++i ) {
+		const idVec3 a = p[i].ToVec3();
+		const idVec3 b = p[i == numPoints ? 0 : i + 1].ToVec3();
+		const idVec3 vLine = (b - a).Normalized();
+		const idVec3 vPoint = point - a;
+		const float f = vLine * vPoint;
+		const float d = ((vLine * f) - vPoint).LengthSqr();
+
+		if ( i == 0 || d < distanceSqr ) {
+			distanceSqr = d;
+		}
+	}
+
+	return idMath::Sqrt( distanceSqr );
+}
+
+/*
+=============
 idWinding::PlaneSide
 =============
 */

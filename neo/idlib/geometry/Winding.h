@@ -107,6 +107,7 @@ public:
 	bool			IsHuge( void ) const;	// base winding for a plane is typically huge
 	void			Print( void ) const;
 
+	float           PointDistance( const idVec3& p ) const;
 	float			PlaneDistance( const idPlane &plane ) const;
 	int				PlaneSide( const idPlane &plane, const float epsilon = ON_EPSILON ) const;
 

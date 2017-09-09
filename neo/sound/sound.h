@@ -73,6 +73,75 @@ const int		SOUND_MAX_LIST_WAVS		= 32;
 // flagged with a non-zero class full volume
 const int		SOUND_MAX_CLASSES		= 4;
 
+
+/*
+* EAX OpenAL Extensions
+*/
+
+struct EAXVECTOR {
+	float x;
+	float y;
+	float z;
+};
+
+// Use this structure for EAXREVERB_ALLPARAMETERS
+// - all levels are hundredths of decibels
+// - all times and delays are in seconds
+//
+// NOTE: This structure may change in future EAX versions.
+//       It is recommended to initialize fields by name:
+//              myReverb.lRoom = -1000;
+//              myReverb.lRoomHF = -100;
+//              ...
+//              myReverb.dwFlags = myFlags /* see EAXREVERBFLAGS below */ ;
+//       instead of:
+//              myReverb = { -1000, -100, ... , 0x00000009 };
+//       If you want to save and load presets in binary form, you
+//       should define your own structure to insure future compatibility.
+//
+struct EAXREVERBPROPERTIES {
+	unsigned long ulEnvironment;   // sets all reverb properties
+	float flEnvironmentSize;       // environment size in meters
+	float flEnvironmentDiffusion;  // environment diffusion
+	long lRoom;                    // room effect level (at mid frequencies)
+	long lRoomHF;                  // relative room effect level at high frequencies
+	long lRoomLF;                  // relative room effect level at low frequencies
+	float flDecayTime;             // reverberation decay time at mid frequencies
+	float flDecayHFRatio;          // high-frequency to mid-frequency decay time ratio
+	float flDecayLFRatio;          // low-frequency to mid-frequency decay time ratio
+	long lReflections;             // early reflections level relative to room effect
+	float flReflectionsDelay;      // initial reflection delay time
+	EAXVECTOR vReflectionsPan;     // early reflections panning vector
+	long lReverb;                  // late reverberation level relative to room effect
+	float flReverbDelay;           // late reverberation delay time relative to initial reflection
+	EAXVECTOR vReverbPan;          // late reverberation panning vector
+	float flEchoTime;              // echo time
+	float flEchoDepth;             // echo depth
+	float flModulationTime;        // modulation time
+	float flModulationDepth;       // modulation depth
+	float flAirAbsorptionHF;       // change in level per meter at high frequencies
+	float flHFReference;           // reference high frequency
+	float flLFReference;           // reference low frequency
+	float flRoomRolloffFactor;     // like DS3D flRolloffFactor but for room effect
+	unsigned long ulFlags;         // modifies the behavior of properties
+};
+
+struct EFXEAXREVERBPROPERTIES;
+
+void ConvertEAXToEFX( const EAXREVERBPROPERTIES *eax, EFXEAXREVERBPROPERTIES *efx );
+void ConvertEFXToEAX( const EFXEAXREVERBPROPERTIES *efx, EAXREVERBPROPERTIES *eax );
+
+class idSoundEffect
+{
+public:
+	virtual ~idSoundEffect() = default;
+
+	virtual void SetProperties( const EAXREVERBPROPERTIES& properties ) = 0;
+	virtual const EAXREVERBPROPERTIES& GetProperties() const = 0;
+	virtual const idStr& GetName() const = 0;
+};
+
+
 // it is somewhat tempting to make this a virtual class to hide the private
 // details here, but that doesn't fit easily with the decl manager at the moment.
 class idSoundShader : public idDecl {
@@ -255,6 +324,15 @@ public:
 	virtual void			SetSlowmo( bool active ) = 0;
 	virtual void			SetSlowmoSpeed( float speed ) = 0;
 	virtual void			SetEnviroSuit( bool active ) = 0;
+
+	// sound effects
+	virtual idSoundEffect*	GetCurrentSoundEffect() = 0;
+	virtual int				GetSoundEffectNum() const = 0;
+	virtual idSoundEffect*	GetSoundEffect( int index ) = 0;
+	virtual void            RecreateModifiedEffects() = 0;
+
+	virtual void            LoadSoundEffects( const char* mapfile, const char** locations, int numLocations ) = 0;
+	virtual void            ReloadSoundEffects() = 0;
 };
 
 
@@ -333,7 +411,7 @@ public:
 	// Free all soundSamples marked as unused
 	// We might want to defer the loading of new sounds to this point,
 	// as we do with images, to avoid having a union in memory at one time.
-	virtual	void			EndLevelLoad( const char *mapString ) = 0;
+	virtual	void			EndLevelLoad() = 0;
 
 	// direct mixing for OSes that support it
 	virtual int				AsyncMix( int soundTime, float *mixBuffer ) = 0;
@@ -343,6 +421,9 @@ public:
 
 	// is EAX support present - -1: disabled at compile time, 0: no suitable hardware, 1: ok, 2: failed to load OpenAL DLL
 	virtual int				IsEAXAvailable( void ) = 0;
+
+	virtual void			ReloadSoundEffects() = 0;
+	virtual void            MarkSoundEffectsDirty() = 0;
 };
 
 extern idSoundSystem	*soundSystem;

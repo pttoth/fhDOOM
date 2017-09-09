@@ -3,6 +3,8 @@ set(SOURCES
   qteditors_public.h
   precompiled.h
   common/common.cpp  
+  dialogs/EfxEditor.h
+  dialogs/EfxEditor.cpp  
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp
   widgets/RenderWidget.h

@@ -29,23 +29,100 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __SND_LOCAL_H__
 #define __SND_LOCAL_H__
 
+#include "sound.h"
+
 // you need the OpenAL headers for build, even if AL is not enabled - http://www.openal.org/
 #ifdef _WIN32
-#include "../openal/include/al.h"
-#include "../openal/include/alc.h"
-#include "../openal/idal.h"
-// broken OpenAL SDK ?
-#define ID_ALCHAR (ALubyte *)
-#elif defined( MACOS_X )
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#define ID_ALCHAR
+#include "../openal-soft/include/AL/al.h"
+#include "../openal-soft/include/AL/alc.h"
+#include "../openal-soft/include/AL/alext.h"
+#include "../openal-soft/include/AL/efx.h"
+#include "../openal-soft/include/AL/efx-presets.h"
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
-#define ID_ALCHAR
+#include "../openal-soft/include/AL/efx.h"
 #endif
-#include "../openal/include/efxlib.h"
+
+// =================================================================================
+
+//EFX
+extern LPALGENEFFECTS			alGenEffects;
+extern LPALDELETEEFFECTS		alDeleteEffects;
+extern LPALISEFFECT				alIsEffect;
+extern LPALEFFECTI				alEffecti;
+extern LPALEFFECTF				alEffectf;
+extern LPALEFFECTFV				alEffectfv;
+extern LPALGENFILTERS			alGenFilters;
+extern LPALDELETEFILTERS		alDeleteFilters;
+extern LPALISFILTER				alIsFilter;
+extern LPALFILTERI				alFilteri;
+extern LPALFILTERF				alFilterf;
+extern LPALGENAUXILIARYEFFECTSLOTS		alGenAuxiliaryEffectSlots;
+extern LPALDELETEAUXILIARYEFFECTSLOTS	alDeleteAuxiliaryEffectSlots;
+extern LPALISAUXILIARYEFFECTSLOT		alIsAuxiliaryEffectSlot;
+extern LPALAUXILIARYEFFECTSLOTI			alAuxiliaryEffectSloti;
+extern LPALAUXILIARYEFFECTSLOTF			alAuxiliaryEffectSlotf;
+
+
+
+// =================================================================================
+
+class idLocalSoundEffect final : public idSoundEffect
+{
+public:
+	explicit idLocalSoundEffect( const char* name );
+	~idLocalSoundEffect();
+
+	void Purge();
+	void Init();
+
+	void BindEffect( ALuint alEffectSlot, float gain );
+	void UnbindEffect();
+	bool isDirty() const { return dirty; }
+
+	virtual void SetProperties( const EAXREVERBPROPERTIES& properties ) override;
+	virtual const EAXREVERBPROPERTIES& GetProperties() const override { return eax; }
+	virtual const idStr& GetName() const override { return name; }
+
+private:
+	bool isNull() const;
+	bool isInitialized() const;
+	void Configure();
+
+	template<typename T>
+	void SetProperty( ALenum name, const char* text, T value, T minValue, T maxValue );
+
+	void SetProperty(ALenum name, float value);
+	void SetProperty(ALenum name, const float* value);
+	void SetProperty(ALenum name, int value);
+
+	idStr name;
+	EAXREVERBPROPERTIES eax;
+	bool dirty;
+	ALuint alEffect;
+	ALuint boundToSlot;
+};
+
+class idEFXFile
+{
+public:
+	idEFXFile();
+	~idEFXFile();
+
+	idLocalSoundEffect* FindEffect( const idStr& name );
+	idLocalSoundEffect* ReadEffect( idLexer& lexer );
+	bool LoadFile(const char *filename, bool OSPath = false);
+	void UnloadFile(void);
+	void ReloadFile();
+	void Clear(void);
+
+	idList<idLocalSoundEffect *>effects;
+
+private:
+	idStr filename;
+	bool osPath;
+};
 
 // demo sound commands
 typedef enum {
@@ -549,57 +626,60 @@ public:
 	virtual					~idSoundWorldLocal( void );
 
 	// call at each map start
-	virtual void			ClearAllSoundEmitters( void );
-	virtual void			StopAllSounds( void );
+	virtual void			ClearAllSoundEmitters( void ) override;
+	virtual void			StopAllSounds( void ) override;
 
 	// get a new emitter that can play sounds in this world
-	virtual idSoundEmitter *AllocSoundEmitter( void );
+	virtual idSoundEmitter *AllocSoundEmitter( void ) override;
 
 	// for load games
-	virtual idSoundEmitter *EmitterForIndex( int index );
+	virtual idSoundEmitter *EmitterForIndex( int index ) override;
 
 	// query data from all emitters in the world
-	virtual float			CurrentShakeAmplitudeForPosition( const int time, const idVec3 &listererPosition );
+	virtual float			CurrentShakeAmplitudeForPosition( const int time, const idVec3 &listererPosition ) override;
 
 	// where is the camera/microphone
 	// listenerId allows listener-private sounds to be added
-	virtual void			PlaceListener( const idVec3 &origin, const idMat3 &axis, const int listenerId, const int gameTime, const idStr& areaName );
+	virtual void			PlaceListener( const idVec3 &origin, const idMat3 &axis, const int listenerId, const int gameTime, const idStr& areaName ) override;
 
 	// fade all sounds in the world with a given shader soundClass
 	// to is in Db (sigh), over is in seconds
-	virtual void			FadeSoundClasses( const int soundClass, const float to, const float over );
+	virtual void			FadeSoundClasses( const int soundClass, const float to, const float over ) override;
 
 	// dumps the current state and begins archiving commands
-	virtual void			StartWritingDemo( idDemoFile *demo );
-	virtual void			StopWritingDemo( void );
+	virtual void			StartWritingDemo( idDemoFile *demo ) override;
+	virtual void			StopWritingDemo( void ) override;
 
 	// read a sound command from a demo file
-	virtual void			ProcessDemoCommand( idDemoFile *readDemo );
+	virtual void			ProcessDemoCommand( idDemoFile *readDemo ) override;
 
 	// background music
-	virtual void			PlayShaderDirectly( const char *name, int channel = -1 );
+	virtual void			PlayShaderDirectly( const char *name, int channel = -1 ) override;
 
 	// pause and unpause the sound world
-	virtual void			Pause( void );
-	virtual void			UnPause( void );
-	virtual bool			IsPaused( void );
+	virtual void			Pause( void ) override;
+	virtual void			UnPause( void ) override;
+	virtual bool			IsPaused( void ) override;
 
 	// avidump
-	virtual void			AVIOpen( const char *path, const char *name );
-	virtual void			AVIClose( void );
+	virtual void			AVIOpen( const char *path, const char *name ) override;
+	virtual void			AVIClose( void ) override;
 
 	// SaveGame Support
-	virtual void			WriteToSaveGame( idFile *savefile );
-	virtual void			ReadFromSaveGame( idFile *savefile );
+	virtual void			WriteToSaveGame( idFile *savefile ) override;
+	virtual void			ReadFromSaveGame( idFile *savefile ) override;
 
-	virtual void			ReadFromSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
-	virtual void			ReadFromSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
-	virtual void			WriteToSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
-	virtual void			WriteToSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
+	virtual void			SetSlowmo( bool active ) override;
+	virtual void			SetSlowmoSpeed( float speed ) override;
+	virtual void			SetEnviroSuit( bool active ) override;
 
-	virtual void			SetSlowmo( bool active );
-	virtual void			SetSlowmoSpeed( float speed );
-	virtual void			SetEnviroSuit( bool active );
+	virtual idLocalSoundEffect*	GetCurrentSoundEffect() override;
+	virtual int					GetSoundEffectNum() const override;
+	virtual idLocalSoundEffect*	GetSoundEffect( int index ) override;
+	virtual void				RecreateModifiedEffects() override { recreateModifiedEffects = true; }
+
+	virtual void            LoadSoundEffects( const char* mapfile, const char** locations, int numLocations ) override;
+	virtual void            ReloadSoundEffects() override;
 
 	//=======================================
 
@@ -620,6 +700,7 @@ public:
 	void					MixLoop( int current44kHz, int numSpeakers, float *finalMixBuffer );
 	void					AVIUpdate( void );
 	void					ResolveOrigin( const int stackDepth, const soundPortalTrace_t *prevStack, const int soundArea, const float dist, const idVec3& soundOrigin, idSoundEmitterLocal *def );
+	void					FindEffects( const int stackDepth, const soundPortalTrace_t *prevStack, const int soundArea );
 	float					FindAmplitude( idSoundEmitterLocal *sound, const int localTime, const idVec3 *listenerPosition, const s_channelType channel, bool shakesOnly );
 
 	//============================================
@@ -633,7 +714,24 @@ public:
 	idVec3					listenerQU;			// position in "quake units"
 	int						listenerArea;
 	idStr					listenerAreaName;
-	int						listenerEnvironmentID;
+
+	ALuint                  alListenerFilter;
+
+	struct effect_slot_t {
+		ALuint num;
+		idLocalSoundEffect* effect;
+		float gain;
+	};
+
+	struct effect_location_t {
+		idStr name;
+		idLocalSoundEffect* effect;
+	};
+
+	idEFXFile				EFXDatabase;
+	bool					efxloaded;
+	idList<effect_location_t> locations;
+	idStaticList<effect_slot_t, 4> effect_slots;
 
 	int						gameMsec;
 	int						game44kHz;
@@ -654,6 +752,14 @@ public:
 	bool					slowmoActive;
 	float					slowmoSpeed;
 	bool					enviroSuitActive;
+
+	bool                    recreateModifiedEffects;
+
+private:
+	void					ReadFromSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
+	void					ReadFromSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
+	void					WriteToSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
+	void					WriteToSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
 };
 
 /*
@@ -680,45 +786,47 @@ public:
 	}
 
 	// all non-hardware initialization
-	virtual void			Init( void );
+	virtual void			Init( void ) override;
 
 	// shutdown routine
-	virtual	void			Shutdown( void );
-	virtual void			ClearBuffer( void );
+	virtual	void			Shutdown( void ) override;
+	virtual void			ClearBuffer( void ) override;
 
 	// sound is attached to the window, and must be recreated when the window is changed
-	virtual bool			ShutdownHW( void );
-	virtual bool			InitHW( void );
+	virtual bool			ShutdownHW( void ) override;
+	virtual bool			InitHW( void ) override;
 
 	// async loop, called at 60Hz
-	virtual int				AsyncUpdate( int time );
+	virtual int				AsyncUpdate( int time ) override;
 	// async loop, when the sound driver uses a write strategy
-	virtual int				AsyncUpdateWrite( int time );
+	virtual int				AsyncUpdateWrite( int time ) override;
 	// direct mixing called from the sound driver thread for OSes that support it
-	virtual int				AsyncMix( int soundTime, float *mixBuffer );
+	virtual int				AsyncMix( int soundTime, float *mixBuffer ) override;
 
-	virtual void			SetMute( bool mute );
+	virtual void			SetMute( bool mute ) override;
 
-	virtual cinData_t		ImageForTime( const int milliseconds, const bool waveform );
+	virtual cinData_t		ImageForTime( const int milliseconds, const bool waveform ) override;
 
-	int						GetSoundDecoderInfo( int index, soundDecoderInfo_t &decoderInfo );
+	int						GetSoundDecoderInfo( int index, soundDecoderInfo_t &decoderInfo ) override;
 
 	// if rw == NULL, no portal occlusion or rendered debugging is available
-	virtual idSoundWorld	*AllocSoundWorld( idRenderWorld *rw );
+	virtual idSoundWorld	*AllocSoundWorld( idRenderWorld *rw ) override;
 
 	// specifying NULL will cause silence to be played
-	virtual void			SetPlayingSoundWorld( idSoundWorld *soundWorld );
+	virtual void			SetPlayingSoundWorld( idSoundWorld *soundWorld ) override;
 
 	// some tools, like the sound dialog, may be used in both the game and the editor
 	// This can return NULL, so check!
-	virtual idSoundWorld	*GetPlayingSoundWorld( void );
+	virtual idSoundWorld	*GetPlayingSoundWorld( void ) override;
 
-	virtual	void			BeginLevelLoad( void );
-	virtual	void			EndLevelLoad( const char *mapString );
+	virtual	void			BeginLevelLoad( void ) override;
+	virtual	void			EndLevelLoad() override;
 
-	virtual void			PrintMemInfo( MemInfo_t *mi );
+	virtual void			PrintMemInfo( MemInfo_t *mi ) override;
 
-	virtual int				IsEAXAvailable( void );
+	virtual int				IsEAXAvailable( void ) override;
+	virtual void            ReloadSoundEffects() override;
+	virtual void            MarkSoundEffectsDirty() override { effectsDirty = true; }
 
 	//-------------------------
 
@@ -749,6 +857,7 @@ public:
 	bool					isInitialized;
 	bool					muted;
 	bool					shutdown;
+	bool                    effectsDirty;
 
 	s_stats					soundStats;				// NOTE: updated throughout the code, not displayed anywhere
 
@@ -765,18 +874,9 @@ public:
 	ALCcontext				*openalContext;
 	ALsizei					openalSourceCount;
 	openalSource_t			openalSources[256];
-	EAXSet					alEAXSet;
-	EAXGet					alEAXGet;
-	EAXSetBufferMode		alEAXSetBufferMode;
-	EAXGetBufferMode		alEAXGetBufferMode;
-	idEFXFile				EFXDatabase;
-	bool					efxloaded;
-							// latches
-	static bool				useOpenAL;
-	static bool				useEAXReverb;
-							// mark available during initialization, or through an explicit test
-	static int				EAXAvailable;
 
+	// mark available during initialization, or through an explicit test
+	static bool				EAXAvailable;
 
 	static idCVar			s_noSound;
 	static idCVar			s_quadraticFalloff;
@@ -804,9 +904,8 @@ public:
 	static idCVar			s_clipVolumes;
 	static idCVar			s_realTimeDecoding;
 	static idCVar			s_libOpenAL;
-	static idCVar			s_useOpenAL;
 	static idCVar			s_useEAXReverb;
-	static idCVar			s_muteEAXReverb;
+	static idCVar			s_efxFadeOutDistance;
 	static idCVar			s_decompressionLimit;
 
 	static idCVar			s_slowAttenuate;
@@ -820,6 +919,7 @@ public:
 	static idCVar			s_reverbFeedback;
 	static idCVar			s_enviroSuitVolumeScale;
 	static idCVar			s_skipHelltimeFX;
+	static idCVar			s_ignore;
 };
 
 extern	idSoundSystemLocal	soundSystemLocal;

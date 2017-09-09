@@ -58,7 +58,6 @@ bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting ) {
 		R_DeriveTangents( tri );
 	}
 
-	//FIXME(johl): sometimes numVerts is zero... why?
 	if (tri->numVerts <= 0) {
 		return false;
 	}

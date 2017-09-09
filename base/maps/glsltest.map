@@ -4,6 +4,18 @@ Version 2
 "classname" "worldspawn"
 // primitive 0
 {
+ brushDef3
+ {
+  ( -0 -0 -1 -16 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 0 -0 1 8 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 0 -1 0 -64 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 1 -0 0 -256 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 0 1 0 -192 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( -1 0 0 -128 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+ }
+}
+// primitive 1
+{
  patchDef2
  {
   "textures/fhdoom/normaltest_3dc"
@@ -15,7 +27,7 @@ Version 2
   )
  }
 }
-// primitive 1
+// primitive 2
 {
  patchDef2
  {
@@ -28,7 +40,7 @@ Version 2
   )
  }
 }
-// primitive 2
+// primitive 3
 {
  patchDef2
  {
@@ -41,7 +53,7 @@ Version 2
   )
  }
 }
-// primitive 3
+// primitive 4
 {
  patchDef2
  {
@@ -54,7 +66,7 @@ Version 2
   )
  }
 }
-// primitive 4
+// primitive 5
 {
  patchDef2
  {
@@ -67,7 +79,7 @@ Version 2
   )
  }
 }
-// primitive 5
+// primitive 6
 {
  patchDef2
  {
@@ -80,7 +92,7 @@ Version 2
   )
  }
 }
-// primitive 6
+// primitive 7
 {
  patchDef2
  {
@@ -93,7 +105,7 @@ Version 2
   )
  }
 }
-// primitive 7
+// primitive 8
 {
  patchDef2
  {
@@ -106,7 +118,7 @@ Version 2
   )
  }
 }
-// primitive 8
+// primitive 9
 {
  brushDef3
  {
@@ -118,7 +130,7 @@ Version 2
   ( -1 0 0 -328 ) ( ( 0.0078125298 -0 0.125000149 ) ( 0 0.0078125 -0.75 ) ) "textures/base_floor/a_sofloor1_d02c" 0 0 0
  }
 }
-// primitive 9
+// primitive 10
 {
  brushDef3
  {
@@ -130,7 +142,7 @@ Version 2
   ( -1 0 0 128 ) ( ( 0.015625 -0 0 ) ( 0 0.015625 2 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 10
+// primitive 11
 {
  brushDef3
  {
@@ -142,7 +154,7 @@ Version 2
   ( -1 0 0 128 ) ( ( 0.015625 -0 0 ) ( 0 0.015625 -6 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 11
+// primitive 12
 {
  brushDef3
  {
@@ -154,7 +166,7 @@ Version 2
   ( -1 0 0 128 ) ( ( 0.015625 0 0 ) ( 0 0.015625 -4 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 12
+// primitive 13
 {
  brushDef3
  {
@@ -166,7 +178,7 @@ Version 2
   ( -1 0 0 128 ) ( ( 0.015625 -0 0 ) ( 0 0.015625 -2 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 13
+// primitive 14
 {
  brushDef3
  {
@@ -178,7 +190,7 @@ Version 2
   ( -1 0 0 128 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 14
+// primitive 15
 {
  brushDef3
  {
@@ -190,7 +202,7 @@ Version 2
   ( 0.0000001788 -1 0 -0.0000276566 ) ( ( 0 -0.0625 19 ) ( 0.0625 0 3.9999990463 ) ) "textures/common/nodraw" 0 0 0
  }
 }
-// primitive 15
+// primitive 16
 {
  patchDef2
  {
@@ -209,7 +221,7 @@ Version 2
   )
  }
 }
-// primitive 16
+// primitive 17
 {
  patchDef2
  {
@@ -228,7 +240,7 @@ Version 2
   )
  }
 }
-// primitive 17
+// primitive 18
 {
  patchDef2
  {
@@ -241,7 +253,7 @@ Version 2
   )
  }
 }
-// primitive 18
+// primitive 19
 {
  patchDef2
  {
@@ -254,7 +266,7 @@ Version 2
   )
  }
 }
-// primitive 19
+// primitive 20
 {
  patchDef2
  {
@@ -267,7 +279,7 @@ Version 2
   )
  }
 }
-// primitive 20
+// primitive 21
 {
  brushDef3
  {
@@ -279,7 +291,7 @@ Version 2
   ( 0 0 -1 -703.9999389648 ) ( ( 0.03125 0 0 ) ( 0 0.031250149 -0.0000015795 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 21
+// primitive 22
 {
  brushDef3
  {
@@ -291,7 +303,7 @@ Version 2
   ( 0.7071067095 0.7071069479 0 -135.7578125 ) ( ( 0.03125 0 -0.0000002454 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 22
+// primitive 23
 {
  brushDef3
  {
@@ -303,7 +315,7 @@ Version 2
   ( -0.7071067691 -0.7071067691 0 45.2548370361 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 23
+// primitive 24
 {
  brushDef3
  {
@@ -315,7 +327,7 @@ Version 2
   ( 1 0.0000001192 0 -256 ) ( ( 0.03125 0 -4 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 24
+// primitive 25
 {
  brushDef3
  {
@@ -327,7 +339,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 25
+// primitive 26
 {
  brushDef3
  {
@@ -339,7 +351,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 26
+// primitive 27
 {
  brushDef3
  {
@@ -351,7 +363,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 27
+// primitive 28
 {
  brushDef3
  {
@@ -363,7 +375,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 28
+// primitive 29
 {
  brushDef3
  {
@@ -375,7 +387,7 @@ Version 2
   ( -1 0 0 248 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
  }
 }
-// primitive 29
+// primitive 30
 {
  brushDef3
  {
@@ -387,7 +399,7 @@ Version 2
   ( -1 0 0 256 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 30
+// primitive 31
 {
  brushDef3
  {
@@ -399,7 +411,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 31
+// primitive 32
 {
  brushDef3
  {
@@ -411,7 +423,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 12.0000047684 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 32
+// primitive 33
 {
  patchDef2
  {
@@ -424,7 +436,7 @@ Version 2
   )
  }
 }
-// primitive 33
+// primitive 34
 {
  patchDef2
  {
@@ -437,7 +449,7 @@ Version 2
   )
  }
 }
-// primitive 34
+// primitive 35
 {
  patchDef2
  {
@@ -450,7 +462,7 @@ Version 2
   )
  }
 }
-// primitive 35
+// primitive 36
 {
  brushDef3
  {
@@ -462,7 +474,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 0 -1.00000453 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
  }
 }
-// primitive 36
+// primitive 37
 {
  brushDef3
  {
@@ -474,7 +486,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 0 -1.00000453 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
  }
 }
-// primitive 37
+// primitive 38
 {
  brushDef3
  {
@@ -486,7 +498,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 38
+// primitive 39
 {
  patchDef2
  {
@@ -499,7 +511,7 @@ Version 2
   )
  }
 }
-// primitive 39
+// primitive 40
 {
  patchDef2
  {
@@ -512,7 +524,7 @@ Version 2
   )
  }
 }
-// primitive 40
+// primitive 41
 {
  brushDef3
  {
@@ -524,7 +536,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 41
+// primitive 42
 {
  brushDef3
  {
@@ -536,7 +548,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 42
+// primitive 43
 {
  brushDef3
  {
@@ -548,7 +560,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 43
+// primitive 44
 {
  brushDef3
  {
@@ -560,7 +572,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 44
+// primitive 45
 {
  brushDef3
  {
@@ -572,7 +584,7 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 45
+// primitive 46
 {
  brushDef3
  {
@@ -587,6 +599,12 @@ Version 2
 }
 // entity 1
 {
+"classname" "info_location"
+"name" "info_location_1"
+"origin" "-40 -16 160"
+}
+// entity 2
+{
 "classname" "target_setinfluence"
 "name" "target_setinfluence_1"
 "origin" "24 224 32"
@@ -597,26 +615,26 @@ Version 2
 "effect_demonic" "1"
 "time" "10"
 }
-// entity 2
+// entity 3
 {
 "classname" "powerup_berserk"
 "name" "powerup_berserk_1"
 "origin" "-248 200 16"
 }
-// entity 3
+// entity 4
 {
 "classname" "func_emitter"
 "name" "func_emitter_1"
 "origin" "-8 -184 48"
 "model" "al3_jumbopipesteam.prt"
 }
-// entity 4
+// entity 5
 {
 "classname" "light"
 "name" "light_9"
 "origin" "96 136 192"
 }
-// entity 5
+// entity 6
 {
 "classname" "light"
 "name" "light_8"
@@ -631,13 +649,13 @@ Version 2
 "nospecular" "0"
 "nodiffuse" "0"
 }
-// entity 6
+// entity 7
 {
 "classname" "env_ragdoll_imp"
 "name" "env_ragdoll_imp_1"
 "origin" "-208 16 8"
 }
-// entity 7
+// entity 8
 {
 "classname" "func_fracture"
 "name" "func_fracture_1"
@@ -658,7 +676,7 @@ Version 2
  }
 }
 }
-// entity 8
+// entity 9
 {
 "classname" "light"
 "name" "light_5"
@@ -671,7 +689,7 @@ Version 2
 "_color" "0.35 1 0"
 "light_radius" "500 500 400"
 }
-// entity 9
+// entity 10
 {
 "classname" "light"
 "name" "light_6"
@@ -684,13 +702,13 @@ Version 2
 "light_radius" "284 244 400"
 "light_center" "0 0 220"
 }
-// entity 10
+// entity 11
 {
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "-128 -168 0"
 }
-// entity 11
+// entity 12
 {
 "classname" "light"
 "name" "light_2"
@@ -702,7 +720,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 12
+// entity 13
 {
 "classname" "light"
 "name" "light_3"
@@ -714,12 +732,12 @@ Version 2
 "_color" "1 0.58 0.38"
 "light_radius" "300 300 300"
 }
-// entity 13
+// entity 14
 {
 "classname" "light"
 "name" "light_4"
 "origin" "264 256 200"
-"falloff" "0.000000"
+"falloff" "0"
 "texture" "lights/tabletest"
 "parallel" "0"
 "light_radius" "300 300 300"
@@ -729,7 +747,7 @@ Version 2
 "nospecular" "0"
 "nodiffuse" "0"
 }
-// entity 14
+// entity 15
 {
 "classname" "func_fracture"
 "name" "func_fracture_2"
@@ -750,7 +768,7 @@ Version 2
  }
 }
 }
-// entity 15
+// entity 16
 {
 "origin" "-48 -168 69.25"
 "classname" "speaker"
@@ -773,28 +791,28 @@ Version 2
 "s_unclamped" "0"
 "s_justVolume" "1"
 }
-// entity 16
+// entity 17
 {
 "classname" "func_emitter"
 "name" "func_emitter_2"
 "origin" "-360 -288 8"
 "model" "al3_jumbopipesteam.prt"
 }
-// entity 17
+// entity 18
 {
 "classname" "func_emitter"
 "name" "func_emitter_3"
 "origin" "-224 144 48"
 "model" "glsl_softsmoke.prt"
 }
-// entity 18
+// entity 19
 {
 "classname" "func_static"
 "name" "func_static_2"
 "origin" "56 208 0"
 "model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
 }
-// entity 19
+// entity 20
 {
 "classname" "func_static"
 "name" "func_static_4"

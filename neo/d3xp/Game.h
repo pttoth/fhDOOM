@@ -192,6 +192,8 @@ public:
 	virtual bool				DownloadRequest( const char *IP, const char *guid, const char *paks, char urls[ MAX_STRING_CHARS ] ) = 0;
 
 	virtual void				GetMapLoadingGUI( char gui[ MAX_STRING_CHARS ] ) = 0;
+
+	virtual int                 GetAreaLocationNames( const char** names, int namesSize ) = 0;
 };
 
 extern idGame *					game;
