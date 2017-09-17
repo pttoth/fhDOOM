@@ -46,7 +46,34 @@ void idSoundWorldLocal::Init( idRenderWorld *renderWorld ) {
 	listenerQU.Zero();
 	listenerArea = 0;
 	listenerAreaName = "Undefined";
-	listenerEnvironmentID = -2;
+
+	alListenerEffect = 0;
+	alListenerEffectSlot = 0;
+	alListenerFilter = AL_FILTER_NULL;
+
+	alGenAuxiliaryEffectSlots(1, &alListenerEffectSlot);
+
+	if (!alIsAuxiliaryEffectSlot(alListenerEffectSlot)) {
+		alListenerEffectSlot = AL_EFFECTSLOT_NULL;
+	}
+
+	alGenFilters(1, &alListenerFilter);
+	ALuint e = alGetError();
+	if (e != AL_NO_ERROR) {
+		common->Warning("idSoundWorldLocal::Init: alGenFilters failed: 0x%x", e);
+		alListenerFilter = AL_FILTER_NULL;
+	}
+	else {
+		alFilteri(alListenerFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+		// original EAX occusion value was -1150
+		// default OCCLUSIONLFRATIO is 0.25
+
+		// pow(10.0, (-1150*0.25)/2000.0)
+		alFilterf(alListenerFilter, AL_LOWPASS_GAIN, 0.718208f);
+		// pow(10.0, -1150/2000.0)
+		alFilterf(alListenerFilter, AL_LOWPASS_GAINHF, 0.266073f);
+	}
+
 
 	gameMsec = 0;
 	game44kHz = 0;
@@ -451,34 +478,41 @@ void idSoundWorldLocal::MixLoop( int current44kHz, int numSpeakers, float *final
 		alListenerfv( AL_ORIENTATION, listenerOrientation );
 
 #if ID_OPENAL
-		if ( soundSystemLocal.s_useEAXReverb.GetBool() ) {
-			if ( soundSystemLocal.efxloaded ) {
+		if (soundSystemLocal.efxloaded) {
+			if (soundSystemLocal.s_useEAXReverb.GetBool()) {
 				idSoundEffect *effect = NULL;
 				int EnvironmentID = -1;
-				idStr defaultStr( "default" );
-				idStr listenerAreaStr( listenerArea );
+				idStr defaultStr("default");
+				idStr listenerAreaStr(listenerArea);
 
-				soundSystemLocal.EFXDatabase.FindEffect( listenerAreaStr, &effect, &EnvironmentID );
-				if (!effect)
-					soundSystemLocal.EFXDatabase.FindEffect( listenerAreaName, &effect, &EnvironmentID );
-				if (!effect)
-					soundSystemLocal.EFXDatabase.FindEffect( defaultStr, &effect, &EnvironmentID );
+				soundSystemLocal.EFXDatabase.FindEffect(listenerAreaStr, &effect, &EnvironmentID);
 
-				// only update if change in settings
-				if ( soundSystemLocal.s_muteEAXReverb.GetBool() || ( listenerEnvironmentID != EnvironmentID ) ) {
-					EAXREVERBPROPERTIES EnvironmentParameters;
+				if (!effect) {
+					soundSystemLocal.EFXDatabase.FindEffect(listenerAreaName, &effect, &EnvironmentID);
+				}
 
-					// get area reverb setting from EAX Manager
-					if ( ( effect ) && ( effect->data) && ( memcpy( &EnvironmentParameters, effect->data, effect->datasize ) ) ) {
-						if ( soundSystemLocal.s_muteEAXReverb.GetBool() ) {
-							EnvironmentParameters.lRoom = -10000;
-							EnvironmentID = -2;
-						}
-						if ( soundSystemLocal.alEAXSet ) {
-							soundSystemLocal.alEAXSet( &EAXPROPERTYID_EAX_FXSlot0, EAXREVERB_ALLPARAMETERS, 0, &EnvironmentParameters, sizeof( EnvironmentParameters ) );
-						}
-					}
-					listenerEnvironmentID = EnvironmentID;
+				if (!effect) {
+					soundSystemLocal.EFXDatabase.FindEffect(defaultStr, &effect, &EnvironmentID);
+				}
+
+				/* FIXME(johl): fix s_muteEAXReverb */
+				/*
+				if (soundSystemLocal.s_muteEAXReverb.GetBool()) {
+					EnvironmentParameters.lRoom = -10000;
+					EnvironmentID = -2;
+				}
+				*/
+
+				soundSystemLocal.BindEffect(effect, alListenerEffectSlot);
+			}
+			else {
+				soundSystemLocal.BindEffect(nullptr, alListenerEffectSlot);
+			}
+
+			ALuint e = alGetError();
+			if (e != AL_NO_ERROR) {
+				if (idSoundSystemLocal::s_ignore.GetBool()) {
+					common->Printf("OpenAL failed!?\n");
 				}
 			}
 		}
@@ -1741,17 +1775,22 @@ void idSoundWorldLocal::AddChannelContribution( idSoundEmitterLocal *sound, idSo
 				alSourcef( chan->openalSource, AL_GAIN, ( volume ) < ( 1.0f ) ? ( volume ) : ( 1.0f ) );
 			}
 			alSourcei( chan->openalSource, AL_LOOPING, ( looping && chan->soundShader->entries[0]->hardwareBuffer ) ? AL_TRUE : AL_FALSE );
-#if !defined(MACOS_X)
+
 			alSourcef( chan->openalSource, AL_REFERENCE_DISTANCE, mind );
 			alSourcef( chan->openalSource, AL_MAX_DISTANCE, maxd );
-#endif
+
 			alSourcef( chan->openalSource, AL_PITCH, ( slowmoActive && !chan->disallowSlow ) ? ( slowmoSpeed ) : ( 1.0f ) );
-#if ID_OPENAL
-			long lOcclusion = ( enviroSuitActive ? -1150 : 0);
-			if ( soundSystemLocal.alEAXSet ) {
-				soundSystemLocal.alEAXSet( &EAXPROPERTYID_EAX_Source, EAXSOURCE_OCCLUSION, chan->openalSource, &lOcclusion, sizeof(lOcclusion) );
+
+			if (idSoundSystemLocal::s_useEAXReverb.GetBool()) {
+				if (enviroSuitActive) {
+					alSourcei(chan->openalSource, AL_DIRECT_FILTER, alListenerFilter);
+					alSource3i(chan->openalSource, AL_AUXILIARY_SEND_FILTER, alListenerEffectSlot, 0, alListenerFilter);
+				}
+				else {
+					alSource3i(chan->openalSource, AL_AUXILIARY_SEND_FILTER, alListenerEffectSlot, 0, AL_FILTER_NULL);
+				}
 			}
-#endif
+
 			if ( ( !looping && chan->leadinSample->hardwareBuffer ) || ( looping && chan->soundShader->entries[0]->hardwareBuffer ) ) {
 				// handle uncompressed (non streaming) single shot and looping sounds
 				if ( chan->triggered ) {
@@ -1769,9 +1808,6 @@ void idSoundWorldLocal::AddChannelContribution( idSoundEmitterLocal *sound, idSo
 					chan->lastopenalStreamingBuffer[1] = chan->openalStreamingBuffer[1];
 					chan->lastopenalStreamingBuffer[2] = chan->openalStreamingBuffer[2];
 					alGenBuffers( 3, &chan->openalStreamingBuffer[0] );
-					if ( soundSystemLocal.alEAXSetBufferMode ) {
-						soundSystemLocal.alEAXSetBufferMode( 3, &chan->openalStreamingBuffer[0], alGetEnumValue( ID_ALCHAR "AL_STORAGE_ACCESSIBLE" ) );
-					}
 					buffers[0] = chan->openalStreamingBuffer[0];
 					buffers[1] = chan->openalStreamingBuffer[1];
 					buffers[2] = chan->openalStreamingBuffer[2];

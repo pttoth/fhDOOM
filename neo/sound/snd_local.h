@@ -31,9 +31,10 @@ If you have questions concerning this license or the applicable additional terms
 
 // you need the OpenAL headers for build, even if AL is not enabled - http://www.openal.org/
 #ifdef _WIN32
-#include "../openal/include/al.h"
-#include "../openal/include/alc.h"
-#include "../openal/idal.h"
+#include "../openal-soft/include/AL/al.h"
+#include "../openal-soft/include/AL/alc.h"
+#include "../openal-soft/include/AL/alext.h"
+//#include "../openal/idal.h"
 // broken OpenAL SDK ?
 #define ID_ALCHAR (ALubyte *)
 #elif defined( MACOS_X )
@@ -45,7 +46,217 @@ If you have questions concerning this license or the applicable additional terms
 #include <AL/alc.h>
 #define ID_ALCHAR
 #endif
-#include "../openal/include/efxlib.h"
+#include "../openal-soft/include/AL/efx.h"
+
+// =================================================================================
+#ifndef GUID_DEFINED
+#define GUID_DEFINED
+typedef struct _GUID
+{
+	unsigned long Data1;
+	unsigned short Data2;
+	unsigned short Data3;
+	unsigned char Data4[8];
+} GUID;
+#endif // GUID_DEFINED
+
+#ifndef DEFINE_GUID
+#ifndef INITGUID
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+                    extern const GUID /*FAR*/ name
+#else
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+                    extern const GUID name = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
+#endif // INITGUID
+#endif // DEFINE_GUID
+
+//EFX
+extern LPALGENEFFECTS			alGenEffects;
+extern LPALDELETEEFFECTS		alDeleteEffects;
+extern LPALISEFFECT				alIsEffect;
+extern LPALEFFECTI				alEffecti;
+extern LPALEFFECTF				alEffectf;
+extern LPALEFFECTFV				alEffectfv;
+extern LPALGENFILTERS			alGenFilters;
+extern LPALDELETEFILTERS		alDeleteFilters;
+extern LPALISFILTER				alIsFilter;
+extern LPALFILTERI				alFilteri;
+extern LPALFILTERF				alFilterf;
+extern LPALGENAUXILIARYEFFECTSLOTS		alGenAuxiliaryEffectSlots;
+extern LPALDELETEAUXILIARYEFFECTSLOTS	alDeleteAuxiliaryEffectSlots;
+extern LPALISAUXILIARYEFFECTSLOT		alIsAuxiliaryEffectSlot;
+extern LPALAUXILIARYEFFECTSLOTI			alAuxiliaryEffectSloti;
+
+/*
+* EAX OpenAL Extensions
+*/
+typedef ALenum(*EAXSet)(const GUID*, ALuint, ALuint, ALvoid*, ALuint);
+typedef ALenum(*EAXGet)(const GUID*, ALuint, ALuint, ALvoid*, ALuint);
+typedef ALboolean(*EAXSetBufferMode)(ALsizei, ALuint*, ALint);
+typedef ALenum(*EAXGetBufferMode)(ALuint, ALint*);
+
+struct EAXVECTOR {
+	float x;
+	float y;
+	float z;
+};
+
+// Use this structure for EAXREVERB_ALLPARAMETERS
+// - all levels are hundredths of decibels
+// - all times and delays are in seconds
+//
+// NOTE: This structure may change in future EAX versions.
+//       It is recommended to initialize fields by name:
+//              myReverb.lRoom = -1000;
+//              myReverb.lRoomHF = -100;
+//              ...
+//              myReverb.dwFlags = myFlags /* see EAXREVERBFLAGS below */ ;
+//       instead of:
+//              myReverb = { -1000, -100, ... , 0x00000009 };
+//       If you want to save and load presets in binary form, you
+//       should define your own structure to insure future compatibility.
+//
+struct EAXREVERBPROPERTIES {
+	unsigned long ulEnvironment;   // sets all reverb properties
+	float flEnvironmentSize;       // environment size in meters
+	float flEnvironmentDiffusion;  // environment diffusion
+	long lRoom;                    // room effect level (at mid frequencies)
+	long lRoomHF;                  // relative room effect level at high frequencies
+	long lRoomLF;                  // relative room effect level at low frequencies
+	float flDecayTime;             // reverberation decay time at mid frequencies
+	float flDecayHFRatio;          // high-frequency to mid-frequency decay time ratio
+	float flDecayLFRatio;          // low-frequency to mid-frequency decay time ratio
+	long lReflections;             // early reflections level relative to room effect
+	float flReflectionsDelay;      // initial reflection delay time
+	EAXVECTOR vReflectionsPan;     // early reflections panning vector
+	long lReverb;                  // late reverberation level relative to room effect
+	float flReverbDelay;           // late reverberation delay time relative to initial reflection
+	EAXVECTOR vReverbPan;          // late reverberation panning vector
+	float flEchoTime;              // echo time
+	float flEchoDepth;             // echo depth
+	float flModulationTime;        // modulation time
+	float flModulationDepth;       // modulation depth
+	float flAirAbsorptionHF;       // change in level per meter at high frequencies
+	float flHFReference;           // reference high frequency
+	float flLFReference;           // reference low frequency
+	float flRoomRolloffFactor;     // like DS3D flRolloffFactor but for room effect
+	unsigned long ulFlags;         // modifies the behavior of properties
+} ;
+
+// =================================================================================
+
+class idSoundEffect
+{
+public:
+	idSoundEffect()
+	: alEffect(~0)
+	, datasize(0)
+	, data(nullptr)
+	{
+	};
+
+	~idSoundEffect() {
+		Purge();
+		if (data && datasize) {
+			Mem_Free(data);
+			data = NULL;
+		}
+	}
+
+	void Purge() {
+		if (alEffect != 0 && alEffect != ~0) {
+			alDeleteEffects(1, &alEffect);
+		}
+
+		alEffect = ~0;
+	}
+
+	void Init() {
+		Purge();
+
+		alGenEffects(1, &alEffect);
+		if (alEffect == 0 || !data) {
+			return;
+		}
+
+		alEffecti(alEffect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+
+		const auto& eax = *(const EAXREVERBPROPERTIES*)data;
+
+		auto MillibelToGain = [](ALfloat millibels, ALfloat min, ALfloat max) {
+			return idMath::ClampFloat(min, max, idMath::Pow(10.0f, millibels / 2000.0f));
+		};
+
+		SetProperty(AL_EAXREVERB_DENSITY, eax.flEnvironmentSize < 2.0f ? eax.flEnvironmentSize - 1.0f : 1.0f);
+		SetProperty(AL_EAXREVERB_DIFFUSION, eax.flEnvironmentDiffusion);
+		SetProperty(AL_EAXREVERB_GAIN, MillibelToGain(eax.lRoom, AL_EAXREVERB_MIN_GAIN, AL_EAXREVERB_MAX_GAIN));
+		SetProperty(AL_EAXREVERB_GAINHF, MillibelToGain(eax.lRoomHF, AL_EAXREVERB_MIN_GAINHF, AL_EAXREVERB_MAX_GAINHF));
+		SetProperty(AL_EAXREVERB_GAINLF, MillibelToGain(eax.lRoomLF, AL_EAXREVERB_MIN_GAINLF, AL_EAXREVERB_MAX_GAINLF));
+		SetProperty(AL_EAXREVERB_DECAY_TIME, eax.flDecayTime);
+		SetProperty(AL_EAXREVERB_DECAY_HFRATIO, eax.flDecayHFRatio);
+		SetProperty(AL_EAXREVERB_DECAY_LFRATIO, eax.flDecayLFRatio);
+		SetProperty(AL_EAXREVERB_REFLECTIONS_GAIN, MillibelToGain(eax.lReflections, AL_EAXREVERB_MIN_REFLECTIONS_GAIN, AL_EAXREVERB_MAX_REFLECTIONS_GAIN));
+		SetProperty(AL_EAXREVERB_REFLECTIONS_DELAY, eax.flReflectionsDelay);
+		SetProperty(AL_EAXREVERB_REFLECTIONS_PAN, eax.vReflectionsPan);
+		SetProperty(AL_EAXREVERB_LATE_REVERB_GAIN, MillibelToGain(eax.lReverb, AL_EAXREVERB_MIN_LATE_REVERB_GAIN, AL_EAXREVERB_MAX_LATE_REVERB_GAIN));
+		SetProperty(AL_EAXREVERB_LATE_REVERB_DELAY, eax.flReverbDelay);
+		SetProperty(AL_EAXREVERB_LATE_REVERB_PAN, eax.vReflectionsPan);
+		SetProperty(AL_EAXREVERB_ECHO_TIME, eax.flEchoTime);
+		SetProperty(AL_EAXREVERB_ECHO_DEPTH, eax.flEchoDepth);
+		SetProperty(AL_EAXREVERB_MODULATION_TIME, eax.flModulationTime);
+		SetProperty(AL_EAXREVERB_MODULATION_DEPTH, eax.flModulationDepth);
+		SetProperty(AL_EAXREVERB_AIR_ABSORPTION_GAINHF, MillibelToGain(eax.flAirAbsorptionHF, AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF, AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF));
+		SetProperty(AL_EAXREVERB_HFREFERENCE, eax.flHFReference);
+		SetProperty(AL_EAXREVERB_LFREFERENCE, eax.flLFReference);
+		SetProperty(AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, eax.flRoomRolloffFactor);
+		SetProperty(AL_EAXREVERB_DECAY_HFLIMIT, (eax.ulFlags & 0x20) ? AL_TRUE : AL_FALSE);
+	}
+
+	void BindEffect(ALuint alEffectSlot) {
+		if (alEffect == ~0) {
+			Init();
+		}
+
+		if (alEffect == 0) {
+			return;
+		}
+
+		alAuxiliaryEffectSloti(alEffectSlot, AL_EFFECTSLOT_EFFECT, alEffect);
+	}
+
+	ALuint alEffect;
+	idStr name;
+	int datasize;
+	void *data;
+
+private:
+	void SetProperty(ALenum name, float value) {
+		alEffectf(alEffect, name, value);
+	};
+
+	void SetProperty(ALenum name, const EAXVECTOR& value) {
+		alEffectfv(alEffect, name, &value.x);
+	};
+
+	void SetProperty(ALenum name, int value) {
+		alEffecti(alEffect, name, value);
+	};
+};
+
+class idEFXFile
+{
+public:
+	idEFXFile();
+	~idEFXFile();
+
+	bool FindEffect(idStr &name, idSoundEffect **effect, int *index);
+	idSoundEffect* ReadEffect(idLexer& lexer);
+	bool LoadFile(const char *filename, bool OSPath = false);
+	void UnloadFile(void);
+	void Clear(void);
+
+	idList<idSoundEffect *>effects;
+};
 
 // demo sound commands
 typedef enum {
@@ -633,7 +844,10 @@ public:
 	idVec3					listenerQU;			// position in "quake units"
 	int						listenerArea;
 	idStr					listenerAreaName;
-	int						listenerEnvironmentID;
+
+	ALuint                  alListenerEffect;
+	ALuint                  alListenerEffectSlot;
+	ALuint                  alListenerFilter;
 
 	int						gameMsec;
 	int						game44kHz;
@@ -765,10 +979,12 @@ public:
 	ALCcontext				*openalContext;
 	ALsizei					openalSourceCount;
 	openalSource_t			openalSources[256];
-	EAXSet					alEAXSet;
-	EAXGet					alEAXGet;
-	EAXSetBufferMode		alEAXSetBufferMode;
-	EAXGetBufferMode		alEAXGetBufferMode;
+
+	//EAX
+
+	const idSoundEffect*    currentEffect;
+	void                    BindEffect(idSoundEffect* effect, ALuint effectSlot);
+
 	idEFXFile				EFXDatabase;
 	bool					efxloaded;
 							// latches
@@ -820,6 +1036,7 @@ public:
 	static idCVar			s_reverbFeedback;
 	static idCVar			s_enviroSuitVolumeScale;
 	static idCVar			s_skipHelltimeFX;
+	static idCVar			s_ignore;
 };
 
 extern	idSoundSystemLocal	soundSystemLocal;

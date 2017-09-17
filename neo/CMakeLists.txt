@@ -1029,9 +1029,9 @@ IF(MSVC)
     Glu32.lib
     Dbghelp.lib
     wsock32.lib
-    iphlpapi.lib
-    "${CMAKE_CURRENT_SOURCE_DIR}/openal/lib/eaxguid.lib"
-    "${CMAKE_CURRENT_SOURCE_DIR}/openal/lib/openal32.lib"
+    iphlpapi.lib    
+    "${CMAKE_CURRENT_SOURCE_DIR}/openal-soft/common.lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/openal-soft/openal32.lib"
     "${WINSDK_LIB_DIR}/dinput8.lib"
     "${WINSDK_LIB_DIR}/dsound.lib"
     "${WINSDK_LIB_DIR}/dxguid.lib")

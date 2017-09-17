@@ -61,10 +61,8 @@ idEFXFile::FindEffect
 ===============
 */
 bool idEFXFile::FindEffect( idStr &name, idSoundEffect **effect, int *index ) {
-	int i;
-
-	for ( i = 0; i < effects.Num(); i++ ) {
-		if ( ( effects[i] ) && ( effects[i]->name == name ) ) {
+	for (int i = 0; i < effects.Num(); i++) {
+		if (effects[i] && effects[i]->name == name) {
 			*effect = effects[i];
 			*index = i;
 			return true;
@@ -78,11 +76,13 @@ bool idEFXFile::FindEffect( idStr &name, idSoundEffect **effect, int *index ) {
 idEFXFile::ReadEffect
 ===============
 */
-bool idEFXFile::ReadEffect( idLexer &src, idSoundEffect *effect ) {
+idSoundEffect* idEFXFile::ReadEffect(idLexer &src) {
+	auto effect = new idSoundEffect;
+
 	idToken name, token;
 
 	if ( !src.ReadToken( &token ) )
-		return false;
+		return nullptr;
 
 	// reverb effect
 	if ( token == "reverb" ) {
@@ -177,14 +177,14 @@ bool idEFXFile::ReadEffect( idLexer &src, idSoundEffect *effect ) {
 				}
 			} while ( 1 );
 
-			return true;
+			return effect;
 		}
 	} else {
 		// other effect (not supported at the moment)
 		src.Error( "idEFXFile::ReadEffect: Unknown effect definition" );
 	}
 
-	return false;
+	return nullptr;
 }
 
 
@@ -212,8 +212,8 @@ bool idEFXFile::LoadFile( const char *filename, bool OSPath ) {
 	}
 
 	while ( !src.EndOfFile() ) {
-		idSoundEffect *effect = new idSoundEffect;
-		if ( ReadEffect( src, effect ) ) {
+		idSoundEffect* effect = ReadEffect(src);
+		if (effect) {
 			effects.Append( effect );
 		}
 	};
