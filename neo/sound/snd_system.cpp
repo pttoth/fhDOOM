@@ -72,10 +72,8 @@ idCVar idSoundSystemLocal::s_ignore("s_ignore", "0", CVAR_SOUND | CVAR_BOOL, "")
 
 idCVar idSoundSystemLocal::s_libOpenAL( "s_libOpenAL", "openal32.dll", CVAR_SOUND | CVAR_ARCHIVE, "OpenAL DLL name/path" );
 idCVar idSoundSystemLocal::s_useEAXReverb( "s_useEAXReverb", "1", CVAR_SOUND | CVAR_BOOL | CVAR_ARCHIVE, "use EAX reverb" );
-idCVar idSoundSystemLocal::s_muteEAXReverb( "s_muteEAXReverb", "1", CVAR_SOUND | CVAR_BOOL, "mute eax reverb" );
 idCVar idSoundSystemLocal::s_decompressionLimit( "s_decompressionLimit", "6", CVAR_SOUND | CVAR_INTEGER | CVAR_ARCHIVE, "specifies maximum uncompressed sample length in seconds" );
 
-bool idSoundSystemLocal::useOpenAL = true;
 bool idSoundSystemLocal::useEAXReverb = false;
 int idSoundSystemLocal::EAXAvailable = -1;
 
@@ -435,31 +433,25 @@ void idSoundSystemLocal::Shutdown() {
 
 	// EAX or not, the list needs to be cleared
 	EFXDatabase.Clear();
+	efxloaded = false;
 
-	// destroy openal sources
-	if ( useOpenAL ) {
+	// adjust source count back up to allow for freeing of all resources
+	openalSourceCount += 8;
 
-		efxloaded = false;
+	for ( ALsizei i = 0; i < openalSourceCount; i++ ) {
+		// stop source
+		alSourceStop( openalSources[i].handle );
+		alSourcei( openalSources[i].handle, AL_BUFFER, 0 );
 
-		// adjust source count back up to allow for freeing of all resources
-		openalSourceCount += 8;
+		// delete source
+		alDeleteSources( 1, &openalSources[i].handle );
 
-		for ( ALsizei i = 0; i < openalSourceCount; i++ ) {
-			// stop source
-			alSourceStop( openalSources[i].handle );
-			alSourcei( openalSources[i].handle, AL_BUFFER, 0 );
-
-			// delete source
-			alDeleteSources( 1, &openalSources[i].handle );
-
-			// clear entry in source array
-			openalSources[i].handle = 0;
-			openalSources[i].startTime = 0;
-			openalSources[i].chan = NULL;
-			openalSources[i].inUse = false;
-			openalSources[i].looping = false;
-
-		}
+		// clear entry in source array
+		openalSources[i].handle = 0;
+		openalSources[i].startTime = 0;
+		openalSources[i].chan = NULL;
+		openalSources[i].inUse = false;
+		openalSources[i].looping = false;
 	}
 
 	// destroy all the sounds (hardware buffers as well)
@@ -467,15 +459,14 @@ void idSoundSystemLocal::Shutdown() {
 	soundCache = NULL;
 
 	// destroy openal device and context
-	if ( useOpenAL ) {
-		alcMakeContextCurrent( NULL );
 
-		alcDestroyContext( openalContext );
-		openalContext = NULL;
+	alcMakeContextCurrent( NULL );
 
-		alcCloseDevice( openalDevice );
-		openalDevice = NULL;
-	}
+	alcDestroyContext( openalContext );
+	openalContext = NULL;
+
+	alcCloseDevice( openalDevice );
+	openalDevice = NULL;
 
 	Sys_FreeOpenAL();
 
@@ -498,20 +489,6 @@ bool idSoundSystemLocal::InitHW() {
 
 	if ( snd_audio_hw == NULL ) {
 		return false;
-	}
-
-	if ( !useOpenAL ) {
-		if ( !snd_audio_hw->Initialize() ) {
-			delete snd_audio_hw;
-			snd_audio_hw = NULL;
-			return false;
-		}
-
-		if ( snd_audio_hw->GetNumberOfSpeakers() == 0 ) {
-			return false;
-		}
-		// put the real number in there
-		s_numberOfSpeakers.SetInteger( snd_audio_hw->GetNumberOfSpeakers() );
 	}
 
 	isInitialized = true;
@@ -629,20 +606,9 @@ int idSoundSystemLocal::AsyncUpdate( int inTime ) {
 	ulong dwCurrentWritePos;
 	dword dwCurrentBlock;
 
-	// If not using openal, get actual playback position from sound hardware
-	if ( useOpenAL ) {
-		// here we do it in samples ( overflows in 27 hours or so )
-		dwCurrentWritePos = idMath::Ftol( (float)Sys_Milliseconds() * 44.1f ) % ( MIXBUFFER_SAMPLES * ROOM_SLICES_IN_BUFFER );
-		dwCurrentBlock = dwCurrentWritePos / MIXBUFFER_SAMPLES;
-	} else {
-		// and here in bytes
-		// get the current byte position in the buffer where the sound hardware is currently reading
-		if ( !snd_audio_hw->GetCurrentPosition( &dwCurrentWritePos ) ) {
-			return 0;
-		}
-		// mixBufferSize is in bytes
-		dwCurrentBlock = dwCurrentWritePos / snd_audio_hw->GetMixBufferSize();
-	}
+	// here we do it in samples ( overflows in 27 hours or so )
+	dwCurrentWritePos = idMath::Ftol( (float)Sys_Milliseconds() * 44.1f ) % ( MIXBUFFER_SAMPLES * ROOM_SLICES_IN_BUFFER );
+	dwCurrentBlock = dwCurrentWritePos / MIXBUFFER_SAMPLES;
 
 	if ( nextWriteBlock == 0xffffffff ) {
 		nextWriteBlock = dwCurrentBlock;
@@ -652,17 +618,6 @@ int idSoundSystemLocal::AsyncUpdate( int inTime ) {
 		return 0;
 	}
 
-	// lock the buffer so we can actually write to it
-	short *fBlock = NULL;
-	ulong fBlockLen = 0;
-	if ( !useOpenAL ) {
-		snd_audio_hw->Lock( (void **)&fBlock, &fBlockLen );
-		if ( !fBlock ) {
-			return 0;
-		}
-	}
-
-	int j;
 	soundStats.runs++;
 	soundStats.activeSounds = 0;
 
@@ -695,37 +650,16 @@ int idSoundSystemLocal::AsyncUpdate( int inTime ) {
 		soundStats.missedWindow++;
 	}
 
-	if ( useOpenAL ) {
-		// enable audio hardware caching
-		alcSuspendContext( openalContext );
-	} else {
-		// clear the buffer for all the mixing output
-		SIMDProcessor->Memset( finalMixBuffer, 0, MIXBUFFER_SAMPLES * sizeof(float) * numSpeakers );
-	}
+	// enable audio hardware caching
+	alcSuspendContext( openalContext );
 
 	// let the active sound world mix all the channels in unless muted or avi demo recording
 	if ( !muted && currentSoundWorld && !currentSoundWorld->fpa[0] ) {
 		currentSoundWorld->MixLoop( newSoundTime, numSpeakers, finalMixBuffer );
 	}
 
-	if ( useOpenAL ) {
-		// disable audio hardware caching (this updates ALL settings since last alcSuspendContext)
-		alcProcessContext( openalContext );
-	} else {
-		short *dest = fBlock + nextWriteSamples * numSpeakers;
-
-		SIMDProcessor->MixedSoundToSamples( dest, finalMixBuffer, MIXBUFFER_SAMPLES * numSpeakers );
-
-		// allow swapping the left / right speaker channels for people with miswired systems
-		if ( numSpeakers == 2 && s_reverse.GetBool() ) {
-			for( j = 0; j < MIXBUFFER_SAMPLES; j++ ) {
-				short temp = dest[j*2];
-				dest[j*2] = dest[j*2+1];
-				dest[j*2+1] = temp;
-			}
-		}
-		snd_audio_hw->Unlock( fBlock, fBlockLen );
-	}
+	// disable audio hardware caching (this updates ALL settings since last alcSuspendContext)
+	alcProcessContext( openalContext );
 
 	CurrentSoundTime = newSoundTime;
 
@@ -748,10 +682,6 @@ int idSoundSystemLocal::AsyncUpdateWrite( int inTime ) {
 		return 0;
 	}
 
-	if ( !useOpenAL ) {
-		snd_audio_hw->Flush();
-	}
-
 	unsigned int dwCurrentBlock = (unsigned int)( inTime * 44.1f / MIXBUFFER_SAMPLES );
 
 	if ( nextWriteBlock == 0xffffffff ) {
@@ -769,38 +699,16 @@ int idSoundSystemLocal::AsyncUpdateWrite( int inTime ) {
 	int sampleTime = dwCurrentBlock * MIXBUFFER_SAMPLES;
 	int numSpeakers = snd_audio_hw->GetNumberOfSpeakers();
 
-	if ( useOpenAL ) {
-		// enable audio hardware caching
-		alcSuspendContext( openalContext );
-	} else {
-		// clear the buffer for all the mixing output
-		SIMDProcessor->Memset( finalMixBuffer, 0, MIXBUFFER_SAMPLES * sizeof(float) * numSpeakers );
-	}
+	// enable audio hardware caching
+	alcSuspendContext( openalContext );
 
 	// let the active sound world mix all the channels in unless muted or avi demo recording
 	if ( !muted && currentSoundWorld && !currentSoundWorld->fpa[0] ) {
 		currentSoundWorld->MixLoop( sampleTime, numSpeakers, finalMixBuffer );
 	}
 
-	if ( useOpenAL ) {
-		// disable audio hardware caching (this updates ALL settings since last alcSuspendContext)
-		alcProcessContext( openalContext );
-	} else {
-		short *dest = snd_audio_hw->GetMixBuffer();
-
-		SIMDProcessor->MixedSoundToSamples( dest, finalMixBuffer, MIXBUFFER_SAMPLES * numSpeakers );
-
-		// allow swapping the left / right speaker channels for people with miswired systems
-		if ( numSpeakers == 2 && s_reverse.GetBool() ) {
-			int j;
-			for( j = 0; j < MIXBUFFER_SAMPLES; j++ ) {
-				short temp = dest[j*2];
-				dest[j*2] = dest[j*2+1];
-				dest[j*2+1] = temp;
-			}
-		}
-		snd_audio_hw->Write( false );
-	}
+	// disable audio hardware caching (this updates ALL settings since last alcSuspendContext)
+	alcProcessContext( openalContext );
 
 	// only move to the next block if the write was successful
 	nextWriteBlock = dwCurrentBlock + 1;
@@ -1366,8 +1274,6 @@ idSoundSystemLocal::DoEnviroSuit
 void idSoundSystemLocal::DoEnviroSuit( float* samples, int numSamples, int numSpeakers ) {
 	float out[10000], *out_p = out + 2;
 	float in[10000], *in_p = in + 2;
-
-	assert( !idSoundSystemLocal::useOpenAL );
 
 	if ( !fxList.Num() ) {
 		for ( int i = 0; i < 6; i++ ) {

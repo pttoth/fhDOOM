@@ -954,12 +954,10 @@ public:
 
 	idEFXFile				EFXDatabase;
 	bool					efxloaded;
-							// latches
-	static bool				useOpenAL;
+
 	static bool				useEAXReverb;
 							// mark available during initialization, or through an explicit test
 	static int				EAXAvailable;
-
 
 	static idCVar			s_noSound;
 	static idCVar			s_quadraticFalloff;
@@ -988,7 +986,6 @@ public:
 	static idCVar			s_realTimeDecoding;
 	static idCVar			s_libOpenAL;
 	static idCVar			s_useEAXReverb;
-	static idCVar			s_muteEAXReverb;
 	static idCVar			s_decompressionLimit;
 
 	static idCVar			s_slowAttenuate;

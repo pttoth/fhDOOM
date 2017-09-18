@@ -450,59 +450,57 @@ void idSoundWorldLocal::MixLoop( int current44kHz, int numSpeakers, float *final
 
 	// if noclip flying outside the world, leave silence
 	if ( listenerArea == -1 ) {
-		if ( idSoundSystemLocal::useOpenAL )
-			alListenerf( AL_GAIN, 0.0f );
+		alListenerf( AL_GAIN, 0.0f );
 		return;
 	}
 
 	// update the listener position and orientation
-	if ( idSoundSystemLocal::useOpenAL ) {
-		ALfloat listenerPosition[3];
 
-		listenerPosition[0] = -listenerPos.y;
-		listenerPosition[1] =  listenerPos.z;
-		listenerPosition[2] = -listenerPos.x;
+	ALfloat listenerPosition[3];
 
-		ALfloat listenerOrientation[6];
+	listenerPosition[0] = -listenerPos.y;
+	listenerPosition[1] =  listenerPos.z;
+	listenerPosition[2] = -listenerPos.x;
 
-		listenerOrientation[0] = -listenerAxis[0].y;
-		listenerOrientation[1] =  listenerAxis[0].z;
-		listenerOrientation[2] = -listenerAxis[0].x;
+	ALfloat listenerOrientation[6];
 
-		listenerOrientation[3] = -listenerAxis[2].y;
-		listenerOrientation[4] =  listenerAxis[2].z;
-		listenerOrientation[5] = -listenerAxis[2].x;
+	listenerOrientation[0] = -listenerAxis[0].y;
+	listenerOrientation[1] =  listenerAxis[0].z;
+	listenerOrientation[2] = -listenerAxis[0].x;
 
-		alListenerf( AL_GAIN, 1.0f );
-		alListenerfv( AL_POSITION, listenerPosition );
-		alListenerfv( AL_ORIENTATION, listenerOrientation );
+	listenerOrientation[3] = -listenerAxis[2].y;
+	listenerOrientation[4] =  listenerAxis[2].z;
+	listenerOrientation[5] = -listenerAxis[2].x;
 
-		if (soundSystemLocal.efxloaded) {
-			if (soundSystemLocal.s_useEAXReverb.GetBool()) {
-				idStr defaultStr("default");
-				idStr listenerAreaStr(listenerArea);
+	alListenerf( AL_GAIN, 1.0f );
+	alListenerfv( AL_POSITION, listenerPosition );
+	alListenerfv( AL_ORIENTATION, listenerOrientation );
 
-				auto effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaStr);
+	if (soundSystemLocal.efxloaded) {
+		if (soundSystemLocal.s_useEAXReverb.GetBool()) {
+			idStr defaultStr("default");
+			idStr listenerAreaStr(listenerArea);
 
-				if (!effect) {
-					effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaName);
-				}
+			auto effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaStr);
 
-				if (!effect) {
-					effect = soundSystemLocal.EFXDatabase.FindEffect(defaultStr);
-				}
-
-				soundSystemLocal.BindEffect(effect, alListenerEffectSlot);
-			}
-			else {
-				soundSystemLocal.BindEffect(nullptr, alListenerEffectSlot);
+			if (!effect) {
+				effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaName);
 			}
 
-			ALuint e = alGetError();
-			if (e != AL_NO_ERROR) {
-				if (idSoundSystemLocal::s_ignore.GetBool()) {
-					common->Printf("OpenAL failed!?\n");
-				}
+			if (!effect) {
+				effect = soundSystemLocal.EFXDatabase.FindEffect(defaultStr);
+			}
+
+			soundSystemLocal.BindEffect(effect, alListenerEffectSlot);
+		}
+		else {
+			soundSystemLocal.BindEffect(nullptr, alListenerEffectSlot);
+		}
+
+		ALuint e = alGetError();
+		if (e != AL_NO_ERROR) {
+			if (idSoundSystemLocal::s_ignore.GetBool()) {
+				common->Printf("OpenAL failed!?\n");
 			}
 		}
 	}
@@ -550,10 +548,6 @@ void idSoundWorldLocal::MixLoop( int current44kHz, int numSpeakers, float *final
 
 			AddChannelContribution( sound, chan, current44kHz, numSpeakers, finalMixBuffer );
 		}
-	}
-
-	if ( !idSoundSystemLocal::useOpenAL && enviroSuitActive ) {
-		soundSystemLocal.DoEnviroSuit( finalMixBuffer, MIXBUFFER_SAMPLES, numSpeakers );
 	}
 }
 
@@ -1740,7 +1734,7 @@ void idSoundWorldLocal::AddChannelContribution( idSoundEmitterLocal *sound, idSo
 	//
 	// allocate and initialize hardware source
 	//
-	if ( idSoundSystemLocal::useOpenAL && sound->removeStatus < REMOVE_STATUS_SAMPLEFINISHED ) {
+	if ( sound->removeStatus < REMOVE_STATUS_SAMPLEFINISHED ) {
 		if ( !alIsSource( chan->openalSource ) ) {
 			chan->openalSource = soundSystemLocal.AllocOpenALSource( chan, !chan->leadinSample->hardwareBuffer || !chan->soundShader->entries[0]->hardwareBuffer || looping, chan->leadinSample->objectInfo.nChannels == 2 );
 		}
