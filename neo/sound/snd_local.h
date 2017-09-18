@@ -49,26 +49,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "../openal-soft/include/AL/efx.h"
 
 // =================================================================================
-#ifndef GUID_DEFINED
-#define GUID_DEFINED
-typedef struct _GUID
-{
-	unsigned long Data1;
-	unsigned short Data2;
-	unsigned short Data3;
-	unsigned char Data4[8];
-} GUID;
-#endif // GUID_DEFINED
-
-#ifndef DEFINE_GUID
-#ifndef INITGUID
-#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-                    extern const GUID /*FAR*/ name
-#else
-#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-                    extern const GUID name = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
-#endif // INITGUID
-#endif // DEFINE_GUID
 
 //EFX
 extern LPALGENEFFECTS			alGenEffects;
@@ -90,10 +70,6 @@ extern LPALAUXILIARYEFFECTSLOTI			alAuxiliaryEffectSloti;
 /*
 * EAX OpenAL Extensions
 */
-typedef ALenum(*EAXSet)(const GUID*, ALuint, ALuint, ALvoid*, ALuint);
-typedef ALenum(*EAXGet)(const GUID*, ALuint, ALuint, ALvoid*, ALuint);
-typedef ALboolean(*EAXSetBufferMode)(ALsizei, ALuint*, ALint);
-typedef ALenum(*EAXGetBufferMode)(ALuint, ALint*);
 
 struct EAXVECTOR {
 	float x;
@@ -150,17 +126,11 @@ class idSoundEffect
 public:
 	idSoundEffect()
 	: alEffect(~0)
-	, datasize(0)
-	, data(nullptr)
 	{
 	};
 
 	~idSoundEffect() {
 		Purge();
-		if (data && datasize) {
-			Mem_Free(data);
-			data = NULL;
-		}
 	}
 
 	void Purge() {
@@ -175,13 +145,11 @@ public:
 		Purge();
 
 		alGenEffects(1, &alEffect);
-		if (alEffect == 0 || !data) {
+		if (alEffect == 0) {
 			return;
 		}
 
 		alEffecti(alEffect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
-
-		const auto& eax = *(const EAXREVERBPROPERTIES*)data;
 
 		auto MillibelToGain = [](ALfloat millibels, ALfloat min, ALfloat max) {
 			return idMath::ClampFloat(min, max, idMath::Pow(10.0f, millibels / 2000.0f));
@@ -226,8 +194,7 @@ public:
 
 	ALuint alEffect;
 	idStr name;
-	int datasize;
-	void *data;
+	EAXREVERBPROPERTIES eax;
 
 private:
 	void SetProperty(ALenum name, float value) {
@@ -249,7 +216,7 @@ public:
 	idEFXFile();
 	~idEFXFile();
 
-	bool FindEffect(idStr &name, idSoundEffect **effect, int *index);
+	idSoundEffect* FindEffect(const idStr& name);
 	idSoundEffect* ReadEffect(idLexer& lexer);
 	bool LoadFile(const char *filename, bool OSPath = false);
 	void UnloadFile(void);

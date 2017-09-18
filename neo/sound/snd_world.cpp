@@ -477,31 +477,20 @@ void idSoundWorldLocal::MixLoop( int current44kHz, int numSpeakers, float *final
 		alListenerfv( AL_POSITION, listenerPosition );
 		alListenerfv( AL_ORIENTATION, listenerOrientation );
 
-#if ID_OPENAL
 		if (soundSystemLocal.efxloaded) {
 			if (soundSystemLocal.s_useEAXReverb.GetBool()) {
-				idSoundEffect *effect = NULL;
-				int EnvironmentID = -1;
 				idStr defaultStr("default");
 				idStr listenerAreaStr(listenerArea);
 
-				soundSystemLocal.EFXDatabase.FindEffect(listenerAreaStr, &effect, &EnvironmentID);
+				auto effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaStr);
 
 				if (!effect) {
-					soundSystemLocal.EFXDatabase.FindEffect(listenerAreaName, &effect, &EnvironmentID);
+					effect = soundSystemLocal.EFXDatabase.FindEffect(listenerAreaName);
 				}
 
 				if (!effect) {
-					soundSystemLocal.EFXDatabase.FindEffect(defaultStr, &effect, &EnvironmentID);
+					effect = soundSystemLocal.EFXDatabase.FindEffect(defaultStr);
 				}
-
-				/* FIXME(johl): fix s_muteEAXReverb */
-				/*
-				if (soundSystemLocal.s_muteEAXReverb.GetBool()) {
-					EnvironmentParameters.lRoom = -10000;
-					EnvironmentID = -2;
-				}
-				*/
 
 				soundSystemLocal.BindEffect(effect, alListenerEffectSlot);
 			}
@@ -516,7 +505,6 @@ void idSoundWorldLocal::MixLoop( int current44kHz, int numSpeakers, float *final
 				}
 			}
 		}
-#endif
 	}
 
 	// debugging option to mute all but a single soundEmitter

@@ -669,9 +669,6 @@ Sys_LoadOpenAL
 ===============
 */
 bool Sys_LoadOpenAL( void ) {
-#if ID_OPENAL
-	const char *sym;
-
 	if ( hOpenAL ) {
 		return true;
 	}
@@ -681,18 +678,8 @@ bool Sys_LoadOpenAL( void ) {
 		common->Warning( "LoadLibrary %s failed.", idSoundSystemLocal::s_libOpenAL.GetString() );
 		return false;
 	}
-	/*
-	if ( ( sym = InitializeIDAL( hOpenAL ) ) ) {
-		common->Warning( "GetProcAddress %s failed.", sym );
-		FreeLibrary( hOpenAL );
-		hOpenAL = NULL;
-		return false;
-	}
-	*/
+
 	return true;
-#else
-	return false;
-#endif
 }
 
 /*
