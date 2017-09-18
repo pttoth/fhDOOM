@@ -987,7 +987,6 @@ public:
 	static idCVar			s_clipVolumes;
 	static idCVar			s_realTimeDecoding;
 	static idCVar			s_libOpenAL;
-	static idCVar			s_useOpenAL;
 	static idCVar			s_useEAXReverb;
 	static idCVar			s_muteEAXReverb;
 	static idCVar			s_decompressionLimit;

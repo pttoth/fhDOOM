@@ -71,12 +71,11 @@ idCVar idSoundSystemLocal::s_skipHelltimeFX( "s_skipHelltimeFX", "0", CVAR_SOUND
 idCVar idSoundSystemLocal::s_ignore("s_ignore", "0", CVAR_SOUND | CVAR_BOOL, "");
 
 idCVar idSoundSystemLocal::s_libOpenAL( "s_libOpenAL", "openal32.dll", CVAR_SOUND | CVAR_ARCHIVE, "OpenAL DLL name/path" );
-idCVar idSoundSystemLocal::s_useOpenAL( "s_useOpenAL", "1", CVAR_SOUND | CVAR_BOOL | CVAR_ARCHIVE, "use OpenAL" );
 idCVar idSoundSystemLocal::s_useEAXReverb( "s_useEAXReverb", "1", CVAR_SOUND | CVAR_BOOL | CVAR_ARCHIVE, "use EAX reverb" );
 idCVar idSoundSystemLocal::s_muteEAXReverb( "s_muteEAXReverb", "1", CVAR_SOUND | CVAR_BOOL, "mute eax reverb" );
 idCVar idSoundSystemLocal::s_decompressionLimit( "s_decompressionLimit", "6", CVAR_SOUND | CVAR_INTEGER | CVAR_ARCHIVE, "specifies maximum uncompressed sample length in seconds" );
 
-bool idSoundSystemLocal::useOpenAL = false;
+bool idSoundSystemLocal::useOpenAL = true;
 bool idSoundSystemLocal::useEAXReverb = false;
 int idSoundSystemLocal::EAXAvailable = -1;
 
@@ -331,106 +330,89 @@ void idSoundSystemLocal::Init() {
 
 	graph = NULL;
 
-	if ( !s_noSound.GetBool() ) {
+	// set up openal device and context
+	common->StartupVariable( "s_useEAXReverb", true );
+
+	if ( !Sys_LoadOpenAL() ) {
+		idSoundSystemLocal::s_noSound.SetBool(true);
+	} else {
+		common->Printf( "Setup OpenAL device and context... " );
+		openalDevice = alcOpenDevice( NULL );
+		openalContext = alcCreateContext( openalDevice, NULL );
+		alcMakeContextCurrent( openalContext );
+		common->Printf( "Done.\n" );
+
+		common->Printf("OpenAL vendor: %s\n", alGetString(AL_VENDOR));
+		common->Printf("OpenAL renderer: %s\n", alGetString(AL_RENDERER));
+		common->Printf("OpenAL version: %s\n", alGetString(AL_VERSION));
+
+		// try to obtain EAX extensions
+		if ( idSoundSystemLocal::s_useEAXReverb.GetBool()) {
+			if (alcIsExtensionPresent(openalDevice, "ALC_EXT_EFX")) {
+				common->Printf("OpenAL: EFX extension found\n");
+
+				alGenEffects = (LPALGENEFFECTS)alGetProcAddress("alGenEffects");
+				alDeleteEffects = (LPALDELETEEFFECTS)alGetProcAddress("alDeleteEffects");
+				alIsEffect = (LPALISEFFECT)alGetProcAddress("alIsEffect");
+				alEffecti = (LPALEFFECTI)alGetProcAddress("alEffecti");
+				alEffectf = (LPALEFFECTF)alGetProcAddress("alEffectf");
+				alEffectfv = (LPALEFFECTFV)alGetProcAddress("alEffectfv");
+				alGenFilters = (LPALGENFILTERS)alGetProcAddress("alGenFilters");
+				alDeleteFilters = (LPALDELETEFILTERS)alGetProcAddress("alDeleteFilters");
+				alIsFilter = (LPALISFILTER)alGetProcAddress("alIsFilter");
+				alFilteri = (LPALFILTERI)alGetProcAddress("alFilteri");
+				alFilterf = (LPALFILTERF)alGetProcAddress("alFilterf");
+				alGenAuxiliaryEffectSlots = (LPALGENAUXILIARYEFFECTSLOTS)alGetProcAddress("alGenAuxiliaryEffectSlots");
+				alDeleteAuxiliaryEffectSlots = (LPALDELETEAUXILIARYEFFECTSLOTS)alGetProcAddress("alDeleteAuxiliaryEffectSlots");
+				alIsAuxiliaryEffectSlot = (LPALISAUXILIARYEFFECTSLOT)alGetProcAddress("alIsAuxiliaryEffectSlot");;
+				alAuxiliaryEffectSloti = (LPALAUXILIARYEFFECTSLOTI)alGetProcAddress("alAuxiliaryEffectSloti");
+
+				idSoundSystemLocal::s_useEAXReverb.SetBool(true);
+			}
+		}
+		else {
+			common->Printf( "OpenAL: EAX 4.0 extension not found\n" );
+			idSoundSystemLocal::s_useEAXReverb.SetBool( false );
+		}
+
+		ALuint handle;
+		openalSourceCount = 0;
+
+		while ( openalSourceCount < 256 ) {
+			alGetError();
+			alGenSources( 1, &handle );
+			if ( alGetError() != AL_NO_ERROR ) {
+				break;
+			} else {
+				// store in source array
+				openalSources[openalSourceCount].handle = handle;
+				openalSources[openalSourceCount].startTime = 0;
+				openalSources[openalSourceCount].chan = NULL;
+				openalSources[openalSourceCount].inUse = false;
+				openalSources[openalSourceCount].looping = false;
+
+				// initialise sources
+				alSourcef( handle, AL_ROLLOFF_FACTOR, 0.0f );
+
+				// found one source
+				openalSourceCount++;
+			}
+		}
+
+		common->Printf( "OpenAL: found %s\n", alcGetString( openalDevice, ALC_DEVICE_SPECIFIER ) );
+		common->Printf( "OpenAL: found %d hardware voices\n", openalSourceCount );
+
+		// adjust source count to allow for at least eight stereo sounds to play
+		openalSourceCount -= 8;
+
+		EAXAvailable = 1;
+	}
+
+	if (!s_noSound.GetBool()) {
 		idSampleDecoder::Init();
 		soundCache = new idSoundCache();
 	}
 
-	// set up openal device and context
-	common->StartupVariable( "s_useOpenAL", true );
-	common->StartupVariable( "s_useEAXReverb", true );
-
-	if ( idSoundSystemLocal::s_useOpenAL.GetBool() || idSoundSystemLocal::s_useEAXReverb.GetBool() ) {
-		if ( !Sys_LoadOpenAL() ) {
-			idSoundSystemLocal::s_useOpenAL.SetBool( false );
-		} else {
-			common->Printf( "Setup OpenAL device and context... " );
-			openalDevice = alcOpenDevice( NULL );
-			openalContext = alcCreateContext( openalDevice, NULL );
-			alcMakeContextCurrent( openalContext );
-			common->Printf( "Done.\n" );
-
-			common->Printf("OpenAL vendor: %s\n", alGetString(AL_VENDOR));
-			common->Printf("OpenAL renderer: %s\n", alGetString(AL_RENDERER));
-			common->Printf("OpenAL version: %s\n", alGetString(AL_VERSION));
-
-			// try to obtain EAX extensions
-			if ( idSoundSystemLocal::s_useEAXReverb.GetBool()) {
-				if (alcIsExtensionPresent(openalDevice, "ALC_EXT_EFX")) {
-					common->Printf("OpenAL: EFX extension found\n");
-
-					alGenEffects = (LPALGENEFFECTS)alGetProcAddress("alGenEffects");
-					alDeleteEffects = (LPALDELETEEFFECTS)alGetProcAddress("alDeleteEffects");
-					alIsEffect = (LPALISEFFECT)alGetProcAddress("alIsEffect");
-					alEffecti = (LPALEFFECTI)alGetProcAddress("alEffecti");
-					alEffectf = (LPALEFFECTF)alGetProcAddress("alEffectf");
-					alEffectfv = (LPALEFFECTFV)alGetProcAddress("alEffectfv");
-					alGenFilters = (LPALGENFILTERS)alGetProcAddress("alGenFilters");
-					alDeleteFilters = (LPALDELETEFILTERS)alGetProcAddress("alDeleteFilters");
-					alIsFilter = (LPALISFILTER)alGetProcAddress("alIsFilter");
-					alFilteri = (LPALFILTERI)alGetProcAddress("alFilteri");
-					alFilterf = (LPALFILTERF)alGetProcAddress("alFilterf");
-					alGenAuxiliaryEffectSlots = (LPALGENAUXILIARYEFFECTSLOTS)alGetProcAddress("alGenAuxiliaryEffectSlots");
-					alDeleteAuxiliaryEffectSlots = (LPALDELETEAUXILIARYEFFECTSLOTS)alGetProcAddress("alDeleteAuxiliaryEffectSlots");
-					alIsAuxiliaryEffectSlot = (LPALISAUXILIARYEFFECTSLOT)alGetProcAddress("alIsAuxiliaryEffectSlot");;
-					alAuxiliaryEffectSloti = (LPALAUXILIARYEFFECTSLOTI)alGetProcAddress("alAuxiliaryEffectSloti");
-
-					idSoundSystemLocal::s_useEAXReverb.SetBool(true);
-				}
-			}
-			else {
-				common->Printf( "OpenAL: EAX 4.0 extension not found\n" );
-				idSoundSystemLocal::s_useEAXReverb.SetBool( false );
-			}
-
-			if ( !idSoundSystemLocal::s_useOpenAL.GetBool() ) {
-				common->Printf( "OpenAL: disabling ( no EAX ). Using legacy mixer.\n" );
-
-				alcMakeContextCurrent( NULL );
-
-				alcDestroyContext( openalContext );
-				openalContext = NULL;
-
-				alcCloseDevice( openalDevice );
-				openalDevice = NULL;
-			} else {
-
-				ALuint handle;
-				openalSourceCount = 0;
-
-				while ( openalSourceCount < 256 ) {
-					alGetError();
-					alGenSources( 1, &handle );
-					if ( alGetError() != AL_NO_ERROR ) {
-						break;
-					} else {
-						// store in source array
-						openalSources[openalSourceCount].handle = handle;
-						openalSources[openalSourceCount].startTime = 0;
-						openalSources[openalSourceCount].chan = NULL;
-						openalSources[openalSourceCount].inUse = false;
-						openalSources[openalSourceCount].looping = false;
-
-						// initialise sources
-						alSourcef( handle, AL_ROLLOFF_FACTOR, 0.0f );
-
-						// found one source
-						openalSourceCount++;
-					}
-				}
-
-				common->Printf( "OpenAL: found %s\n", alcGetString( openalDevice, ALC_DEVICE_SPECIFIER ) );
-				common->Printf( "OpenAL: found %d hardware voices\n", openalSourceCount );
-
-				// adjust source count to allow for at least eight stereo sounds to play
-				openalSourceCount -= 8;
-
-				EAXAvailable = 1;
-			}
-		}
-	}
-
-	useOpenAL = idSoundSystemLocal::s_useOpenAL.GetBool();
 	useEAXReverb = idSoundSystemLocal::s_useEAXReverb.GetBool();
 
 	cmdSystem->AddCommand( "listSounds", ListSounds_f, CMD_FL_SOUND, "lists all sounds" );
