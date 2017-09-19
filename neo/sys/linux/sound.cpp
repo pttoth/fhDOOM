@@ -394,6 +394,6 @@ void idAudioHardwareOSS::Write( bool flushing ) {
  -===============
  */
 bool Sys_LoadOpenAL( void ) {
-	return false;
+	return true;
 }
 

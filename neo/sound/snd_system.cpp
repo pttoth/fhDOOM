@@ -371,6 +371,7 @@ void idSoundSystemLocal::Init() {
 	common->StartupVariable( "s_useEAXReverb", true );
 
 	if ( !Sys_LoadOpenAL() ) {
+		common->Printf( "OpenAL: failed to load OpenAL\n" );
 		idSoundSystemLocal::s_noSound.SetBool(true);
 	} else {
 		common->Printf( "Setup OpenAL device and context... " );
