@@ -34,19 +34,11 @@ If you have questions concerning this license or the applicable additional terms
 #include "../openal-soft/include/AL/al.h"
 #include "../openal-soft/include/AL/alc.h"
 #include "../openal-soft/include/AL/alext.h"
-//#include "../openal/idal.h"
-// broken OpenAL SDK ?
-#define ID_ALCHAR (ALubyte *)
-#elif defined( MACOS_X )
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#define ID_ALCHAR
+#include "../openal-soft/include/AL/efx.h"
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
-#define ID_ALCHAR
 #endif
-#include "../openal-soft/include/AL/efx.h"
 
 // =================================================================================
 
@@ -124,90 +116,21 @@ struct EAXREVERBPROPERTIES {
 class idSoundEffect
 {
 public:
-	idSoundEffect()
-	: alEffect(~0)
-	{
-	};
+	idSoundEffect();
+	~idSoundEffect();
 
-	~idSoundEffect() {
-		Purge();
-	}
-
-	void Purge() {
-		if (alEffect != 0 && alEffect != ~0) {
-			alDeleteEffects(1, &alEffect);
-		}
-
-		alEffect = ~0;
-	}
-
-	void Init() {
-		Purge();
-
-		alGenEffects(1, &alEffect);
-		if (alEffect == 0) {
-			return;
-		}
-
-		alEffecti(alEffect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
-
-		auto MillibelToGain = [](ALfloat millibels, ALfloat min, ALfloat max) {
-			return idMath::ClampFloat(min, max, idMath::Pow(10.0f, millibels / 2000.0f));
-		};
-
-		SetProperty(AL_EAXREVERB_DENSITY, eax.flEnvironmentSize < 2.0f ? eax.flEnvironmentSize - 1.0f : 1.0f);
-		SetProperty(AL_EAXREVERB_DIFFUSION, eax.flEnvironmentDiffusion);
-		SetProperty(AL_EAXREVERB_GAIN, MillibelToGain(eax.lRoom, AL_EAXREVERB_MIN_GAIN, AL_EAXREVERB_MAX_GAIN));
-		SetProperty(AL_EAXREVERB_GAINHF, MillibelToGain(eax.lRoomHF, AL_EAXREVERB_MIN_GAINHF, AL_EAXREVERB_MAX_GAINHF));
-		SetProperty(AL_EAXREVERB_GAINLF, MillibelToGain(eax.lRoomLF, AL_EAXREVERB_MIN_GAINLF, AL_EAXREVERB_MAX_GAINLF));
-		SetProperty(AL_EAXREVERB_DECAY_TIME, eax.flDecayTime);
-		SetProperty(AL_EAXREVERB_DECAY_HFRATIO, eax.flDecayHFRatio);
-		SetProperty(AL_EAXREVERB_DECAY_LFRATIO, eax.flDecayLFRatio);
-		SetProperty(AL_EAXREVERB_REFLECTIONS_GAIN, MillibelToGain(eax.lReflections, AL_EAXREVERB_MIN_REFLECTIONS_GAIN, AL_EAXREVERB_MAX_REFLECTIONS_GAIN));
-		SetProperty(AL_EAXREVERB_REFLECTIONS_DELAY, eax.flReflectionsDelay);
-		SetProperty(AL_EAXREVERB_REFLECTIONS_PAN, eax.vReflectionsPan);
-		SetProperty(AL_EAXREVERB_LATE_REVERB_GAIN, MillibelToGain(eax.lReverb, AL_EAXREVERB_MIN_LATE_REVERB_GAIN, AL_EAXREVERB_MAX_LATE_REVERB_GAIN));
-		SetProperty(AL_EAXREVERB_LATE_REVERB_DELAY, eax.flReverbDelay);
-		SetProperty(AL_EAXREVERB_LATE_REVERB_PAN, eax.vReflectionsPan);
-		SetProperty(AL_EAXREVERB_ECHO_TIME, eax.flEchoTime);
-		SetProperty(AL_EAXREVERB_ECHO_DEPTH, eax.flEchoDepth);
-		SetProperty(AL_EAXREVERB_MODULATION_TIME, eax.flModulationTime);
-		SetProperty(AL_EAXREVERB_MODULATION_DEPTH, eax.flModulationDepth);
-		SetProperty(AL_EAXREVERB_AIR_ABSORPTION_GAINHF, MillibelToGain(eax.flAirAbsorptionHF, AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF, AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF));
-		SetProperty(AL_EAXREVERB_HFREFERENCE, eax.flHFReference);
-		SetProperty(AL_EAXREVERB_LFREFERENCE, eax.flLFReference);
-		SetProperty(AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, eax.flRoomRolloffFactor);
-		SetProperty(AL_EAXREVERB_DECAY_HFLIMIT, (eax.ulFlags & 0x20) ? AL_TRUE : AL_FALSE);
-	}
-
-	void BindEffect(ALuint alEffectSlot) {
-		if (alEffect == ~0) {
-			Init();
-		}
-
-		if (alEffect == 0) {
-			return;
-		}
-
-		alAuxiliaryEffectSloti(alEffectSlot, AL_EFFECTSLOT_EFFECT, alEffect);
-	}
+	void Purge();
+	void Init();
+	void BindEffect(ALuint alEffectSlot);
 
 	ALuint alEffect;
 	idStr name;
 	EAXREVERBPROPERTIES eax;
 
 private:
-	void SetProperty(ALenum name, float value) {
-		alEffectf(alEffect, name, value);
-	};
-
-	void SetProperty(ALenum name, const EAXVECTOR& value) {
-		alEffectfv(alEffect, name, &value.x);
-	};
-
-	void SetProperty(ALenum name, int value) {
-		alEffecti(alEffect, name, value);
-	};
+	void SetProperty(ALenum name, float value);
+	void SetProperty(ALenum name, const EAXVECTOR& value);
+	void SetProperty(ALenum name, int value);
 };
 
 class idEFXFile
@@ -947,17 +870,15 @@ public:
 	ALsizei					openalSourceCount;
 	openalSource_t			openalSources[256];
 
-	//EAX
-
+	//EAX/EFX
 	const idSoundEffect*    currentEffect;
 	void                    BindEffect(idSoundEffect* effect, ALuint effectSlot);
 
 	idEFXFile				EFXDatabase;
 	bool					efxloaded;
 
-	static bool				useEAXReverb;
 							// mark available during initialization, or through an explicit test
-	static int				EAXAvailable;
+	static bool				EAXAvailable;
 
 	static idCVar			s_noSound;
 	static idCVar			s_quadraticFalloff;

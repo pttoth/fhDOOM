@@ -32,6 +32,135 @@ If you have questions concerning this license or the applicable additional terms
 
 /*
 ===============
+idSoundEffect::idSoundEffect
+===============
+*/
+idSoundEffect::idSoundEffect()
+	: alEffect(~0)
+{
+};
+
+/*
+===============
+idSoundEffect::~idSoundEffect
+===============
+*/
+idSoundEffect::~idSoundEffect() {
+	Purge();
+}
+
+/*
+===============
+idSoundEffect::Purge
+===============
+*/
+void idSoundEffect::Purge() {
+	if (soundSystemLocal.EAXAvailable && alEffect != 0 && alEffect != ~0) {
+		alDeleteEffects(1, &alEffect);
+	}
+
+	alEffect = ~0;
+}
+
+/*
+===============
+idSoundEffect::Init
+===============
+*/
+void idSoundEffect::Init() {
+	Purge();
+
+	if (!soundSystemLocal.EAXAvailable) {
+		alEffect = 0;
+		return;
+	}
+
+	alGenEffects(1, &alEffect);
+	if (alEffect == 0) {
+		return;
+	}
+
+	alEffecti(alEffect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+
+	auto MillibelToGain = [](ALfloat millibels, ALfloat min, ALfloat max) {
+		return idMath::ClampFloat(min, max, idMath::Pow(10.0f, millibels / 2000.0f));
+	};
+
+	SetProperty(AL_EAXREVERB_DENSITY, eax.flEnvironmentSize < 2.0f ? eax.flEnvironmentSize - 1.0f : 1.0f);
+	SetProperty(AL_EAXREVERB_DIFFUSION, eax.flEnvironmentDiffusion);
+	SetProperty(AL_EAXREVERB_GAIN, MillibelToGain(eax.lRoom, AL_EAXREVERB_MIN_GAIN, AL_EAXREVERB_MAX_GAIN));
+	SetProperty(AL_EAXREVERB_GAINHF, MillibelToGain(eax.lRoomHF, AL_EAXREVERB_MIN_GAINHF, AL_EAXREVERB_MAX_GAINHF));
+	SetProperty(AL_EAXREVERB_GAINLF, MillibelToGain(eax.lRoomLF, AL_EAXREVERB_MIN_GAINLF, AL_EAXREVERB_MAX_GAINLF));
+	SetProperty(AL_EAXREVERB_DECAY_TIME, eax.flDecayTime);
+	SetProperty(AL_EAXREVERB_DECAY_HFRATIO, eax.flDecayHFRatio);
+	SetProperty(AL_EAXREVERB_DECAY_LFRATIO, eax.flDecayLFRatio);
+	SetProperty(AL_EAXREVERB_REFLECTIONS_GAIN, MillibelToGain(eax.lReflections, AL_EAXREVERB_MIN_REFLECTIONS_GAIN, AL_EAXREVERB_MAX_REFLECTIONS_GAIN));
+	SetProperty(AL_EAXREVERB_REFLECTIONS_DELAY, eax.flReflectionsDelay);
+	SetProperty(AL_EAXREVERB_REFLECTIONS_PAN, eax.vReflectionsPan);
+	SetProperty(AL_EAXREVERB_LATE_REVERB_GAIN, MillibelToGain(eax.lReverb, AL_EAXREVERB_MIN_LATE_REVERB_GAIN, AL_EAXREVERB_MAX_LATE_REVERB_GAIN));
+	SetProperty(AL_EAXREVERB_LATE_REVERB_DELAY, eax.flReverbDelay);
+	SetProperty(AL_EAXREVERB_LATE_REVERB_PAN, eax.vReflectionsPan);
+	SetProperty(AL_EAXREVERB_ECHO_TIME, eax.flEchoTime);
+	SetProperty(AL_EAXREVERB_ECHO_DEPTH, eax.flEchoDepth);
+	SetProperty(AL_EAXREVERB_MODULATION_TIME, eax.flModulationTime);
+	SetProperty(AL_EAXREVERB_MODULATION_DEPTH, eax.flModulationDepth);
+	SetProperty(AL_EAXREVERB_AIR_ABSORPTION_GAINHF, MillibelToGain(eax.flAirAbsorptionHF, AL_EAXREVERB_MIN_AIR_ABSORPTION_GAINHF, AL_EAXREVERB_MAX_AIR_ABSORPTION_GAINHF));
+	SetProperty(AL_EAXREVERB_HFREFERENCE, eax.flHFReference);
+	SetProperty(AL_EAXREVERB_LFREFERENCE, eax.flLFReference);
+	SetProperty(AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, eax.flRoomRolloffFactor);
+	SetProperty(AL_EAXREVERB_DECAY_HFLIMIT, (eax.ulFlags & 0x20) ? AL_TRUE : AL_FALSE);
+}
+
+/*
+===============
+idSoundEffect::BindEffect
+===============
+*/
+void idSoundEffect::BindEffect(ALuint alEffectSlot) {
+	assert(soundSystemLocal.EAXAvailable);
+
+	if (alEffect == ~0) {
+		Init();
+	}
+
+	if (alEffect == 0) {
+		return;
+	}
+
+	alAuxiliaryEffectSloti(alEffectSlot, AL_EFFECTSLOT_EFFECT, alEffect);
+}
+
+/*
+===============
+idSoundEffect::SetProperty
+===============
+*/
+void idSoundEffect::SetProperty(ALenum name, float value) {
+	alEffectf(alEffect, name, value);
+};
+
+/*
+===============
+idSoundEffect::SetProperty
+===============
+*/
+void idSoundEffect::SetProperty(ALenum name, const EAXVECTOR& value) {
+	alEffectfv(alEffect, name, &value.x);
+};
+
+/*
+===============
+idSoundEffect::SetProperty
+===============
+*/
+void idSoundEffect::SetProperty(ALenum name, int value) {
+	alEffecti(alEffect, name, value);
+};
+
+
+
+/*
+===============
 idEFXFile::idEFXFile
 ===============
 */

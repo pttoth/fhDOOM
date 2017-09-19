@@ -51,29 +51,30 @@ void idSoundWorldLocal::Init( idRenderWorld *renderWorld ) {
 	alListenerEffectSlot = 0;
 	alListenerFilter = AL_FILTER_NULL;
 
-	alGenAuxiliaryEffectSlots(1, &alListenerEffectSlot);
+	if (soundSystemLocal.EAXAvailable) {
+		alGenAuxiliaryEffectSlots(1, &alListenerEffectSlot);
 
-	if (!alIsAuxiliaryEffectSlot(alListenerEffectSlot)) {
-		alListenerEffectSlot = AL_EFFECTSLOT_NULL;
+		if (!alIsAuxiliaryEffectSlot(alListenerEffectSlot)) {
+			alListenerEffectSlot = AL_EFFECTSLOT_NULL;
+		}
+
+		alGenFilters(1, &alListenerFilter);
+		ALuint e = alGetError();
+		if (e != AL_NO_ERROR) {
+			common->Warning("idSoundWorldLocal::Init: alGenFilters failed: 0x%x", e);
+			alListenerFilter = AL_FILTER_NULL;
+		}
+		else {
+			alFilteri(alListenerFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			// original EAX occusion value was -1150
+			// default OCCLUSIONLFRATIO is 0.25
+
+			// pow(10.0, (-1150*0.25)/2000.0)
+			alFilterf(alListenerFilter, AL_LOWPASS_GAIN, 0.718208f);
+			// pow(10.0, -1150/2000.0)
+			alFilterf(alListenerFilter, AL_LOWPASS_GAINHF, 0.266073f);
+		}
 	}
-
-	alGenFilters(1, &alListenerFilter);
-	ALuint e = alGetError();
-	if (e != AL_NO_ERROR) {
-		common->Warning("idSoundWorldLocal::Init: alGenFilters failed: 0x%x", e);
-		alListenerFilter = AL_FILTER_NULL;
-	}
-	else {
-		alFilteri(alListenerFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-		// original EAX occusion value was -1150
-		// default OCCLUSIONLFRATIO is 0.25
-
-		// pow(10.0, (-1150*0.25)/2000.0)
-		alFilterf(alListenerFilter, AL_LOWPASS_GAIN, 0.718208f);
-		// pow(10.0, -1150/2000.0)
-		alFilterf(alListenerFilter, AL_LOWPASS_GAINHF, 0.266073f);
-	}
-
 
 	gameMsec = 0;
 	game44kHz = 0;
