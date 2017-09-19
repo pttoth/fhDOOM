@@ -512,10 +512,10 @@ void R_InitOpenGL( void ) {
 		if (r_useFramebuffer.GetBool()) {
 			if (r_fullscreen.GetBool()) {
 				if (Sys_GetDisplayResolution(&glConfig.windowWidth, &glConfig.windowHeight)) {
-					common->Printf("native display resolution: %d x %d\n", glConfig.windowWidth, glConfig.windowHeight);
+					common->Printf("OpenGL: native display resolution: %d x %d\n", glConfig.windowWidth, glConfig.windowHeight);
 				}
 				else {
-					common->Error("failed to detect display resolution\n");
+					common->Error("OpenGL: failed to detect native display resolution\n");
 				}
 			}
 			else {

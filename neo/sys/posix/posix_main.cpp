@@ -42,6 +42,8 @@ If you have questions concerning this license or the applicable additional terms
 #include <signal.h>
 #include <fcntl.h>
 
+#include <X11/Xlib.h>
+
 #include "posix_public.h"
 
 #define					MAX_OSPATH 256
@@ -1099,3 +1101,32 @@ Sys_FreeOpenAL
 ===============
 */
 void Sys_FreeOpenAL( void ) { }
+
+/*
+==================
+Sys_GetDisplayResolution
+==================
+*/
+bool Sys_GetDisplayResolution(int* width, int* height) {
+	::Display* display = XOpenDisplay(nullptr);
+	if (!display) {
+		return false;
+	}
+
+	::Screen* screen = ScreenOfDisplay(display, 0);
+	if (!screen) {
+		return false;
+	}
+
+	if (width) {
+		*width = screen->width;
+	}
+
+	if (height) {
+		*height = screen->height;
+	}
+
+	XCloseDisplay(display);
+
+	return true;
+}
