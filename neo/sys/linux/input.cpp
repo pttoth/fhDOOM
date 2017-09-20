@@ -177,8 +177,6 @@ void Sys_InitInput(void) {
 		have_xkb = false;
 	}
 
-	memset(s_scantokey, 0, sizeof(s_scantokey));
-
 	for (int i=0; i<sizeof(s_keySymbolMap)/sizeof(s_keySymbolMap[0]); ++i) {
 		UpdateScanToKey(s_keySymbolMap[i].keysym, s_keySymbolMap[i].keynum);
 	}

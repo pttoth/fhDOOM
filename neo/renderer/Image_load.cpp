@@ -308,7 +308,14 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 		}
 	}
 
-	glGenerateTextureMipmapEXT( texnum, type == TT_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP );
+	if (glConfig.extDirectStateAccessAvailable) {
+		glGenerateTextureMipmapEXT( texnum, type == TT_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP );
+	}
+	else {
+		assert(glConfig.arbDirectStateAccessAvailable);
+		glGenerateTextureMipmap( texnum );
+	}
+
 
 	SetImageFilterAndRepeat();
 }
@@ -368,13 +375,25 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 		return;
 	}
 
-	glGenTextures( 1, &texnum );
+	if (glConfig.extDirectStateAccessAvailable) {
+		glGenTextures(1, &texnum);
+		glTextureStorage2DEXT(texnum, target, mipmaps, internalformat2, uploadWidth, uploadHeight);
 
-	glTextureStorage2DEXT( texnum, target, mipmaps, internalformat2, uploadWidth, uploadHeight );
+		if (format == pixelFormat_t::DXT5_RxGB) {
+			static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
+			glTextureParameterIivEXT(texnum, GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, agbr);
+		}
+	}
+	else {
+		assert(glConfig.arbDirectStateAccessAvailable);
 
-	if (format == pixelFormat_t::DXT5_RxGB) {
-		static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
-		glTextureParameterIivEXT( texnum, GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, agbr );
+		glCreateTextures(target, 1, &texnum);
+		glTextureStorage2D(texnum, mipmaps, internalformat2, uploadWidth, uploadHeight);
+
+		if (format == pixelFormat_t::DXT5_RxGB) {
+			static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
+			glTextureParameterIiv(texnum, GL_TEXTURE_SWIZZLE_RGBA, agbr);
+		}
 	}
 }
 
@@ -407,8 +426,16 @@ void idImage::AllocateMultiSampleStorage( pixelFormat_t format, uint32 width, ui
 
 	hasAlpha = false;
 
-	glGenTextures( 1, &texnum );
-	glTextureStorage2DMultisampleEXT( texnum, GL_TEXTURE_2D_MULTISAMPLE, samples, internalformat2, width, height, GL_FALSE );
+	if (glConfig.extDirectStateAccessAvailable) {
+		glGenTextures(1, &texnum);
+		glTextureStorage2DMultisampleEXT(texnum, GL_TEXTURE_2D_MULTISAMPLE, samples, internalformat2, width, height, GL_FALSE);
+	}
+	else {
+		assert(glConfig.arbDirectStateAccessAvailable);
+
+		glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &texnum);
+		glTextureStorage2DMultisample(texnum, samples, internalformat2, width, height, GL_FALSE);
+	}
 }
 
 /*
@@ -424,15 +451,41 @@ void idImage::UploadImage( pixelFormat_t format, uint32 width, uint32 height, ui
 
 	const bool compressed = IsCompressed( format );
 	const GLenum internalFormat = SelectInteralFormat( format );
-	const GLenum facetarget = (type == TT_CUBIC) ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : GL_TEXTURE_2D;
 
-	if (compressed) {
-		glCompressedTextureSubImage2DEXT( texnum, facetarget, mipmapLevel, 0, 0, width, height, internalFormat, size, data );
+	if (glConfig.extDirectStateAccessAvailable) {
+		const GLenum facetarget = (type == TT_CUBIC) ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : GL_TEXTURE_2D;
+
+		if (compressed) {
+			glCompressedTextureSubImage2DEXT(texnum, facetarget, mipmapLevel, 0, 0, width, height, internalFormat, size, data);
+		}
+		else {
+			const GLenum externalFormat = SelectExternalFormat(format);
+			glTextureSubImage2DEXT(texnum, facetarget, mipmapLevel, 0, 0, width, height, externalFormat, GL_UNSIGNED_BYTE, data);
+		}
 	}
 	else {
-		const GLenum externalFormat = SelectExternalFormat( format );
-		glTextureSubImage2DEXT( texnum, facetarget, mipmapLevel, 0, 0, width, height, externalFormat, GL_UNSIGNED_BYTE, data );
+		assert(glConfig.arbDirectStateAccessAvailable);
+
+		if (type == TT_CUBIC) {
+			if (compressed) {
+				glCompressedTextureSubImage3D(texnum, mipmapLevel, 0, 0, face, width, height, 1, internalFormat, size, data);
+			}
+			else {
+				const GLenum externalFormat = SelectExternalFormat(format);
+				glTextureSubImage3D(texnum, mipmapLevel, 0, 0, face, width, height, 1, externalFormat, GL_UNSIGNED_BYTE, data);
+			}
+		}
+		else {
+			if (compressed) {
+				glCompressedTextureSubImage2D(texnum, mipmapLevel, 0, 0, width, height, internalFormat, size, data);
+			}
+			else {
+				const GLenum externalFormat = SelectExternalFormat(format);
+				glTextureSubImage2D(texnum, mipmapLevel, 0, 0, width, height, externalFormat, GL_UNSIGNED_BYTE, data);
+			}
+		}
 	}
+
 }
 
 /*
@@ -1124,18 +1177,17 @@ void idImage::Bind(int textureUnit) {
 		ActuallyLoadImage( true, true );	// check for precompressed, load is from back end
 	}
 
-
 	// bump our statistic counters
 	frameUsed = backEnd.frameCount;
 	bindCount++;
 
-	if(textureUnit == -1) {
+	if ( textureUnit == -1 ) {
 		textureUnit = backEnd.glState.currenttmu;
 	}
 
 	tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
-	if(tmu->currentTexture != texnum) {
+	if ( tmu->currentTexture != texnum ) {
 		if(glConfig.extDirectStateAccessAvailable) {
 			if (type == TT_2D) {
 				glBindMultiTextureEXT(GL_TEXTURE0 + textureUnit, GL_TEXTURE_2D, texnum);
@@ -1145,21 +1197,15 @@ void idImage::Bind(int textureUnit) {
 			}
 		}
 		else {
-			GL_SelectTexture( textureUnit );
-
-			if (type == TT_2D) {
-				glBindTexture( GL_TEXTURE_2D, texnum );
-			}
-			else if (type == TT_CUBIC) {
-				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
-			}
+			assert(glConfig.arbDirectStateAccessAvailable);
+			glBindTextureUnit(textureUnit, texnum);
 		}
 
 		tmu->currentTexture = texnum;
 		tmu->currentTextureType = type;
 	}
 
-	if(sampler) {
+	if ( sampler ) {
 		sampler->Bind(textureUnit);
 	}
 
@@ -1210,11 +1256,12 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 			}
 
 			//TODO(johl): this bind is not strictly required, but the caller relies on this image being bound after
-			Bind( textureUnit );
+			Bind(textureUnit);
 		}
 		else {
-			Bind( textureUnit );
-
+			assert(glConfig.arbDirectStateAccessAvailable);
+			common->Warning("UploadScratch not implemented for cube maps\n");
+#if 0
 			// if the scratchImage isn't in the format we want, specify it as a new texture
 			if (cols != uploadWidth || rows != uploadHeight) {
 				uploadWidth = cols;
@@ -1234,9 +1281,10 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 						GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows * 4 * i );
 				}
 			}
+#endif
+			//TODO(johl): this bind is not strictly required, but the caller relies on this image being bound after
+			Bind(textureUnit);
 		}
-
-
 
 		filter = TF_LINEAR;
 		repeat = TR_CLAMP;
@@ -1263,7 +1311,9 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 			Bind( textureUnit );
 		}
 		else {
-			Bind( textureUnit );
+			assert(glConfig.arbDirectStateAccessAvailable);
+			common->Warning("UploadScratch not implemented\n");
+#if 0
 			// if the scratchImage isn't in the format we want, specify it as a new texture
 			if (cols != uploadWidth || rows != uploadHeight) {
 				uploadWidth = cols;
@@ -1275,6 +1325,9 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 				// it and don't try and do a texture compression
 				glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
 			}
+#endif
+			//TODO(johl): this bind is not strictly required, but the caller relies on this image being bound after
+			Bind(textureUnit);
 		}
 
 
