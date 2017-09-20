@@ -1790,15 +1790,8 @@ void idImageManager::BindNull(int textureUnit) {
 				glBindMultiTextureEXT(GL_TEXTURE0 +  textureUnit, GL_TEXTURE_CUBE_MAP, 0 );
 			}
 		} else {
-			//FIXME(johl): delete this code path?
-			//GL_SelectTexture( textureUnit );
-
-			if (tmu->currentTextureType == TT_2D) {
-				glBindTexture( GL_TEXTURE_2D, 0 );
-			}
-			else if (tmu->currentTextureType == TT_CUBIC) {
-				glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
-			}
+			assert(glConfig.arbDirectStateAccessAvailable);
+			glBindTextureUnit(textureUnit, 0);
 		}
 
 		tmu->currentTexture = 0;
