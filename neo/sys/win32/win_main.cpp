@@ -1565,6 +1565,60 @@ void Sys_DoPreferences( void ) {
 
 /*
 ==================
+Sys_GetDisplays
+==================
+*/
+static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	idList<display_t>* displays = reinterpret_cast<idList<display_t>*>(dwData);
+
+	MONITORINFOEX iMonitor;
+	iMonitor.cbSize = sizeof(MONITORINFOEX);
+	GetMonitorInfo(hMonitor, &iMonitor);
+
+	if (iMonitor.dwFlags == DISPLAY_DEVICE_MIRRORING_DRIVER)
+	{
+		return TRUE;
+	}
+
+	display_t display;
+	memset(&display, 0, sizeof(display));
+
+	display.width = iMonitor.rcMonitor.right - iMonitor.rcMonitor.left;
+	display.height = iMonitor.rcMonitor.bottom - iMonitor.rcMonitor.top;
+	display.x = iMonitor.rcMonitor.left;
+	display.y = iMonitor.rcMonitor.bottom;
+	display.num = displays->Num();
+	strncpy(display.name, iMonitor.szDevice, sizeof(display.name) - 1);
+
+	displays->Append(display);
+
+	return TRUE;
+}
+
+idList<display_t> Sys_GetDisplays() {
+	idList<display_t> ret;
+#if 1
+	EnumDisplayMonitors(NULL, NULL, &MonitorEnumProc, reinterpret_cast<LPARAM>(&ret));
+#else
+	for (int num = 0;; ++num) {
+		DISPLAY_DEVICE device;
+		device.cb = sizeof(device);
+
+		if (!EnumDisplayDevicesA(NULL, num, &device, 0)) {
+			break;
+		}
+
+		idStr s;
+
+		common->Printf("name: %s\n", device.DeviceName);
+		common->Printf("string: %s\n", device.DeviceString);
+	}
+#endif
+	return ret;
+}
+
+/*
+==================
 Sys_GetDisplayResolution
 ==================
 */

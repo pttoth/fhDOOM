@@ -232,10 +232,19 @@ typedef struct sysMemoryStats_s {
 	int availExtendedVirtual;
 } sysMemoryStats_t;
 
+struct display_t {
+	int num;
+	int width;
+	int height;
+	int x;
+	int y;
+	char name[64];
+};
+
 typedef unsigned long address_t;
 typedef unsigned long long uint64;
 
-template<class type> class idList;		// for Sys_ListFiles
+template<class type> class idList;		// for Sys_ListFiles, Sys_ListDisplays
 
 
 void			Sys_Init( void );
@@ -391,6 +400,8 @@ void			Sys_SetFatalError( const char *error );
 
 // display perference dialog
 void			Sys_DoPreferences( void );
+
+idList<display_t> Sys_GetDisplays();
 bool            Sys_GetDisplayResolution(int* width, int* height);
 
 /*

@@ -223,7 +223,8 @@ idCVar r_softParticles( "r_softParticles", "1", CVAR_RENDERER | CVAR_ARCHIVE | C
 idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
 
 idCVar r_windowMode("r_windowMode", "-1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
-idCVar r_useFramebuffer( "r_useFramebuffer", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
+idCVar r_useFramebuffer( "r_useFramebuffer", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
+idCVar r_useDisplayResolution("r_useDisplayResolution", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
 
 namespace {
@@ -502,6 +503,12 @@ void R_InitOpenGL( void ) {
 		common->FatalError( "R_InitOpenGL called while active" );
 	}
 
+	auto displays = Sys_GetDisplays();
+	common->Printf("found %d displays:\n", displays.Num());
+	for (const auto& display : displays) {
+		common->Printf("  %d: %s %dx%d @ %dx%d\n", display.num, display.name, display.width, display.height, display.x, display.y);
+	}
+
 	//
 	// initialize OS specific portions of the renderSystem
 	//
@@ -509,29 +516,27 @@ void R_InitOpenGL( void ) {
 		// set the parameters we are trying
 		R_GetModeInfo( glConfig.vidWidth, glConfig.vidHeight, glConfig.vidAspectRatio, r_mode.GetInteger() );
 
+		glConfig.windowWidth = glConfig.vidWidth;
+		glConfig.windowHeight = glConfig.vidHeight;
+
 		if (r_useFramebuffer.GetBool()) {
-			if (r_fullscreen.GetBool()) {
+			if (r_fullscreen.GetBool() && r_useDisplayResolution.GetBool()) {
 				if (Sys_GetDisplayResolution(&glConfig.windowWidth, &glConfig.windowHeight)) {
-					common->Printf("OpenGL: native display resolution: %d x %d\n", glConfig.windowWidth, glConfig.windowHeight);
+					common->Printf("OpenGL: native display resolution: %dx%d\n", glConfig.windowWidth, glConfig.windowHeight);
 				}
 				else {
-					common->Error("OpenGL: failed to detect native display resolution\n");
+					common->Warning("OpenGL: failed to detect native display resolution, using: %dx%d\n", glConfig.windowWidth, glConfig.windowHeight);
 				}
 			}
-			else {
-				if (r_windowMode.GetInteger() < 0) {
-					glConfig.windowWidth = glConfig.vidWidth;
-					glConfig.windowHeight = glConfig.vidHeight;
+			else if (!r_fullscreen.GetBool() && r_windowMode.GetInteger() >= 0) {
+				int ignored;
+				if (R_GetModeInfo(glConfig.windowWidth, glConfig.windowHeight, ignored, r_windowMode.GetInteger())) {
+					common->Printf("OpenGL: window resolution: %dx%d\n", glConfig.windowWidth, glConfig.windowHeight);
 				}
 				else {
-					int ignored;
-					R_GetModeInfo(glConfig.windowWidth, glConfig.windowHeight, ignored, r_windowMode.GetInteger());
+					common->Warning("OpenGL: failed to get window resolution, using: %dx%d\n", glConfig.windowWidth, glConfig.windowHeight);
 				}
 			}
-		}
-		else {
-			glConfig.windowWidth = glConfig.vidWidth;
-			glConfig.windowHeight = glConfig.vidHeight;
 		}
 
 		glimpParms_t	parms;

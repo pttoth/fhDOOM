@@ -83,11 +83,10 @@ ID_INLINE void idSwap( type &a, type &b ) {
 template< class type >
 class idList {
 public:
-
 	typedef int		cmp_t( const type *, const type * );
 	typedef type	new_t( void );
 
-					idList( int newgranularity = 16 );
+					explicit idList( int newgranularity = 16 );
 					idList( const idList<type> &other );
 					idList( idList<type>&& other );
 					~idList<type>( void );
@@ -142,6 +141,13 @@ public:
 	void            RemoveLast();                                       // removes the last element from the list
 	type            TakeLast();                                         // removes and returns the last element from the list
 
+	//compatibility with STL and range based for loop
+	type*			begin() { return list; }
+	type*			end() { return list + num; }
+	const type*		begin() const { return list; }
+	const type*		end() const { return list + num; }
+	const type*		cbegin() const { return list; }
+	const type*		cend() const { return list + num; }
 private:
 	int				num;
 	int				size;
