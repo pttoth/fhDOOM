@@ -37,9 +37,10 @@ frameData_t		*frameData;
 backEndState_t	backEnd;
 
 static idCVar r_fxaa("r_fxaa", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
-static idCVar r_bloomThreshold("r_bloomThreshold", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
-static idCVar r_bloomBlurPasses("r_bloomBlurPasses", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
-static idCVar r_bloomFactor("r_bloomFactor", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
+static idCVar r_bloomThreshold("r_bloomThreshold", "0.9", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
+static idCVar r_bloomBlurPasses("r_bloomBlurPasses", "4", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
+static idCVar r_bloomFactor("r_bloomFactor", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
+static idCVar r_hdrPixelFormat("r_hdrPixelFormat", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
 
 static const unsigned vertexLayoutAttributes[] = {
 	//None:
@@ -655,8 +656,18 @@ static void	RB_SetBuffer( const void *data ) {
 		const int renderWidth = glConfig.vidWidth * scale;
 		const int renderHeight = glConfig.vidHeight * scale;
 
-		fhFramebuffer::renderFramebuffer->Resize(renderWidth, renderHeight,	samples);
-		fhFramebuffer::currentRenderFramebuffer->Resize(renderWidth, renderHeight, 1);
+		pixelFormat_t colorFormat;
+		switch (r_hdrPixelFormat.GetInteger()) {
+		case 1:
+			colorFormat = pixelFormat_t::RGBA_32F;
+			break;
+		default:
+			colorFormat = pixelFormat_t::RGBA;
+			break;
+		}
+
+		fhFramebuffer::renderFramebuffer->Resize(renderWidth, renderHeight, samples, colorFormat, fhFramebuffer::renderFramebuffer->GetDepthFormat());
+		fhFramebuffer::currentRenderFramebuffer->Resize(renderWidth, renderHeight, 1, colorFormat, fhFramebuffer::currentRenderFramebuffer->GetDepthFormat());
 		fhFramebuffer::renderFramebuffer->Bind();
 
 		glViewport(0, 0, renderWidth, renderHeight);
@@ -758,13 +769,14 @@ RB_SwapBuffers
 */
 static void	RB_SwapBuffers( const void *data ) {
 
+	//FIXME(johl): this is just hacked together as proof-of-concept
 	if (r_useFramebuffer.GetBool()) {
 		auto src = fhFramebuffer::renderFramebuffer;
 		auto def = fhFramebuffer::defaultFramebuffer;
 
 		if (src->GetSamples() > 1) {
 			auto resolve = fhFramebuffer::currentRenderFramebuffer;
-			resolve->Resize( src->GetWidth(), src->GetHeight() );
+			resolve->Resize( src->GetWidth(), src->GetHeight(), 1, src->GetColorFormat(), src->GetDepthFormat() );
 
 			glViewport( 0, 0, src->GetWidth(), src->GetHeight() );
 			glScissor( 0, 0, src->GetWidth(), src->GetHeight() );
@@ -772,11 +784,7 @@ static void	RB_SwapBuffers( const void *data ) {
 
 			src = resolve;
 		}
-#if 0
-		glViewport(0, 0, def->GetWidth(), def->GetHeight());
-		glScissor(0, 0, def->GetWidth(), def->GetHeight());
-		fhFramebuffer::BlitColor(src, def);
-#else
+
 		auto prepareFullScreePass = []() {
 			GL_ModelViewMatrix.LoadIdentity();
 			GL_State(GLS_DEFAULT);
@@ -805,8 +813,6 @@ static void	RB_SwapBuffers( const void *data ) {
 
 			GL_ProjectionMatrix.Pop();
 		};
-
-		const float w = 0.4f, h = 0.4f;
 
 		if (r_ignore2.GetBool()) {
 			prepareFullScreePass();
@@ -873,7 +879,7 @@ static void	RB_SwapBuffers( const void *data ) {
 		fhRenderProgram::SetShaderParm(1, idVec4(r_bloomFactor.GetFloat(), 0, 0, 0));
 
 		renderFullScreenPass();
-#endif
+
 		def->Bind();
 	}
 

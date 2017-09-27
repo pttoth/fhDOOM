@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 
 class idImage;
+enum class pixelFormat_t;
 
 class fhFramebuffer {
 public:
@@ -38,10 +39,15 @@ public:
 	int  GetWidth() const;
 	int  GetHeight() const;
 	int  GetSamples() const;
+	pixelFormat_t GetColorFormat() const { return colorFormat; }
+	pixelFormat_t GetDepthFormat() const { return depthFormat; }
 
 	void Purge();
 	void Bind();
-	void Resize( int width, int height, int samples = 1 );
+	void Resize(int width, int height, int samples = 1) {
+		Resize(width, height, samples, colorFormat, depthFormat);
+	}
+	void Resize(int width, int height, int samples, pixelFormat_t colorFormat, pixelFormat_t depthFormat);
 
 	GLuint GetName() const { return name; }
 
@@ -87,6 +93,8 @@ private:
 	int      width;
 	int      height;
 	int      samples;
+	pixelFormat_t colorFormat;
+	pixelFormat_t depthFormat;
 	GLuint   name;
 	idImage* colorAttachment;
 	idImage* depthAttachment;

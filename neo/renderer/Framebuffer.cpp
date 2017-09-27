@@ -46,6 +46,8 @@ fhFramebuffer::fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
 	colorAttachment = color;
 	depthAttachment = depth;
 	samples = 1;
+	colorFormat = color ? color->pixelFormat : pixelFormat_t::RGBA;
+	depthFormat = depth ? depth->pixelFormat : pixelFormat_t::DEPTH_24_STENCIL_8;
 }
 
 static const char* GetFrameBufferStatusMessage( int status ) {
@@ -93,12 +95,16 @@ bool fhFramebuffer::IsDefault() const {
 	return (name == 0);
 }
 
-void fhFramebuffer::Resize( int width, int height, int samples ) {
+void fhFramebuffer::Resize(int width, int height, int samples, pixelFormat_t colorFormat, pixelFormat_t depthFormat) {
 	if (!colorAttachment && !depthAttachment) {
 		return;
 	}
 
-	if (this->width == width && this->height == height && this->samples == samples) {
+	if (this->width == width
+		&& this->height == height
+		&& this->samples == samples
+		&& this->colorFormat == colorFormat
+		&& this->depthFormat == depthFormat) {
 		return;
 	}
 
@@ -112,6 +118,8 @@ void fhFramebuffer::Resize( int width, int height, int samples ) {
 	this->width = width;
 	this->height = height;
 	this->samples = samples;
+	this->colorFormat = colorFormat;
+	this->depthFormat = depthFormat;
 }
 
 int fhFramebuffer::GetWidth() const {
@@ -170,7 +178,7 @@ void fhFramebuffer::Allocate() {
 	auto target = samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 
 	if (colorAttachment) {
-		colorAttachment->AllocateMultiSampleStorage( colorAttachment->pixelFormat, width, height, samples );
+		colorAttachment->AllocateMultiSampleStorage( colorFormat, width, height, samples );
 		colorAttachment->filter = TF_LINEAR;
 		colorAttachment->repeat = TR_CLAMP;
 		colorAttachment->SetImageFilterAndRepeat();
@@ -187,7 +195,7 @@ void fhFramebuffer::Allocate() {
 			attachmentType = GL_DEPTH_ATTACHMENT;
 		}
 
-		depthAttachment->AllocateMultiSampleStorage( depthAttachment->pixelFormat, width, height, samples );
+		depthAttachment->AllocateMultiSampleStorage( depthFormat, width, height, samples );
 		depthAttachment->filter = TF_LINEAR;
 		depthAttachment->repeat = TR_CLAMP;
 		depthAttachment->SetImageFilterAndRepeat();
