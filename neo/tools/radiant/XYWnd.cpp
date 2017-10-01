@@ -2774,48 +2774,6 @@ void CXYWnd::DrawCameraIcon() {
 
 /*
  =======================================================================================================================
- =======================================================================================================================
- */
-void CXYWnd::DrawZIcon(void) {
-	if (m_nViewType == XY) {
-		float	x = z.origin[0];
-		float	y = z.origin[1];
-		glEnable(GL_BLEND);
-		globalImages->BindNull();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDisable(GL_CULL_FACE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		fhImmediateMode im;
-		im.Color4f(0.0, 0.0, 1.0, 0.25);
-		im.Begin(GL_QUADS);
-		im.Vertex3f(x - 8, y - 8, 0);
-		im.Vertex3f(x + 8, y - 8, 0);
-		im.Vertex3f(x + 8, y + 8, 0);
-		im.Vertex3f(x - 8, y + 8, 0);
-		im.End();
-		glDisable(GL_BLEND);
-
-		im.Color4f(0.0, 0.0, 1.0, 1);
-
-		im.Begin(GL_LINE_LOOP);
-		im.Vertex3f(x - 8, y - 8, 0);
-		im.Vertex3f(x + 8, y - 8, 0);
-		im.Vertex3f(x + 8, y + 8, 0);
-		im.Vertex3f(x - 8, y + 8, 0);
-		im.End();
-
-		im.Begin(GL_LINE_STRIP);
-		im.Vertex3f(x - 4, y + 4, 0);
-		im.Vertex3f(x + 4, y + 4, 0);
-		im.Vertex3f(x - 4, y - 4, 0);
-		im.Vertex3f(x + 4, y - 4, 0);
-		im.End();
-	}
-}
-
-/*
- =======================================================================================================================
     FilterBrush
  =======================================================================================================================
  */
@@ -2934,10 +2892,9 @@ bool FilterBrush(const brush_t *pb) {
 
 		return false;
 	}
-	else {
-		if ( g_qeglobals.d_savedinfo.exclude & EXCLUDE_ENT ) {
-			return ( idStr::Cmpn( pb->owner->eclass->name, "func_static", 10 ) != 0 );
-		}
+
+	if ( g_qeglobals.d_savedinfo.exclude & EXCLUDE_ENT ) {
+		return ( idStr::Cmpn( pb->owner->eclass->name, "func_static", 10 ) != 0 );
 	}
 
 	if ( g_qeglobals.d_savedinfo.exclude & EXCLUDE_LIGHTS && pb->owner->eclass->nShowFlags & ECLASS_LIGHT ) {
@@ -3516,7 +3473,6 @@ void CXYWnd::XY_Draw() {
 
 	// now draw camera point
 	DrawCameraIcon();
-	DrawZIcon();
 
 	if (RotateMode()) {
 		DrawRotateIcon();

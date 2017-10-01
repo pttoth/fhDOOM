@@ -108,7 +108,6 @@ public:
 	void SetOrigin(idVec3 org);		// PGM
 	void XY_Init();
   void XY_Draw();
-  void DrawZIcon();
   void DrawRotateIcon();
   void DrawCameraIcon();
   void XY_DrawBlockGrid();

@@ -398,8 +398,8 @@ void CCamWnd::Cam_BuildMatrix() {
 	m_Camera.right[0] = m_Camera.forward[1];
 	m_Camera.right[1] = -m_Camera.forward[0];
 
-  float	matrix[4][4];
-  GL_ProjectionMatrix.Get(&matrix[0][0]);
+	float	matrix[4][4];
+	GL_ProjectionMatrix.Get(&matrix[0][0]);
 
 	for (int i = 0; i < 3; i++) {
 		m_Camera.vright[i] = matrix[i][0];
@@ -661,6 +661,38 @@ void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
  =======================================================================================================================
  */
 void CCamWnd::InitCull() {
+#if 1
+	const float xfov = 90;
+	const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
+
+	const idVec3 vieworg = m_Camera.origin;
+	//const idMat3 viewaxis = m_Camera.angles.ToMat3();
+	const auto viewaxis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
+
+	float	xs, xc;
+	float	ang;
+
+	ang = DEG2RAD(xfov) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
+
+	m_viewPlanes[0] = xs * viewaxis[0] + xc * viewaxis[1];
+	m_viewPlanes[1] = xs * viewaxis[0] - xc * viewaxis[1];
+
+	ang = DEG2RAD(yfov) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
+
+	m_viewPlanes[2] = xs * viewaxis[0] + xc * viewaxis[2];
+	m_viewPlanes[3] = xs * viewaxis[0] - xc * viewaxis[2];
+
+	// plane four is the front clipping plane
+	m_viewPlanes[4] = /* vec3_origin - */ viewaxis[0];
+
+	for (int i = 0; i < 5; i++) {
+		// flip direction so positive side faces out (FIXME: globally unify this)
+		m_viewPlanes[i] = -m_viewPlanes[i].Normal();
+		m_viewPlanes[i][3] = -(vieworg * m_viewPlanes[i].Normal());
+	}
+#else
 	int i;
 
 	VectorSubtract(m_Camera.vpn, m_Camera.vright, m_vCull1);
@@ -681,6 +713,7 @@ void CCamWnd::InitCull() {
 			m_nCullv2[i] = i;
 		}
 	}
+#endif
 }
 
 /*
@@ -688,28 +721,26 @@ void CCamWnd::InitCull() {
  =======================================================================================================================
  */
 bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
-	idVec3	point;
 
 	if ( b->forceVisibile ) {
 		return false;
 	}
 
 	idBounds bounds = idBounds(b->mins, b->maxs);
-	//editorModel_t editorModel = Brush_GetEditorModel(b);
-	//bounds.AddBounds(editorModel.bounds);
-	//bounds.AddBounds(editorModel.model->Bounds());
+	editorModel_t editorModel = Brush_GetEditorModel(b);
+	bounds.AddBounds(editorModel.bounds);
+	bounds.AddBounds(editorModel.model->Bounds());
 
 	idVec3 points[8];
 	bounds.ToPoints(points);
 
 	if (g_PrefsDlg.m_bCubicClipping) {
 		const float maxDistance = g_PrefsDlg.m_nCubicScale * 64;
-#if 1
 		const float maxDistanceSquared = maxDistance * maxDistance;
-
+#if 0
 		bool outside = true;
 		for (int i = 0; i < 8; ++i) {
-			idVec3 distance = bounds.GetCenter() - m_Camera.origin;
+			const idVec3 distance = points[i] - m_Camera.origin;
 
 			if (distance.LengthSqr() < maxDistanceSquared) {
 				outside = false;
@@ -723,7 +754,7 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 #else
 		idVec3 distance = bounds.GetCenter() - m_Camera.origin;
 
-		if (distance.Length() > maxDistance) {
+		if (distance.LengthSqr() > maxDistanceSquared) {
 			return true;
 		}
 #endif
@@ -750,6 +781,7 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 
 	return false;
 	/*
+	idVec3	point;
 
 	for (int i = 0; i < 3; i++) {
 		point[i] = bounds[0][m_nCullv1[i]] - m_Camera.origin[i];
@@ -867,11 +899,7 @@ void DrawAxial(face_t *selFace) {
 void CCamWnd::SetProjectionMatrix() {
 	float xfov = 90;
 	float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
-#if 0
-	float screenaspect = (float)m_Camera.width / m_Camera.height;
-	glLoadIdentity();
-	gluPerspective(yfov, screenaspect, 2, 8192);
-#else
+
 	float	xmin, xmax, ymin, ymax;
 	float	width, height;
 	float	zNear;
@@ -912,13 +940,11 @@ void CCamWnd::SetProjectionMatrix() {
 	projectionMatrix[11] = -1;
 	projectionMatrix[15] = 0;
 
-  GL_ProjectionMatrix.Load(projectionMatrix);
-#endif
+	GL_ProjectionMatrix.Load(projectionMatrix);
 }
 
 void CCamWnd::Cam_Draw() {
 	brush_t *brush;
-	face_t	*face;
 
 	// float yfov;
 	int		i;
@@ -945,36 +971,7 @@ void CCamWnd::Cam_Draw() {
 	}
 
 	{
-		const float xfov = 90;
-		const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
 
-		const idVec3 vieworg = m_Camera.origin;
-		//const idMat3 viewaxis = m_Camera.angles.ToMat3();
-		const auto viewaxis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
-
-		float	xs, xc;
-		float	ang;
-
-		ang = DEG2RAD(xfov) * 0.5f;
-		idMath::SinCos(ang, xs, xc);
-
-		m_viewPlanes[0] = xs * viewaxis[0] + xc * viewaxis[1];
-		m_viewPlanes[1] = xs * viewaxis[0] - xc * viewaxis[1];
-
-		ang = DEG2RAD(yfov) * 0.5f;
-		idMath::SinCos(ang, xs, xc);
-
-		m_viewPlanes[2] = xs * viewaxis[0] + xc * viewaxis[2];
-		m_viewPlanes[3] = xs * viewaxis[0] - xc * viewaxis[2];
-
-		// plane four is the front clipping plane
-		m_viewPlanes[4] = /* vec3_origin - */ viewaxis[0];
-
-		for (int i = 0; i < 5; i++) {
-			// flip direction so positive side faces out (FIXME: globally unify this)
-			m_viewPlanes[i] = -m_viewPlanes[i].Normal();
-			m_viewPlanes[i][3] = -(vieworg * m_viewPlanes[i].Normal());
-		}
 	}
 
 	SetProjectionMatrix();
@@ -1010,27 +1007,27 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		setGLMode(m_Camera.draw_mode);
-    Brush_Draw(brush, false);
+		Brush_Draw(brush, false);
 	}
 
-  if (!renderMode) {
-    // draw normally
-    for (brush = pList->next; brush != pList; brush = brush->next) {
-      setGLMode(m_Camera.draw_mode);
-      Brush_Draw(brush, true);
-    }
-  }
+	if (!renderMode) {
+		// draw normally
+		for (brush = pList->next; brush != pList; brush = brush->next) {
+			setGLMode(m_Camera.draw_mode);
+			Brush_Draw(brush, true);
+		}
+	}
 
-  g_qeglobals.surfaceBuffer.Commit();
-  g_qeglobals.lineBuffer.Commit();
-  g_qeglobals.pointBuffer.Commit();
+	g_qeglobals.surfaceBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.pointBuffer.Commit();
 
-  g_qeglobals.surfaceBuffer.Clear();
-  g_qeglobals.lineBuffer.Clear();
-  g_qeglobals.pointBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.pointBuffer.Clear();
 
 
-  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
+	const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
 
 	setGLMode(m_Camera.draw_mode);
 
@@ -1040,32 +1037,31 @@ void CCamWnd::Cam_Draw() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	globalImages->BindNull();
 
-  if(renderMode) {
-    for (brush = pList->next; brush != pList; brush = brush->next) {
-      if (brush->pPatch /*|| brush->modelHandle > 0*/) {
-        DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
-      }
-    }
-  }
+	if(renderMode) {
+		for (brush = pList->next; brush != pList; brush = brush->next) {
+			if (brush->pPatch /*|| brush->modelHandle > 0*/) {
+				DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+			}
+		}
+	}
 
 	for (brush = pList->next; brush != pList; brush = brush->next) {
-
-    if(brush->pPatch) {
-      DrawPatchMeshSolid(brush->pPatch, color);
-      DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
-      DrawPatchMeshHandles(brush->pPatch);
-      continue;
-    }
-
-		if ( brush->modelHandle > 0) {
-      continue;
+		if(brush->pPatch) {
+			DrawPatchMeshSolid(brush->pPatch, color);
+			DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+			DrawPatchMeshHandles(brush->pPatch);
+			continue;
 		}
 
-    if ( brush->owner->eclass->entityModel ) {
-        continue;
-    }
+		if ( brush->modelHandle > 0) {
+			continue;
+		}
 
-		for (face = brush->brush_faces; face; face = face->next) {
+		if ( brush->owner->eclass->entityModel ) {
+			continue;
+		}
+
+		for (auto face = brush->brush_faces; face; face = face->next) {
 			Face_Draw(face, color);
 		}
 	}
@@ -1079,17 +1075,17 @@ void CCamWnd::Cam_Draw() {
 		}
 	}
 
-  g_qeglobals.surfaceBuffer.Commit();
-  g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Commit();
+	g_qeglobals.surfaceBuffer.Clear();
 
-  if (!renderMode) {
-    for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
-      face_t	*selFace = reinterpret_cast <face_t *> (g_ptrSelectedFaces.GetAt(i));
-      DrawAxial(selFace);
-    }
-  }
+	if (!renderMode) {
+		for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
+			face_t	*selFace = reinterpret_cast <face_t *> (g_ptrSelectedFaces.GetAt(i));
+			DrawAxial(selFace);
+		}
+	}
 
-  g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);
@@ -1107,16 +1103,16 @@ void CCamWnd::Cam_Draw() {
 			continue;
 		}
 
-		for (face = brush->brush_faces; face; face = face->next) {
+		for (auto face = brush->brush_faces; face; face = face->next) {
 			Face_DrawOutline( face, idVec3(1,1,1));
 		}
 	}
 
-  g_qeglobals.lineBuffer.Commit();
-  g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Clear();
 
 	// edge / vertex flags
-  fhImmediateMode im;
+	fhImmediateMode im;
 	if (g_qeglobals.d_select_mode == sel_vertex) {
 		glPointSize(4);
 
@@ -1155,9 +1151,9 @@ void CCamWnd::Cam_Draw() {
 	glEnable(GL_DEPTH_TEST);
 
 	DrawPathLines();
-  Pointfile_Draw();
+	Pointfile_Draw();
 
-  g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
 
 	//
 	// bind back to the default texture so that we don't have problems elsewhere
