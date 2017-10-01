@@ -2791,22 +2791,6 @@ bool FilterBrush(const brush_t *pb) {
 		return false;
 	}
 
-	if (g_pParentWnd->GetZWnd()->m_pZClip)	// ZClip class up and running? (and hence Z window built)
-	{
-		if (g_pParentWnd->GetZWnd()->m_pZClip->IsEnabled())
-		{
-			// ZClipping active...
-			//
-			if (pb->mins[2] > g_pParentWnd->GetZWnd()->m_pZClip->GetTop()	// brush bottom edge is above clip top
-				||
-				pb->maxs[2] < g_pParentWnd->GetZWnd()->m_pZClip->GetBottom()// brush top edge is below clip bottom
-				)
-			{
-				return TRUE;
-			}
-		}
-	}
-
 	if (g_qeglobals.d_savedinfo.exclude & (EXCLUDE_CAULK | EXCLUDE_VISPORTALS)) {
 		//
 		// filter out the brush only if all faces are caulk if not don't hide the whole

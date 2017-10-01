@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ public:
 	{
 		name = "";
 		shift[0] = shift[1] = 0.0;
-		rotate = 0;	
+		rotate = 0;
 		scale[0] = scale[1] = 0;
 		value = 0;
 	}
@@ -124,10 +124,10 @@ public:
 
 //++timo texdef and brushprimit_texdef are static
 // TODO : do dynamic ?
-typedef struct face_s
+struct face_t
 {
-	struct face_s			*next;
-	struct face_s			*original;		//used for vertex movement
+	face_t					*next;
+	face_t					*original;		//used for vertex movement
 	idVec3					planepts[3];
 	idVec3					orgplanepts[3];	// used for arbitrary rotation
 	texdef_t				texdef;
@@ -143,17 +143,17 @@ typedef struct face_s
 
 	// Timo new brush primit texdef
 	brushprimit_texdef_t	brushprimit_texdef;
-} face_t;
+};
 
-typedef struct {
+struct curveVertex_t {
 	idVec3	xyz;
 	float	sideST[2];
 	float	capST[2];
-} curveVertex_t;
+};
 
-typedef struct {
+struct sideVertex_t {
 	curveVertex_t	v[2];
-} sideVertex_t;
+};
 
 
 #define	MIN_PATCH_WIDTH		3
@@ -184,16 +184,16 @@ typedef struct {
 #define PATCH_BEZIER      0x00000000    // default bezier
 #define PATCH_BSPLINE     0x10000000    // bspline
 
-#define PATCH_TYPEMASK     0x00000fff    // 
-#define PATCH_BTYPEMASK    0x0000f000    // 
-#define PATCH_STYLEMASK    0xffff0000    // 
+#define PATCH_TYPEMASK     0x00000fff    //
+#define PATCH_BTYPEMASK    0x0000f000    //
+#define PATCH_STYLEMASK    0xffff0000    //
 
 
 struct brush_t;
 
 struct fhSimpleVert;
 
-typedef struct {
+struct patchMesh_t {
 	int			width, height;		// in control points, not patches
 	int			horzSubdivisions;
 	int			vertSubdivisions;
@@ -205,10 +205,10 @@ typedef struct {
 	brush_t *	pSymbiot;
 	bool		bSelected;
 	bool		bOverlay;
-  idVec3* wireframeVerts;
-  int     wireframeVertNum;
-  fhSimpleVert* triangleVerts;
-  int triangleVertsNum;
+	idVec3* wireframeVerts;
+	int     wireframeVertNum;
+	fhSimpleVert* triangleVerts;
+	int triangleVertsNum;
 
 	idDict *	epairs;
 	// cast this one to an IPluginTexdef if you are using it
@@ -224,16 +224,16 @@ typedef struct {
 			return verts[row * width + col];
 		}
 	}
-} patchMesh_t;
+};
 
 enum {
 	LIGHT_TARGET,
-  LIGHT_RIGHT,
+	LIGHT_RIGHT,
 	LIGHT_UP,
 	LIGHT_RADIUS,
 	LIGHT_X,
 	LIGHT_Y,
-	LIGHT_Z, 
+	LIGHT_Z,
 	LIGHT_START,
 	LIGHT_END,
 	LIGHT_CENTER
@@ -260,7 +260,7 @@ enum {
 
 enum EVAR_TYPES {
 	EVAR_STRING,
-	EVAR_INT,		
+	EVAR_INT,
 	EVAR_FLOAT,
 	EVAR_BOOL,
 	EVAR_COLOR,
@@ -270,15 +270,15 @@ enum EVAR_TYPES {
 	EVAR_SOUND
 };
 
-typedef struct evar_s {
+struct evar_t {
 	int	type;
 	idStr name;
 	idStr desc;
-} evar_t;
+};
 
-typedef struct eclass_s
+struct eclass_t
 {
-	struct eclass_s *next;
+	eclass_t *next;
 	idStr	name;
 	bool	fixedsize;
 	idVec3	mins, maxs;
@@ -295,7 +295,7 @@ typedef struct eclass_s
 	idDict	args;
 	idDict	defArgs;
 	idList<evar_t> vars;
-} eclass_t;
+};
 
 extern	eclass_t	*eclass;
 
@@ -313,8 +313,8 @@ extern	eclass_t	*eclass;
 #define W_CAMERA_IFON	0x0100
 #define W_XZ			0x0200  //--| only used for patch vertex manip stuff
 #define W_YZ			0x0400  //--|
-#define W_MEDIA			0x1000 
-#define W_GAME			0x2000 
+#define W_MEDIA			0x1000
+#define W_GAME			0x2000
 #define	W_ALL			0xFFFFFFFF
 
 // used in some Drawing routines
