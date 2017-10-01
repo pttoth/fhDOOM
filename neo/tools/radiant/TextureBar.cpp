@@ -179,7 +179,7 @@ void CTextureBar::OnBtnApplytexturestuff()
 
 void CTextureBar::GetSurfaceAttributes()
 {
-	texdef_t* pt = (g_ptrSelectedFaces.Num() > 0) ? &g_ptrSelectedFaces[0]->texdef : &g_qeglobals.d_texturewin.texdef;
+	texdef_t* pt = (g_selectedFaces.Num() > 0) ? &g_selectedFaces[0].GetFace()->texdef : &g_qeglobals.d_texturewin.texdef;
 
 	if (pt)
 	{
@@ -195,13 +195,13 @@ void CTextureBar::GetSurfaceAttributes()
 //++timo implement brush primitive here
 void CTextureBar::SetSurfaceAttributes()
 {
-	if (g_ptrSelectedFaces.Num() > 0)
+	if (g_selectedFaces.Num() > 0)
 	{
 		if (g_qeglobals.m_bBrushPrimitMode)
 		{
 			common->Printf("Warning : brush primitive mode not implemented in CTextureBar");
 		}
-		face_t *selFace = g_ptrSelectedFaces[0];
+		face_t *selFace = g_selectedFaces[0].GetFace();
 
 		texdef_t* pt = &selFace->texdef;
 		UpdateData(TRUE);

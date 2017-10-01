@@ -32,7 +32,7 @@ extern	char		currentmap[1024];
 extern	brush_t	active_brushes;	// brushes currently being displayed
 extern	brush_t	selected_brushes;	// highlighted
 
-extern	idList<face_t*> g_ptrSelectedFaces;
+extern	idList<fhSelectedFace> g_selectedFaces;
 extern	brush_t	filtered_brushes;	// brushes that have been filtered or regioned
 
 extern	entity_t	entities;

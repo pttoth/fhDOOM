@@ -3643,7 +3643,7 @@ void Patch_SetTextureInfo( texdef_t *pt ) {
 }
 
 bool WINAPI OnlyPatchesSelected() {
-	if ( g_ptrSelectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes ) {
+	if ( g_selectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes ) {
 		return false;
 	}
 	for ( brush_t*pb = selected_brushes.next ; pb != &selected_brushes ; pb = pb->next ) {
@@ -3655,7 +3655,7 @@ bool WINAPI OnlyPatchesSelected() {
 }
 
 bool WINAPI AnyPatchesSelected() {
-	if (g_ptrSelectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes) {
+	if (g_selectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes) {
 		return false;
 	}
 	for ( brush_t*pb = selected_brushes.next ; pb != &selected_brushes ; pb = pb->next ) {

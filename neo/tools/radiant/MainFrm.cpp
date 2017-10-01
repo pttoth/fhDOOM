@@ -5629,9 +5629,9 @@ void CMainFrame::OnPatchTab() {
 		Patch_InsDelHandleTAB();
 	}
 	else if (g_bAxialMode) {
-		int faceCount = g_ptrSelectedFaces.Num();
+		int faceCount = g_selectedFaces.Num();
 		if (faceCount > 0) {
-			face_t	*selFace = g_ptrSelectedFaces[0];
+			face_t	*selFace = g_selectedFaces[0].GetFace();
 			int *ip = (Sys_KeyDown(VK_SHIFT)) ? &g_axialAnchor : &g_axialDest;
 			(*ip)++;
 			if ( *ip >= selFace->face_winding->GetNumPoints() ) {
@@ -6608,11 +6608,11 @@ void CMainFrame::OnViewMaterialanimation()
 extern void Face_SetAxialScale_BrushPrimit(face_t *face, bool y);
 void CMainFrame::OnAxialTextureByWidth() {
 	// temp test code
-	int faceCount = g_ptrSelectedFaces.Num();
+	int faceCount = g_selectedFaces.Num();
 
 	if (faceCount > 0) {
 		for (int i = 0; i < faceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_SetAxialScale_BrushPrimit(selFace, false);
 		}
 		Sys_UpdateWindows(W_CAMERA);
@@ -6622,11 +6622,11 @@ void CMainFrame::OnAxialTextureByWidth() {
 
 void CMainFrame::OnAxialTextureByHeight() {
 	// temp test code
-	int faceCount = g_ptrSelectedFaces.Num();
+	int faceCount = g_selectedFaces.Num();
 
 	if (faceCount > 0) {
 		for (int i = 0; i < faceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_SetAxialScale_BrushPrimit(selFace, true);
 		}
 		Sys_UpdateWindows(W_CAMERA);
@@ -6637,7 +6637,7 @@ void CMainFrame::OnAxialTextureArbitrary() {
 	if (g_bAxialMode) {
 		g_bAxialMode = false;
 	}
-	int faceCount = g_ptrSelectedFaces.Num();
+	int faceCount = g_selectedFaces.Num();
 	if (faceCount > 0) {
 		g_axialAnchor = 0;
 		g_axialDest = 1;

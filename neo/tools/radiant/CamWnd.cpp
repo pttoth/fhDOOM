@@ -52,9 +52,9 @@ int g_axialDest = -1;
 bool g_bAxialMode = false;
 
 void ValidateAxialPoints() {
-	int faceCount = g_ptrSelectedFaces.Num();
+	int faceCount = g_selectedFaces.Num();
 	if (faceCount > 0) {
-		face_t	*selFace = g_ptrSelectedFaces[0];
+		face_t	*selFace = g_selectedFaces[0].GetFace();
 		if (g_axialAnchor >= selFace->face_winding->GetNumPoints()) {
 			g_axialAnchor = 0;
 		}
@@ -1066,11 +1066,11 @@ void CCamWnd::Cam_Draw() {
 		}
 	}
 
-	int nCount = g_ptrSelectedFaces.Num();
+	int nCount = g_selectedFaces.Num();
 
 	if (!renderMode) {
 		for (int i = 0; i < nCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_Draw(selFace, color);
 		}
 	}
@@ -1079,8 +1079,8 @@ void CCamWnd::Cam_Draw() {
 	g_qeglobals.surfaceBuffer.Clear();
 
 	if (!renderMode) {
-		for (int i = 0; i < g_ptrSelectedFaces.Num(); i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
+		for (int i = 0; i < g_selectedFaces.Num(); i++) {
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			DrawAxial(selFace);
 		}
 	}
@@ -1092,8 +1092,8 @@ void CCamWnd::Cam_Draw() {
 	glDisable(GL_DEPTH_TEST);
 
 	if (renderMode) {
-		for (int i = 0; i < g_ptrSelectedFaces.Num(); i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
+		for (int i = 0; i < g_selectedFaces.Num(); i++) {
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_DrawOutline( selFace, idVec3(1,0,0));
 		}
 	}

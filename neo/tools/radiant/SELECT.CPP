@@ -33,8 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/model_local.h"	// for idRenderModelPrt
 
 // externs
-idList<face_t*> g_ptrSelectedFaces;
-idList<brush_t*> g_ptrSelectedFaceBrushes;
+idList<fhSelectedFace> g_selectedFaces;
 
 extern void Brush_Resize(brush_t *b, idVec3 vMin, idVec3 vMax);
 
@@ -208,8 +207,7 @@ void Select_Brush(brush_t *brush, bool bComplete, bool bStatus) {
 	brush_t		*b;
 	entity_t	*e;
 
-	g_ptrSelectedFaces.Clear();
-	g_ptrSelectedFaceBrushes.Clear();
+	g_selectedFaces.Clear();
 
 	// selected_face = NULL;
 	if (g_qeglobals.d_select_count < MAX_MAP_ENTITIES) {
@@ -297,24 +295,21 @@ singleselect:
  =======================================================================================================================
  */
 void Select_Ray(idVec3 origin, idVec3 dir, int flags) {
-	qertrace_t	t;
-
-	t = Test_Ray(origin, dir, flags);
+	const qertrace_t t = Test_Ray(origin, dir, flags);
 
 	if (!t.brush) {
 		return;
 	}
 
 	if (flags == SF_SINGLEFACE) {
-		int		nCount = g_ptrSelectedFaces.Num();
+		int		nCount = g_selectedFaces.Num();
 		bool	bOk = true;
 		for (int i = 0; i < nCount; i++) {
-			if (t.face == g_ptrSelectedFaces[i]) {
+			if (t.face == g_selectedFaces[i].GetFace()) {
 				bOk = false;
 
 				// need to move remove i'th entry
-				g_ptrSelectedFaces.RemoveIndex(i);
-				g_ptrSelectedFaceBrushes.RemoveIndex(i);
+				g_selectedFaces.RemoveIndex(i);
 				nCount--;
 			}
 		}
@@ -331,13 +326,11 @@ void Select_Ray(idVec3 origin, idVec3 dir, int flags) {
 				for ( face = t.brush->brush_faces; face; face = face->next ) {
 					//Don't add face that was clicked
 					if ( face != t.face ) {
-						g_ptrSelectedFaces.Append(face);
-						g_ptrSelectedFaceBrushes.Append(t.brush);
+						g_selectedFaces.Append(fhSelectedFace(t.brush, face));
 					}
 				}
 			} else {
-				g_ptrSelectedFaces.Append(t.face);
-				g_ptrSelectedFaceBrushes.Append(t.brush);
+				g_selectedFaces.Append(fhSelectedFace(t.brush, t.face));
 			}
 		}
 
@@ -396,8 +389,7 @@ void Select_Ray(idVec3 origin, idVec3 dir, int flags) {
 void Select_Delete(void) {
 	brush_t *brush;
 
-	g_ptrSelectedFaces.Clear();
-	g_ptrSelectedFaceBrushes.Clear();
+	g_selectedFaces.Clear();
 
 	// selected_face = NULL;
 	g_qeglobals.d_select_mode = sel_brush;
@@ -436,8 +428,7 @@ void Select_Deselect(bool bDeselectFaces) {
 
 	if (b == &selected_brushes) {
 		if (bDeselectFaces) {
-			g_ptrSelectedFaces.Clear();
-			g_ptrSelectedFaceBrushes.Clear();
+			g_selectedFaces.Clear();
 
 			// selected_face = NULL;
 		}
@@ -447,8 +438,7 @@ void Select_Deselect(bool bDeselectFaces) {
 	}
 
 	if (bDeselectFaces) {
-		g_ptrSelectedFaces.Clear();
-		g_ptrSelectedFaceBrushes.Clear();
+		g_selectedFaces.Clear();
 
 		// selected_face = NULL;
 	}
@@ -535,13 +525,12 @@ void Select_Clone(void) {
  */
 void WINAPI Select_SetTexture(texdef_t *texdef,brushprimit_texdef_t	*brushprimit_texdef,bool bFitScale,void *pPlugTexdef,bool update) {
 	brush_t *b;
-	int		nCount = g_ptrSelectedFaces.Num();
+	int		nCount = g_selectedFaces.Num();
 	if (nCount > 0) {
 		Undo_Start("set face textures");
-		ASSERT(g_ptrSelectedFaces.Num() == g_ptrSelectedFaceBrushes.Num());
 		for (int i = 0; i < nCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			Undo_AddBrush(selBrush);
  			SetFaceTexdef(selBrush,selFace,texdef,brushprimit_texdef,bFitScale);
 			Brush_Build(selBrush, bFitScale);
@@ -1502,7 +1491,7 @@ void Select_ShiftTexture(float x, float y, bool autoAdjust) {
 	brush_t *b;
 	face_t	*f;
 
-	int		nFaceCount = g_ptrSelectedFaces.Num();
+	int		nFaceCount = g_selectedFaces.Num();
 
 	if (selected_brushes.next == &selected_brushes && nFaceCount == 0) {
 		return;
@@ -1532,8 +1521,8 @@ void Select_ShiftTexture(float x, float y, bool autoAdjust) {
 
 	if (nFaceCount > 0) {
 		for (int i = 0; i < nFaceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			if (g_qeglobals.m_bBrushPrimitMode) {
 				//
 				// use face normal to compute a true translation Select_ShiftTexture_BrushPrimit(
@@ -1565,7 +1554,7 @@ void Select_ScaleTexture(float x, float y, bool update, bool absolute) {
 	brush_t *b;
 	face_t	*f;
 
-	int		nFaceCount = g_ptrSelectedFaces.Num();
+	int		nFaceCount = g_selectedFaces.Num();
 
 	if (selected_brushes.next == &selected_brushes && nFaceCount == 0) {
 		return;
@@ -1595,8 +1584,8 @@ void Select_ScaleTexture(float x, float y, bool update, bool absolute) {
 
 	if (nFaceCount > 0) {
 		for (int i = 0; i < nFaceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			if (g_qeglobals.m_bBrushPrimitMode) {
 				if (absolute) {
 					Face_SetExplicitScale_BrushPrimit(selFace, x, y);
@@ -1629,7 +1618,7 @@ void Select_RotateTexture(float amt, bool absolute) {
 	brush_t *b;
 	face_t	*f;
 
-	int		nFaceCount = g_ptrSelectedFaces.Num();
+	int		nFaceCount = g_selectedFaces.Num();
 
 	if (selected_brushes.next == &selected_brushes && nFaceCount == 0) {
 		return;
@@ -1656,8 +1645,8 @@ void Select_RotateTexture(float amt, bool absolute) {
 
 	if (nFaceCount > 0) {
 		for (int i = 0; i < nFaceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			if (g_qeglobals.m_bBrushPrimitMode) {
 				idVec3 org;
 				org.Zero();
@@ -1716,11 +1705,11 @@ void Select_AllOfType() {
 	entity_t	*e;
 	if ((selected_brushes.next == &selected_brushes) || (selected_brushes.next->next != &selected_brushes)) {
 		CString strName;
-		if (g_ptrSelectedFaces.Num() == 0) {
+		if (g_selectedFaces.Num() == 0) {
 			strName = g_qeglobals.d_texturewin.texdef.name;
 		}
 		else {
-			face_t	*selFace = g_ptrSelectedFaces[0];
+			face_t	*selFace = g_selectedFaces[0].GetFace();
 			strName = selFace->texdef.name;
 		}
 
@@ -1824,7 +1813,7 @@ void Select_Reselect() {
  */
 void Select_FitTexture(float height, float width) {
 	brush_t *b;
-	int		nFaceCount = g_ptrSelectedFaces.Num();
+	int		nFaceCount = g_selectedFaces.Num();
 
 	if (selected_brushes.next == &selected_brushes && nFaceCount == 0) {
 		return;
@@ -1843,8 +1832,8 @@ void Select_FitTexture(float height, float width) {
 
 	if (nFaceCount > 0) {
 		for (int i = 0; i < nFaceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			Face_FitTexture(selFace, height, width);
 			Brush_Build(selBrush);
 		}
@@ -1978,7 +1967,7 @@ void Select_CenterOrigin() {
  =======================================================================================================================
  */
 int Select_NumSelectedFaces() {
-	return g_ptrSelectedFaces.Num();
+	return g_selectedFaces.Num();
 }
 
 /*
@@ -1987,7 +1976,7 @@ int Select_NumSelectedFaces() {
  */
 face_t *Select_GetSelectedFace(int index) {
 	assert(index >= 0 && index < Select_NumSelectedFaces());
-	return g_ptrSelectedFaces[index];
+	return g_selectedFaces[index].GetFace();
 }
 
 /*
@@ -1996,7 +1985,7 @@ face_t *Select_GetSelectedFace(int index) {
  */
 brush_t *Select_GetSelectedFaceBrush(int index) {
 	assert(index >= 0 && index < Select_NumSelectedFaces());
-	return g_ptrSelectedFaceBrushes[index];
+	return g_selectedFaces[index].GetBrush();
 }
 
 /*
@@ -2036,13 +2025,12 @@ void Select_SetDefaultTexture(const idMaterial *mat, bool fitScale, bool setText
 
 void Select_UpdateTextureName(const char *name) {
 	brush_t *b;
-	int		nCount = g_ptrSelectedFaces.Num();
+	int		nCount = g_selectedFaces.Num();
 	if (nCount > 0) {
 		Undo_Start("set face texture name");
-		ASSERT(g_ptrSelectedFaces.Num() == g_ptrSelectedFaceBrushes.Num());
 		for (int i = 0; i < nCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
+			brush_t *selBrush = g_selectedFaces[i].GetBrush();
 			Undo_AddBrush(selBrush);
 			selFace->texdef.SetName(name);
 			Brush_Build(selBrush);
@@ -2081,7 +2069,7 @@ void Select_UpdateTextureName(const char *name) {
  */
 void Select_FlipTexture(bool y) {
 
-	int faceCount = g_ptrSelectedFaces.Num();
+	int faceCount = g_selectedFaces.Num();
 
 	Undo_Start("Select_FlipTexture");
 	for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
@@ -2094,8 +2082,7 @@ void Select_FlipTexture(bool y) {
 
 	if (faceCount > 0) {
 		for (int i = 0; i < faceCount; i++) {
-			face_t	*selFace = g_ptrSelectedFaces[i];
-			brush_t *selBrush = g_ptrSelectedFaceBrushes[i];
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_FlipTexture_BrushPrimit(selFace, y);
 		}
 	}

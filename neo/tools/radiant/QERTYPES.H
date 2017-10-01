@@ -191,6 +191,25 @@ struct sideVertex_t {
 
 struct brush_t;
 
+class fhSelectedFace
+{
+public:
+	fhSelectedFace()
+		: brush(nullptr), face(nullptr)
+	{}
+
+	fhSelectedFace(brush_t* brush, face_t* face)
+		: brush(brush), face(face)
+	{}
+
+	brush_t* GetBrush() const { assert(brush); return brush; }
+	face_t* GetFace() const { assert(face); return face; }
+
+private:
+	brush_t* brush;
+	face_t* face;
+};
+
 struct fhSimpleVert;
 
 struct patchMesh_t {
