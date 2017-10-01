@@ -283,18 +283,6 @@ Version 2
 {
  brushDef3
  {
-  ( 0 0 -1 136 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
-  ( 0 0 1 -184 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
-  ( 0 -1 0 -1720 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
-  ( 1 0 0 1792 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
-  ( 0 1 0 1704 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
-  ( -1 0 0 -1808 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
- }
-}
-// primitive 22
-{
- brushDef3
- {
   ( 0 0 -1 -8 ) ( ( -0.03125 0 4 ) ( 0 -0.03125 -4.0000004768 ) ) "textures/common/caulk" 0 0 0
   ( 0 0 1 0 ) ( ( 0 -0.0130209923 3.3333256245 ) ( 0.125 0 7.9999580383 ) ) "textures/base_trim/sfltrim1" 0 0 0
   ( -0.0000001192 1 0 56.0000152588 ) ( ( 0.0130209923 0 3.3333256245 ) ( -0.0000000219 0.1249989569 0.0000027996 ) ) "textures/base_trim/sfltrim1" 0 0 0
@@ -303,7 +291,7 @@ Version 2
   ( 0.7071067095 0.7071069479 0 -135.7578125 ) ( ( 0.03125 0 -0.0000002454 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 23
+// primitive 22
 {
  brushDef3
  {
@@ -315,7 +303,7 @@ Version 2
   ( -0.7071067691 -0.7071067691 0 45.2548370361 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 24
+// primitive 23
 {
  brushDef3
  {
@@ -327,7 +315,7 @@ Version 2
   ( 1 0.0000001192 0 -256 ) ( ( 0.03125 0 -4 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 25
+// primitive 24
 {
  brushDef3
  {
@@ -339,7 +327,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 26
+// primitive 25
 {
  brushDef3
  {
@@ -351,7 +339,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 27
+// primitive 26
 {
  brushDef3
  {
@@ -363,7 +351,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 28
+// primitive 27
 {
  brushDef3
  {
@@ -375,7 +363,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 29
+// primitive 28
 {
  brushDef3
  {
@@ -387,7 +375,7 @@ Version 2
   ( -1 0 0 248 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
  }
 }
-// primitive 30
+// primitive 29
 {
  brushDef3
  {
@@ -399,7 +387,7 @@ Version 2
   ( -1 0 0 256 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 31
+// primitive 30
 {
  brushDef3
  {
@@ -411,7 +399,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 32
+// primitive 31
 {
  brushDef3
  {
@@ -423,7 +411,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 12.0000047684 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 33
+// primitive 32
 {
  patchDef2
  {
@@ -436,7 +424,7 @@ Version 2
   )
  }
 }
-// primitive 34
+// primitive 33
 {
  patchDef2
  {
@@ -449,7 +437,7 @@ Version 2
   )
  }
 }
-// primitive 35
+// primitive 34
 {
  patchDef2
  {
@@ -462,7 +450,7 @@ Version 2
   )
  }
 }
-// primitive 36
+// primitive 35
 {
  brushDef3
  {
@@ -474,7 +462,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 0 -1.00000453 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
  }
 }
-// primitive 37
+// primitive 36
 {
  brushDef3
  {
@@ -486,7 +474,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 0 -1.00000453 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
  }
 }
-// primitive 38
+// primitive 37
 {
  brushDef3
  {
@@ -498,7 +486,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 39
+// primitive 38
 {
  patchDef2
  {
@@ -511,7 +499,7 @@ Version 2
   )
  }
 }
-// primitive 40
+// primitive 39
 {
  patchDef2
  {
@@ -524,7 +512,7 @@ Version 2
   )
  }
 }
-// primitive 41
+// primitive 40
 {
  brushDef3
  {
@@ -536,7 +524,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 42
+// primitive 41
 {
  brushDef3
  {
@@ -548,7 +536,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 43
+// primitive 42
 {
  brushDef3
  {
@@ -560,7 +548,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 44
+// primitive 43
 {
  brushDef3
  {
@@ -572,7 +560,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 45
+// primitive 44
 {
  brushDef3
  {
@@ -584,7 +572,7 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 46
+// primitive 45
 {
  brushDef3
  {

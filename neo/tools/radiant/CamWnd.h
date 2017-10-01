@@ -167,6 +167,8 @@ protected:
 	idAngles saveAng;
 	bool saveValid;
 
+	idPlane m_viewPlanes[5];
+
 	// Generated message map functions
 protected:
 	void OriginalMouseDown(UINT nFlags, CPoint point);

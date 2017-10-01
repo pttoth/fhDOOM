@@ -694,25 +694,62 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 		return false;
 	}
 
-  idBounds bounds = idBounds(b->mins, b->maxs);
-  editorModel_t editorModel = Brush_GetEditorModel(b);
-  bounds.AddBounds(editorModel.bounds);
-  bounds.AddBounds(editorModel.model->Bounds());
+	idBounds bounds = idBounds(b->mins, b->maxs);
+	//editorModel_t editorModel = Brush_GetEditorModel(b);
+	//bounds.AddBounds(editorModel.bounds);
+	//bounds.AddBounds(editorModel.model->Bounds());
+
+	idVec3 points[8];
+	bounds.ToPoints(points);
 
 	if (g_PrefsDlg.m_bCubicClipping) {
-
 		const float maxDistance = g_PrefsDlg.m_nCubicScale * 64;
+#if 1
+		const float maxDistanceSquared = maxDistance * maxDistance;
 
-    idVec3 distance = bounds.GetCenter() - m_Camera.origin;
+		bool outside = true;
+		for (int i = 0; i < 8; ++i) {
+			idVec3 distance = bounds.GetCenter() - m_Camera.origin;
+
+			if (distance.LengthSqr() < maxDistanceSquared) {
+				outside = false;
+				break;
+			}
+		}
+
+		if (outside) {
+			return true;
+		}
+#else
+		idVec3 distance = bounds.GetCenter() - m_Camera.origin;
 
 		if (distance.Length() > maxDistance) {
 			return true;
 		}
+#endif
 	}
 
 	if (cubicOnly) {
 		return false;
 	}
+
+	for (int i = 0; i < 5; ++i) {
+		bool outside = true;
+
+		for (int j = 0; j < 8; ++j) {
+			if (m_viewPlanes[i].Distance(points[j]) < 0) {
+				outside = false;
+				break;
+			}
+		}
+
+		if (outside) {
+			return true;
+		}
+	}
+
+	return false;
+	/*
 
 	for (int i = 0; i < 3; i++) {
 		point[i] = bounds[0][m_nCullv1[i]] - m_Camera.origin[i];
@@ -731,6 +768,7 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 	}
 
 	return false;
+	*/
 }
 
 #if 0
@@ -906,22 +944,55 @@ void CCamWnd::Cam_Draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
-	SetProjectionMatrix();
-  g_qeglobals.surfaceBuffer.Clear();
-  g_qeglobals.lineBuffer.Clear();
-  g_qeglobals.pointBuffer.Clear();
+	{
+		const float xfov = 90;
+		const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
 
-  GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
-  GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
-  GL_ProjectionMatrix.Rotate(m_Camera.angles[0], 0, 1, 0);
-  GL_ProjectionMatrix.Rotate(-m_Camera.angles[1], 0, 0, 1);
-  GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
+		const idVec3 vieworg = m_Camera.origin;
+		//const idMat3 viewaxis = m_Camera.angles.ToMat3();
+		const auto viewaxis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
+
+		float	xs, xc;
+		float	ang;
+
+		ang = DEG2RAD(xfov) * 0.5f;
+		idMath::SinCos(ang, xs, xc);
+
+		m_viewPlanes[0] = xs * viewaxis[0] + xc * viewaxis[1];
+		m_viewPlanes[1] = xs * viewaxis[0] - xc * viewaxis[1];
+
+		ang = DEG2RAD(yfov) * 0.5f;
+		idMath::SinCos(ang, xs, xc);
+
+		m_viewPlanes[2] = xs * viewaxis[0] + xc * viewaxis[2];
+		m_viewPlanes[3] = xs * viewaxis[0] - xc * viewaxis[2];
+
+		// plane four is the front clipping plane
+		m_viewPlanes[4] = /* vec3_origin - */ viewaxis[0];
+
+		for (int i = 0; i < 5; i++) {
+			// flip direction so positive side faces out (FIXME: globally unify this)
+			m_viewPlanes[i] = -m_viewPlanes[i].Normal();
+			m_viewPlanes[i][3] = -(vieworg * m_viewPlanes[i].Normal());
+		}
+	}
+
+	SetProjectionMatrix();
+	g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.pointBuffer.Clear();
+
+	GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
+	GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
+	GL_ProjectionMatrix.Rotate(m_Camera.angles[0], 0, 1, 0);
+	GL_ProjectionMatrix.Rotate(-m_Camera.angles[1], 0, 0, 1);
+	GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
 
 	Cam_BuildMatrix();
 
-  brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
+	brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
 
-  g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Clear();
 	for (brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
 
 		if ( CullBrush(brush, false) ) {
