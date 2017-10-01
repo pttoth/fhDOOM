@@ -33,8 +33,8 @@ extern	brush_t	active_brushes;	// brushes currently being displayed
 extern	brush_t	selected_brushes;	// highlighted
 
 
-extern CPtrArray& g_ptrSelectedFaces;
-extern CPtrArray& g_ptrSelectedFaceBrushes;
+extern CPtrArray g_ptrSelectedFaces;
+extern CPtrArray g_ptrSelectedFaceBrushes;
 //extern	face_t	*selected_face;
 //extern	brush_t	*selected_face_brush;
 extern	brush_t	filtered_brushes;	// brushes that have been filtered or regioned

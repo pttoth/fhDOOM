@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,10 +33,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/model_local.h"	// for idRenderModelPrt
 
 // externs
-CPtrArray	g_SelectedFaces;
-CPtrArray	g_SelectedFaceBrushes;
-CPtrArray	&g_ptrSelectedFaces = g_SelectedFaces;
-CPtrArray	&g_ptrSelectedFaceBrushes = g_SelectedFaceBrushes;
+CPtrArray g_ptrSelectedFaces;
+CPtrArray g_ptrSelectedFaceBrushes;
 
 extern void Brush_Resize(brush_t *b, idVec3 vMin, idVec3 vMax);
 
@@ -146,7 +144,7 @@ qertrace_t Test_Ray(const idVec3 &origin, const idVec3 &dir, int flags) {
 			if (g_PrefsDlg.m_selectNoModels) {
 				if (brush->modelHandle > 0) {
 					continue;
-				}									
+				}
 			}
 
 			face = Brush_Ray(origin, dir, brush, &dist, true);
@@ -256,7 +254,7 @@ singleselect:
 				if (p && *p) {
 					g_Inspectors->mediaDlg.SelectCurrentItem(true, p, CDialogTextures::SOUNDS);
 				}
-				
+
 			}
 			if ( ( e->eclass->nShowFlags & ECLASS_LIGHT ) && !brush->entityModel ) {
 				if (brush->pointLight) {
@@ -308,15 +306,15 @@ void Select_Ray(idVec3 origin, idVec3 dir, int flags) {
 	}
 
 	if (flags == SF_SINGLEFACE) {
-		int		nCount = g_SelectedFaces.GetSize();
+		int		nCount = g_ptrSelectedFaces.GetSize();
 		bool	bOk = true;
 		for (int i = 0; i < nCount; i++) {
-			if (t.face == reinterpret_cast < face_t * > (g_SelectedFaces.GetAt(i))) {
+			if (t.face == reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i))) {
 				bOk = false;
 
 				// need to move remove i'th entry
-				g_SelectedFaces.RemoveAt(i, 1);
-				g_SelectedFaceBrushes.RemoveAt(i, 1);
+				g_ptrSelectedFaces.RemoveAt(i, 1);
+				g_ptrSelectedFaceBrushes.RemoveAt(i, 1);
 				nCount--;
 			}
 		}
@@ -333,13 +331,13 @@ void Select_Ray(idVec3 origin, idVec3 dir, int flags) {
 				for ( face = t.brush->brush_faces; face; face = face->next ) {
 					//Don't add face that was clicked
 					if ( face != t.face ) {
-						g_SelectedFaces.Add( face );
-						g_SelectedFaceBrushes.Add( t.brush );
+						g_ptrSelectedFaces.Add(face);
+						g_ptrSelectedFaceBrushes.Add(t.brush);
 					}
 				}
 			} else {
-				g_SelectedFaces.Add(t.face);
-				g_SelectedFaceBrushes.Add(t.brush);
+				g_ptrSelectedFaces.Add(t.face);
+				g_ptrSelectedFaceBrushes.Add(t.brush);
 			}
 		}
 
@@ -757,7 +755,7 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
 	entity_t *lastOwner = NULL;
 
 	for (b = selected_brushes.next; b != &selected_brushes; b = b->next) {
-		
+
 		bool doBrush = true;
 		if (!(b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN) && b->owner != lastOwner) {
 			if (b->modelHandle || b->owner->eclass->nShowFlags & ECLASS_ROTATABLE) {
@@ -807,7 +805,7 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
 					bo.FromTransformedBounds(bo2, b->owner->origin, b->owner->rotation);
 					Brush_Resize(b, bo[0], bo[1]);
 					doBrush = false;
-				} 
+				}
 				if (b->owner->eclass->fixedsize) {
 					doBrush = false;
 				}
@@ -821,8 +819,8 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
 
 				b->owner->SetKeyValue("origin", text);
 			}
-			
-		   
+
+
 
 			if (OkForRotationKey(b)) {
 				sprintf(str, "%g %g %g %g %g %g %g %g %g",b->owner->rotation[0][0],b->owner->rotation[0][1],b->owner->rotation[0][2],
@@ -830,7 +828,7 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
 						b->owner->rotation[2][1],b->owner->rotation[2][2]);
 				b->owner->SetKeyValue("rotation", str);
 			}
-			
+
 			if (b->trackLightOrigin) {
 				sprintf(str, "%g %g %g %g %g %g %g %g %g",b->owner->lightRotation[0][0],b->owner->lightRotation[0][1],b->owner->lightRotation[0][2],
 						b->owner->lightRotation[1][0],b->owner->lightRotation[1][1],b->owner->lightRotation[1][2],b->owner->lightRotation[2][0],
@@ -844,7 +842,7 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
 		if (doBrush) {
 			for (f = b->brush_faces; f; f = f->next) {
 				for (i = 0; i < 3; i++) {
-					f->planepts[i] = ( ((g_bRotateMode) ? f->orgplanepts[i] : f->planepts[i]) - select_origin ) * ((g_bRotateMode) ? select_bmatrix : select_matrix) + select_origin; 
+					f->planepts[i] = ( ((g_bRotateMode) ? f->orgplanepts[i] : f->planepts[i]) - select_origin ) * ((g_bRotateMode) ? select_bmatrix : select_matrix) + select_origin;
 				}
 
 				if ( select_fliporder ) {
@@ -1184,7 +1182,7 @@ void AbsoluteToLocal( const idPlane &normal2, face_t *f, idVec3 &p1, idVec3 &p2,
 void Select_FlipAxis(int axis) {
 
 	Select_GetMid( select_origin );
-	
+
 	for ( int i = 0; i < 3; i++) {
 		VectorCopy(vec3_origin, select_matrix[i]);
 		select_matrix[i][i] = 1;
@@ -2084,7 +2082,7 @@ void Select_UpdateTextureName(const char *name) {
 void Select_FlipTexture(bool y) {
 
 	int faceCount = g_ptrSelectedFaces.GetSize();
-	
+
 	Undo_Start("Select_FlipTexture");
 	for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		if (b->pPatch) {
@@ -2111,7 +2109,7 @@ void Select_FlipTexture(bool y) {
 
 /*
  =======================================================================================================================
-    Select_SetKeyVal 
+    Select_SetKeyVal
 	sets values on non-world entities
  =======================================================================================================================
  */
@@ -2145,7 +2143,7 @@ void Select_CopyPatchTextureCoords( patchMesh_t *p ) {
 
 /*
  =======================================================================================================================
-	Select_SetProjectFaceOntoPatch     
+	Select_SetProjectFaceOntoPatch
  =======================================================================================================================
  */
 void Select_ProjectFaceOntoPatch( face_t *face ) {
@@ -2159,7 +2157,7 @@ void Select_ProjectFaceOntoPatch( face_t *face ) {
 
 /*
  =======================================================================================================================
-    Select_SetPatchFit 
+    Select_SetPatchFit
  =======================================================================================================================
  */
 extern float Patch_Width(patchMesh_t *p);
