@@ -466,7 +466,12 @@ const GLvoid* userParam
 	if (numDebugOutputMessages == sizeof(debugOutputMessages) / sizeof(debugOutputMessages[0])) {
 		return;
 	}
-	_snprintf(debugOutputMessages[numDebugOutputMessages++].buffer, sizeof(debugOutputMessages[0]) - 1, "(GL %u) %s, %s, %s: %s", id, debSource, debType, debSev, message);
+#ifdef _WIN32
+	_snprintf
+#else
+	snprintf
+#endif
+	(debugOutputMessages[numDebugOutputMessages++].buffer, sizeof(debugOutputMessages[0]) - 1, "(GL %u) %s, %s, %s: %s", id, debSource, debType, debSev, message);
 
 #pragma warning( pop )
 }
@@ -504,12 +509,13 @@ void R_InitOpenGL( void ) {
 	if (glConfig.isInitialized) {
 		common->FatalError( "R_InitOpenGL called while active" );
 	}
-
+#if _WIN32
 	auto displays = Sys_GetDisplays();
 	common->Printf("found %d displays:\n", displays.Num());
 	for (const auto& display : displays) {
 		common->Printf("  %d: %s %dx%d @ %dx%d\n", display.num, display.name, display.width, display.height, display.x, display.y);
 	}
+#endif
 
 	//
 	// initialize OS specific portions of the renderSystem
