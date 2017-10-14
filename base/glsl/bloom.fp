@@ -39,29 +39,9 @@ in vs_output
 out vec4 result;
 
 void main(void)
-{ 
-  float t = shaderParm0.x;
+{
+  vec4 t = vec4(shaderParm0.x);
   vec4 color = texture2D(texture1, frag.texcoord);
-  
-  float brightness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-  if(brightness > 0.1)  
-    result = vec4(max(vec3(0,0,0), color.rgb - vec3(t,t,t)), 1);  
-  else
-    result = vec4(0,0,0,1);  
-
-  
-
-  if (color.x > t*1.2)   
-    result.x = color.x;
-
-  if (color.y > t*1.2) 
-    result.y = color.y;
-
-  if (color.z > t) 
-    result.z = color.z;
-  
-  result.w = 1;
-
-  //result = vec4(1,0,0,1);
-  
+  color = (color - t) / (1 - t);
+  result = clamp(color, 0, 1);
 }

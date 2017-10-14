@@ -876,7 +876,12 @@ static void	RB_SwapBuffers( const void *data ) {
 		} else {
 			fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), 0, 0));
 		}
-		fhRenderProgram::SetShaderParm(1, idVec4(r_bloomFactor.GetFloat(), 0, 0, 0));
+
+		if (r_ignore2.GetBool()) {
+			fhRenderProgram::SetShaderParm(1, idVec4(r_bloomFactor.GetFloat(), 0, 0, 0));
+		} else {
+			fhRenderProgram::SetShaderParm(1, idVec4(0, 0, 0, 0));
+		}
 
 		renderFullScreenPass();
 

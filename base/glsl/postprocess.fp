@@ -57,11 +57,11 @@ out vec4 result;
 #endif
 
 
-//optimized version for mobile, where dependent 
+//optimized version for mobile, where dependent
 //texture reads can be a bottleneck
 vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
-            vec2 v_rgbNW, vec2 v_rgbNE, 
-            vec2 v_rgbSW, vec2 v_rgbSE, 
+            vec2 v_rgbNW, vec2 v_rgbNE,
+            vec2 v_rgbSW, vec2 v_rgbSE,
             vec2 v_rgbM) {
     vec4 color;
     vec2 inverseVP = vec2(1.0 / resolution.x, 1.0 / resolution.y);
@@ -80,19 +80,19 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
     float lumaM  = dot(rgbM,  luma);
     float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
     float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
-    
+
     vec2 dir;
     dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
     dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
-    
+
     float dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
                           (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
-    
+
     float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
     dir = min(vec2(FXAA_SPAN_MAX, FXAA_SPAN_MAX),
               max(vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),
               dir * rcpDirMin)) * inverseVP;
-    
+
     vec3 rgbA = 0.5 * (
         texture2D(tex, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)).xyz +
         texture2D(tex, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)).xyz);
@@ -109,44 +109,38 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
 }
 
 void main(void)
-{  
+{
 
 //  vec4 color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));
 //  float f = (color.r + color.g + color.b) / 3;
 //  result = vec4(f,f,f,1);
 
   float brightness = shaderParm0.x;
-  float gamma = shaderParm0.y;  
+  float gamma = shaderParm0.y;
 
   vec4 color;
   if (shaderParm0.z > 0)
   {
-  	vec2 resolution = shaderParm0.zw;
-	vec2 fragCoord =  frag.texcoord * resolution;
-	vec2 inverseVP = 1.0 / resolution.xy;	
-	vec2 nw = (fragCoord + vec2(-1.0, -1.0)) * inverseVP;
-	vec2 ne = (fragCoord + vec2(1.0, -1.0)) * inverseVP;
-	vec2 sw = (fragCoord + vec2(-1.0, 1.0)) * inverseVP;
-	vec2 se = (fragCoord + vec2(1.0, 1.0)) * inverseVP;
-	vec2 m = vec2(fragCoord * inverseVP);
+    vec2 resolution = shaderParm0.zw;
+    vec2 fragCoord =  frag.texcoord * resolution;
+    vec2 inverseVP = 1.0 / resolution.xy;
+    vec2 nw = (fragCoord + vec2(-1.0, -1.0)) * inverseVP;
+    vec2 ne = (fragCoord + vec2(1.0, -1.0)) * inverseVP;
+    vec2 sw = (fragCoord + vec2(-1.0, 1.0)) * inverseVP;
+    vec2 se = (fragCoord + vec2(1.0, 1.0)) * inverseVP;
+    vec2 m = vec2(fragCoord * inverseVP);
 
-	color = fxaa(texture1, fragCoord, resolution, nw, ne, sw, se, m);
+    color = fxaa(texture1, fragCoord, resolution, nw, ne, sw, se, m);
   }
-  else 
+  else
   {
-  	color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));  
+    color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));
   }
-/*
-  float t = 0.6;
-  vec3 threshold = vec3(t, t, t);
-  if (color.x > threshold.x || color.y > threshold.y || color.z > threshold.z) {
-  	color = vec4(1,0,0,1);
-  }
-*/
-  vec4 bloom = texture2D(texture2, frag.texcoord);
-  color += bloom * shaderParm1.x;
 
-  //color = color / (color + vec4(1,1,1,1)) * 1.3;
+  if (shaderParm1.x > 0) {
+    vec4 bloom = texture2D(texture2, frag.texcoord);
+    color += bloom * shaderParm1.x;
+  }
 
   result = vec4(pow(color.rgb, vec3(1.0/gamma)), 1) * brightness;
 }
