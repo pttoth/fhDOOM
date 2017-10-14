@@ -341,7 +341,9 @@ namespace {
 	const int s_numVidModes = (sizeof( r_vidModes ) / sizeof( r_vidModes[0] ));
 
 	std::mutex debugOutputMutex;
-	idList<idStr> debugOutputBuffer;
+	struct glDebugMessage_t { char buffer[512]; };
+	glDebugMessage_t debugOutputMessages[32];
+	int numDebugOutputMessages = 0;
 }
 
 bool R_GetModeInfo(int &width, int &height, int &aspectRatio, int mode) {
@@ -460,12 +462,11 @@ const GLvoid* userParam
 		break;
 	}
 
-
-	idStr temp;
-	sprintf(temp, "(GL %u) %s, %s, %s: %s", id, debSource, debType, debSev, message);
-
 	std::lock_guard<std::mutex> lock(debugOutputMutex);
-	debugOutputBuffer.Append(temp);
+	if (numDebugOutputMessages == sizeof(debugOutputMessages) / sizeof(debugOutputMessages[0])) {
+		return;
+	}
+	_snprintf(debugOutputMessages[numDebugOutputMessages++].buffer, sizeof(debugOutputMessages[0]) - 1, "(GL %u) %s, %s, %s: %s", id, debSource, debType, debSev, message);
 
 #pragma warning( pop )
 }
@@ -473,10 +474,11 @@ const GLvoid* userParam
 void RB_PrintDebugOutput()
 {
 	std::lock_guard<std::mutex> lock(debugOutputMutex);
-	for (int i = 0; i < debugOutputBuffer.Num(); ++i) {
-		common->Printf("%s\n", debugOutputBuffer[i].c_str());
+	for (int i = 0; i < numDebugOutputMessages; ++i) {
+		common->Printf("%s\n", debugOutputMessages[i].buffer);
 	}
-	debugOutputBuffer.Clear();
+
+	numDebugOutputMessages = 0;
 }
 
 

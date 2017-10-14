@@ -3738,6 +3738,8 @@ void CMainFrame::UpdateWindows(int nBits) {
 	if (nBits & W_TEXTURE) {
 		g_Inspectors->texWnd.RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 	}
+
+	RB_PrintDebugOutput();
 }
 
 /*
