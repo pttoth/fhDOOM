@@ -179,37 +179,37 @@ void CTextureBar::OnBtnApplytexturestuff()
 
 void CTextureBar::GetSurfaceAttributes()
 {
-  texdef_t* pt = (g_ptrSelectedFaces.GetSize() > 0) ? &(reinterpret_cast<face_t*>(g_ptrSelectedFaces.GetAt(0)))->texdef : &g_qeglobals.d_texturewin.texdef;
+	texdef_t* pt = (g_selectedFaces.Num() > 0) ? &g_selectedFaces[0].GetFace()->texdef : &g_qeglobals.d_texturewin.texdef;
 
-  if (pt)
-  {
-    m_nHShift = pt->shift[0];
-    m_nVShift = pt->shift[1];
-    m_nHScale = pt->scale[0];
-    m_nVScale = pt->scale[1];
-    m_nRotate = pt->rotate;
-    UpdateData(FALSE);
-  }
+	if (pt)
+	{
+		m_nHShift = pt->shift[0];
+		m_nVShift = pt->shift[1];
+		m_nHScale = pt->scale[0];
+		m_nVScale = pt->scale[1];
+		m_nRotate = pt->rotate;
+		UpdateData(FALSE);
+	}
 }
 
 //++timo implement brush primitive here
 void CTextureBar::SetSurfaceAttributes()
 {
-  if (g_ptrSelectedFaces.GetSize() > 0)
-  {
-	  if (g_qeglobals.m_bBrushPrimitMode)
-    {
-		  common->Printf("Warning : brush primitive mode not implemented in CTextureBar");
-    }
-    face_t *selFace = reinterpret_cast<face_t*>(g_ptrSelectedFaces.GetAt(0));
+	if (g_selectedFaces.Num() > 0)
+	{
+		if (g_qeglobals.m_bBrushPrimitMode)
+		{
+			common->Printf("Warning : brush primitive mode not implemented in CTextureBar");
+		}
+		face_t *selFace = g_selectedFaces[0].GetFace();
 
-	  texdef_t* pt = &selFace->texdef;
-    UpdateData(TRUE);
-    pt->shift[0] = m_nHShift;
-    pt->shift[1] = m_nVShift;
-    pt->scale[0] = m_nHScale;
-    pt->scale[1] = m_nVScale;
-    pt->rotate = m_nRotate;
-    Sys_UpdateWindows(W_CAMERA);
-  }
+		texdef_t* pt = &selFace->texdef;
+		UpdateData(TRUE);
+		pt->shift[0] = m_nHShift;
+		pt->shift[1] = m_nVShift;
+		pt->scale[0] = m_nHScale;
+		pt->scale[1] = m_nVScale;
+		pt->rotate = m_nRotate;
+		Sys_UpdateWindows(W_CAMERA);
+	}
 }

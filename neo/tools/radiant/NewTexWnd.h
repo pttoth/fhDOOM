@@ -25,16 +25,8 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
-#if !defined(NEWTEXWND_H)
-#define NEWTEXWND_H
-
-#if _MSC_VER >= 1000
 #pragma once
-#endif // _MSC_VER >= 1000
-// TexWnd.h : header file
-//
 #include "../../renderer/tr_local.h"
-//#include "texwnd.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CTexWnd window
@@ -45,38 +37,24 @@ class CNewTexWnd : public CWnd
 // Construction
 public:
 	CNewTexWnd();
-  void UpdateFilter(const char* pFilter);
-  void UpdatePrefs();
-  void FocusEdit();
+	virtual ~CNewTexWnd();
 
-// Attributes
-public:
+	void UpdatePrefs();
 
-// Operations
-public:
+	virtual BOOL DestroyWindow() override;
+	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL) override;
+protected:
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CNewTexWnd)
-	public:
-	virtual BOOL DestroyWindow();
-	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
-	protected:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
-
-// Implementation
 public:
 	void EnsureTextureIsVisible(const char *name);
-	virtual ~CNewTexWnd();
+
 	BOOL OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResult );
 	int CNewTexWnd::OnToolHitTest(CPoint point, TOOLINFO * pTI);
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual BOOL PreTranslateMessage(MSG* pMsg) override;
 
 protected:
-  //CTexEdit m_wndFilter;
-  //CButton  m_wndShaders;
-  bool m_bNeedRange;
+	bool m_bNeedRange;
 	HGLRC hglrcTexture;
 	CDC	 *hdcTexture;
 	CPoint cursor;
@@ -90,7 +68,7 @@ protected:
 	idList<const idMaterial*> materialList;
 
 	// Generated message map functions
-protected:
+
 	const idMaterial* NextPos();
 	const idMaterial *getMaterialAtPoint(CPoint point);
 	void InitPos();
@@ -121,5 +99,3 @@ public:
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Developer Studio will insert additional declarations immediately before the previous line.
-
-#endif // !defined(NEWTEXWND_H)

@@ -52,9 +52,9 @@ int g_axialDest = -1;
 bool g_bAxialMode = false;
 
 void ValidateAxialPoints() {
-	int faceCount = g_ptrSelectedFaces.GetSize();
+	int faceCount = g_selectedFaces.Num();
 	if (faceCount > 0) {
-		face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(0));
+		face_t	*selFace = g_selectedFaces[0].GetFace();
 		if (g_axialAnchor >= selFace->face_winding->GetNumPoints()) {
 			g_axialAnchor = 0;
 		}
@@ -75,7 +75,6 @@ IMPLEMENT_DYNCREATE(CCamWnd, CWnd);
  =======================================================================================================================
  */
 CCamWnd::CCamWnd() {
-	m_pXYFriend = NULL;
 	memset(&m_Camera, 0, sizeof(camera_t));
 	worldDirty = true;
 	worldModel = NULL;
@@ -200,30 +199,28 @@ void CCamWnd::OnPaint() {
 	if (!wglMakeCurrent(dc.m_hDC, win32.hGLRC)) {
 		common->Printf("ERROR: wglMakeCurrent failed..\n ");
 		common->Printf("Please restart " EDITOR_WINDOWTEXT " if the camera view is not working\n");
+		return;
 	}
-	else {
-	    fhImmediateMode::ResetStats();
-		QE_CheckOpenGLForErrors();
 
-		g_pSplitList = NULL;
-		if (g_bClipMode) {
-			if (g_Clip1.Set() && g_Clip2.Set()) {
-				g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
-			}
+	glViewport(0, 0, m_Camera.width, m_Camera.height);
+	glScissor(0, 0, m_Camera.width, m_Camera.height);
+	glClearColor(g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][0], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][1], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][2], 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	fhImmediateMode::ResetStats();
+	QE_CheckOpenGLForErrors();
+
+	g_pSplitList = NULL;
+	if (g_bClipMode) {
+		if (g_Clip1.Set() && g_Clip2.Set()) {
+			g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
 		}
-
-		Cam_Draw();
-		QE_CheckOpenGLForErrors();
-		wglSwapBuffers(dc.m_hDC);
 	}
-}
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::SetXYFriend(CXYWnd *pWnd) {
-	m_pXYFriend = pWnd;
+	Cam_Draw();
+	QE_CheckOpenGLForErrors();
+	wglSwapBuffers(dc.m_hDC);
+
 }
 
 /*
@@ -398,8 +395,8 @@ void CCamWnd::Cam_BuildMatrix() {
 	m_Camera.right[0] = m_Camera.forward[1];
 	m_Camera.right[1] = -m_Camera.forward[0];
 
-  float	matrix[4][4];
-  GL_ProjectionMatrix.Get(&matrix[0][0]);
+	float	matrix[4][4];
+	GL_ProjectionMatrix.Get(&matrix[0][0]);
 
 	for (int i = 0; i < 3; i++) {
 		m_Camera.vright[i] = matrix[i][0];
@@ -661,6 +658,38 @@ void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
  =======================================================================================================================
  */
 void CCamWnd::InitCull() {
+#if 1
+	const float xfov = 90;
+	const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
+
+	const idVec3 vieworg = m_Camera.origin;
+	//const idMat3 viewaxis = m_Camera.angles.ToMat3();
+	const auto viewaxis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
+
+	float	xs, xc;
+	float	ang;
+
+	ang = DEG2RAD(xfov) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
+
+	m_viewPlanes[0] = xs * viewaxis[0] + xc * viewaxis[1];
+	m_viewPlanes[1] = xs * viewaxis[0] - xc * viewaxis[1];
+
+	ang = DEG2RAD(yfov) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
+
+	m_viewPlanes[2] = xs * viewaxis[0] + xc * viewaxis[2];
+	m_viewPlanes[3] = xs * viewaxis[0] - xc * viewaxis[2];
+
+	// plane four is the front clipping plane
+	m_viewPlanes[4] = /* vec3_origin - */ viewaxis[0];
+
+	for (int i = 0; i < 5; i++) {
+		// flip direction so positive side faces out (FIXME: globally unify this)
+		m_viewPlanes[i] = -m_viewPlanes[i].Normal();
+		m_viewPlanes[i][3] = -(vieworg * m_viewPlanes[i].Normal());
+	}
+#else
 	int i;
 
 	VectorSubtract(m_Camera.vpn, m_Camera.vright, m_vCull1);
@@ -681,6 +710,7 @@ void CCamWnd::InitCull() {
 			m_nCullv2[i] = i;
 		}
 	}
+#endif
 }
 
 /*
@@ -688,31 +718,67 @@ void CCamWnd::InitCull() {
  =======================================================================================================================
  */
 bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
-	idVec3	point;
 
 	if ( b->forceVisibile ) {
 		return false;
 	}
 
-  idBounds bounds = idBounds(b->mins, b->maxs);
-  editorModel_t editorModel = Brush_GetEditorModel(b);
-  bounds.AddBounds(editorModel.bounds);
-  bounds.AddBounds(editorModel.model->Bounds());
+	idBounds bounds = idBounds(b->mins, b->maxs);
+	editorModel_t editorModel = Brush_GetEditorModel(b);
+	bounds.AddBounds(editorModel.bounds);
+	bounds.AddBounds(editorModel.model->Bounds());
+
+	idVec3 points[8];
+	bounds.ToPoints(points);
 
 	if (g_PrefsDlg.m_bCubicClipping) {
-
 		const float maxDistance = g_PrefsDlg.m_nCubicScale * 64;
+		const float maxDistanceSquared = maxDistance * maxDistance;
+#if 0
+		bool outside = true;
+		for (int i = 0; i < 8; ++i) {
+			const idVec3 distance = points[i] - m_Camera.origin;
 
-    idVec3 distance = bounds.GetCenter() - m_Camera.origin;
+			if (distance.LengthSqr() < maxDistanceSquared) {
+				outside = false;
+				break;
+			}
+		}
 
-		if (distance.Length() > maxDistance) {
+		if (outside) {
 			return true;
 		}
+#else
+		idVec3 distance = bounds.GetCenter() - m_Camera.origin;
+
+		if (distance.LengthSqr() > maxDistanceSquared) {
+			return true;
+		}
+#endif
 	}
 
 	if (cubicOnly) {
 		return false;
 	}
+
+	for (int i = 0; i < 5; ++i) {
+		bool outside = true;
+
+		for (int j = 0; j < 8; ++j) {
+			if (m_viewPlanes[i].Distance(points[j]) < 0) {
+				outside = false;
+				break;
+			}
+		}
+
+		if (outside) {
+			return true;
+		}
+	}
+
+	return false;
+	/*
+	idVec3	point;
 
 	for (int i = 0; i < 3; i++) {
 		point[i] = bounds[0][m_nCullv1[i]] - m_Camera.origin[i];
@@ -731,33 +797,14 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 	}
 
 	return false;
+	*/
 }
-
-#if 0
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::DrawLightRadius(brush_t *pBrush) {
-	// if lighting
-	int nRadius = Brush_LightRadius(pBrush);
-	if (nRadius > 0) {
-		Brush_SetLightColor(pBrush);
-		glEnable(GL_BLEND);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_BLEND);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-}
-#endif
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void setGLMode(int mode) {
+static void setGLMode(int mode) {
 	switch (mode)
 	{
 		case cd_wire:
@@ -793,7 +840,7 @@ void setGLMode(int mode) {
 
 
 extern void glLabeledPoint(idVec4 &color, idVec3 &point, float size, const char *label);
-void DrawAxial(face_t *selFace) {
+static void DrawAxial(face_t *selFace) {
 	if (g_bAxialMode) {
 		idVec3 points[4];
 
@@ -829,11 +876,7 @@ void DrawAxial(face_t *selFace) {
 void CCamWnd::SetProjectionMatrix() {
 	float xfov = 90;
 	float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
-#if 0
-	float screenaspect = (float)m_Camera.width / m_Camera.height;
-	glLoadIdentity();
-	gluPerspective(yfov, screenaspect, 2, 8192);
-#else
+
 	float	xmin, xmax, ymin, ymax;
 	float	width, height;
 	float	zNear;
@@ -874,17 +917,10 @@ void CCamWnd::SetProjectionMatrix() {
 	projectionMatrix[11] = -1;
 	projectionMatrix[15] = 0;
 
-  GL_ProjectionMatrix.Load(projectionMatrix);
-#endif
+	GL_ProjectionMatrix.Load(projectionMatrix);
 }
 
 void CCamWnd::Cam_Draw() {
-	brush_t *brush;
-	face_t	*face;
-
-	// float yfov;
-	int		i;
-
 	if (!active_brushes.next) {
 		return;					// not valid yet
 	}
@@ -898,31 +934,23 @@ void CCamWnd::Cam_Draw() {
 		Cam_Render();
 	}
 
-	glViewport(0, 0, m_Camera.width, m_Camera.height);
-	glScissor(0, 0, m_Camera.width, m_Camera.height);
-	glClearColor(g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][0], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][1], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][2], 0);
-
-	if (!renderMode) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-
 	SetProjectionMatrix();
-  g_qeglobals.surfaceBuffer.Clear();
-  g_qeglobals.lineBuffer.Clear();
-  g_qeglobals.pointBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.pointBuffer.Clear();
 
-  GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
-  GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
-  GL_ProjectionMatrix.Rotate(m_Camera.angles[0], 0, 1, 0);
-  GL_ProjectionMatrix.Rotate(-m_Camera.angles[1], 0, 0, 1);
-  GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
+	GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
+	GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
+	GL_ProjectionMatrix.Rotate(m_Camera.angles[0], 0, 1, 0);
+	GL_ProjectionMatrix.Rotate(-m_Camera.angles[1], 0, 0, 1);
+	GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
 
 	Cam_BuildMatrix();
 
-  brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
+	const brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
 
-  g_qeglobals.surfaceBuffer.Clear();
-	for (brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
+	g_qeglobals.surfaceBuffer.Clear();
+	for (auto brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
 
 		if ( CullBrush(brush, false) ) {
 			continue;
@@ -939,27 +967,27 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		setGLMode(m_Camera.draw_mode);
-    Brush_Draw(brush, false);
+		Brush_Draw(brush, false);
 	}
 
-  if (!renderMode) {
-    // draw normally
-    for (brush = pList->next; brush != pList; brush = brush->next) {
-      setGLMode(m_Camera.draw_mode);
-      Brush_Draw(brush, true);
-    }
-  }
+	if (!renderMode) {
+		// draw normally
+		for (auto brush = pList->next; brush != pList; brush = brush->next) {
+			setGLMode(m_Camera.draw_mode);
+			Brush_Draw(brush, true);
+		}
+	}
 
-  g_qeglobals.surfaceBuffer.Commit();
-  g_qeglobals.lineBuffer.Commit();
-  g_qeglobals.pointBuffer.Commit();
+	g_qeglobals.surfaceBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.pointBuffer.Commit();
 
-  g_qeglobals.surfaceBuffer.Clear();
-  g_qeglobals.lineBuffer.Clear();
-  g_qeglobals.pointBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.pointBuffer.Clear();
 
 
-  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
+	const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
 
 	setGLMode(m_Camera.draw_mode);
 
@@ -969,89 +997,86 @@ void CCamWnd::Cam_Draw() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	globalImages->BindNull();
 
-  if(renderMode) {
-    for (brush = pList->next; brush != pList; brush = brush->next) {
-      if (brush->pPatch /*|| brush->modelHandle > 0*/) {
-        DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
-      }
-    }
-  }
+	if(renderMode) {
+		for (auto brush = pList->next; brush != pList; brush = brush->next) {
+			if (brush->pPatch /*|| brush->modelHandle > 0*/) {
+				DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+			}
+		}
+	}
 
-	for (brush = pList->next; brush != pList; brush = brush->next) {
-
-    if(brush->pPatch) {
-      DrawPatchMeshSolid(brush->pPatch, color);
-      DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
-      DrawPatchMeshHandles(brush->pPatch);
-      continue;
-    }
-
-		if ( brush->modelHandle > 0) {
-      continue;
+	for (auto brush = pList->next; brush != pList; brush = brush->next) {
+		if(brush->pPatch) {
+			DrawPatchMeshSolid(brush->pPatch, color);
+			DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+			DrawPatchMeshHandles(brush->pPatch);
+			continue;
 		}
 
-    if ( brush->owner->eclass->entityModel ) {
-        continue;
-    }
+		if ( brush->modelHandle > 0) {
+			continue;
+		}
 
-		for (face = brush->brush_faces; face; face = face->next) {
+		if ( brush->owner->eclass->entityModel ) {
+			continue;
+		}
+
+		for (auto face = brush->brush_faces; face; face = face->next) {
 			Face_Draw(face, color);
 		}
 	}
 
-	int nCount = g_ptrSelectedFaces.GetSize();
-
 	if (!renderMode) {
-		for (int i = 0; i < nCount; i++) {
-			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
+		for (const auto& selected : g_selectedFaces) {
+			const face_t *selFace = selected.GetFace();
 			Face_Draw(selFace, color);
 		}
 	}
 
-  g_qeglobals.surfaceBuffer.Commit();
-  g_qeglobals.surfaceBuffer.Clear();
+	g_qeglobals.surfaceBuffer.Commit();
+	g_qeglobals.surfaceBuffer.Clear();
 
-  if (!renderMode) {
-    for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
-      face_t	*selFace = reinterpret_cast <face_t *> (g_ptrSelectedFaces.GetAt(i));
-      DrawAxial(selFace);
-    }
-  }
+	if (!renderMode) {
+		for (const auto& selected : g_selectedFaces) {
+			face_t	*selFace = selected.GetFace();
+			DrawAxial(selFace);
+		}
+	}
 
-  g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 
 	if (renderMode) {
-		for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
-			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
+		for (const auto& selected : g_selectedFaces) {
+			const face_t *selFace = selected.GetFace();
 			Face_DrawOutline( selFace, idVec3(1,0,0));
 		}
 	}
 
-	for (brush = pList->next; brush != pList; brush = brush->next) {
+	for (auto brush = pList->next; brush != pList; brush = brush->next) {
 		if (brush->pPatch || brush->modelHandle > 0) {
 			continue;
 		}
 
-		for (face = brush->brush_faces; face; face = face->next) {
+		for (auto face = brush->brush_faces; face; face = face->next) {
 			Face_DrawOutline( face, idVec3(1,1,1));
 		}
 	}
 
-  g_qeglobals.lineBuffer.Commit();
-  g_qeglobals.lineBuffer.Clear();
+	g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Clear();
 
 	// edge / vertex flags
-  fhImmediateMode im;
+	fhImmediateMode im;
 	if (g_qeglobals.d_select_mode == sel_vertex) {
 		glPointSize(4);
 
 		im.Color3f(0, 1, 0);
 		im.Begin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_numpoints; i++) {
+		for (int i = 0; i < g_qeglobals.d_numpoints; i++) {
 			im.Vertex3fv( g_qeglobals.d_points[i].ToFloatPtr() );
 		}
 
@@ -1064,7 +1089,7 @@ void CCamWnd::Cam_Draw() {
 		glPointSize(4);
 		im.Color3f(0, 0, 1);
 		im.Begin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_numedges; i++) {
+		for (int i = 0; i < g_qeglobals.d_numedges; i++) {
 			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
 			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
 			im.Vertex3f( (v1[0] + v2[0]) * 0.5f, (v1[1] + v2[1]) * 0.5f, (v1[2] + v2[2]) * 0.5f );
@@ -1084,9 +1109,9 @@ void CCamWnd::Cam_Draw() {
 	glEnable(GL_DEPTH_TEST);
 
 	DrawPathLines();
-  Pointfile_Draw();
+	Pointfile_Draw();
 
-  g_qeglobals.lineBuffer.Commit();
+	g_qeglobals.lineBuffer.Commit();
 
 	//
 	// bind back to the default texture so that we don't have problems elsewhere
@@ -1125,55 +1150,6 @@ void CCamWnd::OnSize(UINT nType, int cx, int cy) {
 void CCamWnd::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	g_pParentWnd->HandleKey(nChar, nRepCnt, nFlags, false);
 }
-
-//
-// =======================================================================================================================
-//    Timo brush primitive texture shifting, using camera view to select translations::
-// =======================================================================================================================
-//
-void CCamWnd::ShiftTexture_BrushPrimit(face_t *f, int x, int y) {
-/*
-	idVec3	texS, texT;
-	idVec3	viewX, viewY;
-	int		XS, XT, YS, YT;
-	int		outS, outT;
-#ifdef _DEBUG
-	if (!g_qeglobals.m_bBrushPrimitMode) {
-		common->Printf("Warning : unexpected call to CCamWnd::ShiftTexture_BrushPrimit with brush primitive mode disbaled\n");
-		return;
-	}
-#endif
-	// compute face axis base
-	//ComputeAxisBase(f->plane.Normal(), texS, texT);
-
-	// compute camera view vectors
-	VectorCopy(m_Camera.vup, viewY);
-	VectorCopy(m_Camera.vright, viewX);
-
-	// compute best vectors
-	//ComputeBest2DVector(viewX, texS, texT, XS, XT);
-	//ComputeBest2DVector(viewY, texS, texT, YS, YT);
-
-	// check this is not a degenerate case
-	if ((XS == YS) && (XT == YT))
-	{
-#ifdef _DEBUG
-		common->Printf("Warning : degenerate best vectors axis base in CCamWnd::ShiftTexture_BrushPrimit\n");
-#endif
-		// forget it
-		Select_ShiftTexture_BrushPrimit(f, x, y, false);
-		return;
-	}
-
-	// compute best fitted translation in face axis base
-	outS = XS * x + YS * y;
-	outT = XT * x + YT * y;
-
-	// call actual texture shifting code
-	Select_ShiftTexture_BrushPrimit(f, outS, outT, false);
-*/
-}
-
 
 bool IsBModel(brush_t *b) {
 	const char *v = b->owner->ValueForKey( "model" );
@@ -1333,10 +1309,7 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 
 }
 
-void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFile) {
-	if(!tris || !objFile)
-		return;
-
+void Tris_ToOBJ(const idTriList& tris, const idMatList& mats, idFile* objFile, idFile* mtlFile) {
 	idList<idStr*> matNames;
 	int i, j, k;
 	int indexBase = 1;
@@ -1347,8 +1320,8 @@ void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFi
 		objFile->Printf( "mtllib %s\n", mtlFile->GetName() );
 	}
 
-	for (i = 0; i < tris->Num(); i++) {
-		srfTriangles_t *tri = (*tris)[i];
+	for (i = 0; i < tris.Num(); i++) {
+		srfTriangles_t *tri = tris[i];
 		for (j = 0; j < tri->numVerts; j++) {
 			objFile->Printf( "v %f %f %f\n", tri->verts[j].xyz.x, tri->verts[j].xyz.z, -tri->verts[j].xyz.y );
 		}
@@ -1359,8 +1332,8 @@ void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFi
 			objFile->Printf( "vn %f %f %f\n", tri->verts[j].normal.x, tri->verts[j].normal.y, tri->verts[j].normal.z );
 		}
 
-		if (mats && mats->Num() > i && stricmp( (*mats)[i]->GetName(), lastMaterial)) {
-			lastMaterial = (*mats)[i]->GetName();
+		if (mats.Num() > i && stricmp( mats[i]->GetName(), lastMaterial)) {
+			lastMaterial = mats[i]->GetName();
 
 			bool found = false;
 			for (k = 0; k < matNames.Num(); k++) {
@@ -1391,7 +1364,7 @@ void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFi
 
 	}
 
-	if(mats && mtlFile) {
+	if(mtlFile) {
 		for (k = 0; k < matNames.Num(); k++) {
 			// This presumes the diffuse tga name matches the material name
 			mtlFile->Printf( "newmtl %s\n\tNs 0\n\td 1\n\tillum 2\n\tKd 0 0 0 \n\tKs 0.22 0.22 0.22 \n\tKa 0 0 0 \n\tmap_Kd %s/base/%s.tga\n\n\n", matNames[k]->c_str(), "z:/d3xp", matNames[k]->c_str() );
@@ -1612,7 +1585,7 @@ void Select_ToOBJ() {
 		idFile *objFile = fileSystem->OpenExplicitFileWrite( objFilePath );
 		idFile *mtlFile = fileSystem->OpenExplicitFileWrite( mtlFilePath );
 
-		Tris_ToOBJ(&tris, &mats, objFile, mtlFile);
+		Tris_ToOBJ(tris, mats, objFile, mtlFile);
 
 		fileSystem->CloseFile( objFile );
 		fileSystem->CloseFile( mtlFile );
@@ -1757,30 +1730,6 @@ void CCamWnd::BuildRendererState() {
 	//common->Printf("Render data used %d brushes\n", numBrushes);
 	worldDirty = false;
 	UpdateCaption();
-}
-
-/*
-===============================
-CCamWnd::UpdateRenderEntities
-
-  Creates a new entity state list
-  returns true if a repaint is needed
-===============================
-*/
-bool CCamWnd::UpdateRenderEntities() {
-
-	if (rebuildMode) {
-		return false;
-	}
-
-	bool ret = false;
-	for ( entity_t *ent = entities.next ; ent != &entities ; ent = ent->next ) {
-		BuildEntityRenderState( ent, (ent->lightDef != -1 || ent->modelDef != -1 || ent->soundEmitter ) ? true : false );
-		if (ret == false && ent->modelDef || ent->lightDef) {
-			ret = true;
-		}
-	}
-	return ret;
 }
 
 /*
@@ -1953,28 +1902,9 @@ void CCamWnd::MarkWorldDirty() {
  =======================================================================================================================
  */
 void CCamWnd::Cam_Render() {
-
-	renderView_t	refdef;
-	CPaintDC	dc(this);	// device context for painting
-
-
 	if (!active_brushes.next) {
 		return;					// not valid yet
 	}
-
-	if (!wglMakeCurrent(dc.m_hDC, win32.hGLRC)) {
-		common->Printf("ERROR: wglMakeCurrent failed..\n ");
-		common->Printf("Please restart " EDITOR_WINDOWTEXT " if the camera view is not working\n");
-		return;
-	}
-
-	// save the editor state
-	//glPushAttrib( GL_ALL_ATTRIB_BITS );
-	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-	glScissor( 0, 0, m_Camera.width, m_Camera.height );
-	glClear( GL_COLOR_BUFFER_BIT );
-
-	//	wglSwapBuffers(dc.m_hDC);
 
 	// create the model, using explicit normals
 	if ( rebuildMode && worldDirty ) {
@@ -1989,6 +1919,7 @@ void CCamWnd::Cam_Render() {
 	// render it
 	renderSystem->BeginFrame( m_Camera.width, m_Camera.height );
 
+	renderView_t refdef;
 	memset( &refdef, 0, sizeof( refdef ) );
 	refdef.vieworg = m_Camera.origin;
 
@@ -2009,13 +1940,10 @@ void CCamWnd::Cam_Render() {
 
 	renderSystem->EndFrame();
 
-	//wglSwapBuffers(dc.m_hDC);
 	// get back to the editor state
 	GL_ModelViewMatrix.LoadIdentity();
-
 	glConfig.windowWidth = oldWindowWidth;
 	glConfig.windowHeight = oldWindowHeight;
-	Cam_BuildMatrix();
 }
 
 

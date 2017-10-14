@@ -172,10 +172,10 @@ void CSurfaceDlg::SetTexMods() {
 		m_subdivide = false;
 	}
 
-	int faceCount = g_ptrSelectedFaces.GetSize();
+	int faceCount = g_selectedFaces.Num();
 	face_t *selFace = NULL;
 	if (faceCount) {
-		selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(0));
+		selFace = g_selectedFaces[0].GetFace();
 	} else {
 		if (selected_brushes.next != &selected_brushes) {
 			brush_t *b = selected_brushes.next;

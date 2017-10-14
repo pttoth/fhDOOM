@@ -35,7 +35,6 @@ If you have questions concerning this license or the applicable additional terms
 ** GLimp_SwapBuffers
 ** GLimp_Init
 ** GLimp_Shutdown
-** GLimp_SetGamma
 **
 ** Note that the GLW_xxx functions are Windows specific GL-subsystem
 ** related functions that are relevant ONLY to win_glimp.c
@@ -47,69 +46,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "rc/AFEditor_resource.h"
 #include "rc/doom_resource.h"
 #include "../../renderer/tr_local.h"
-
-/*
-========================
-GLimp_GetOldGammaRamp
-========================
-*/
-static void GLimp_SaveGamma( void ) {
-	HDC			hDC;
-	BOOL		success;
-
-	hDC = GetDC( GetDesktopWindow() );
-	success = GetDeviceGammaRamp( hDC, win32.oldHardwareGamma );
-	common->DPrintf( "...getting default gamma ramp: %s\n", success ? "success" : "failed" );
-	ReleaseDC( GetDesktopWindow(), hDC );
-}
-
-/*
-========================
-GLimp_RestoreGamma
-========================
-*/
-static void GLimp_RestoreGamma( void ) {
-	HDC hDC;
-	BOOL success;
-
-	// if we never read in a reasonable looking
-	// table, don't write it out
-	if ( win32.oldHardwareGamma[0][255] == 0 ) {
-		return;
-	}
-
-	hDC = GetDC( GetDesktopWindow() );
-	success = SetDeviceGammaRamp( hDC, win32.oldHardwareGamma );
-	common->DPrintf ( "...restoring hardware gamma: %s\n", success ? "success" : "failed" );
-	ReleaseDC( GetDesktopWindow(), hDC );
-}
-
-
-/*
-========================
-GLimp_SetGamma
-
-The renderer calls this when the user adjusts r_gamma or r_brightness
-========================
-*/
-void GLimp_SetGamma( unsigned short red[256], unsigned short green[256], unsigned short blue[256] ) {
-	unsigned short table[3][256];
-	int i;
-
-	if ( !win32.hDC ) {
-		return;
-	}
-
-	for ( i = 0; i < 256; i++ ) {
-		table[0][i] = red[i];
-		table[1][i] = green[i];
-		table[2][i] = blue[i];
-	}
-
-	if ( !SetDeviceGammaRamp( win32.hDC, table ) ) {
-		common->Printf( "WARNING: SetDeviceGammaRamp failed.\n" );
-	}
-}
 
 /*
 =============================================================================
@@ -692,10 +628,6 @@ bool GLimp_Init( glimpParms_t parms ) {
 		return false;
 	}
 
-	// save the hardware gamma so it can be
-	// restored on exit
-	GLimp_SaveGamma();
-
 	// create our window classes if we haven't already
 	GLW_CreateWindowClasses();
 
@@ -846,9 +778,6 @@ void GLimp_Shutdown( void ) {
 		CloseHandle( win32.renderThreadHandle );
 		win32.renderThreadHandle = NULL;
 	}
-
-	// restore gamma
-	GLimp_RestoreGamma();
 }
 
 

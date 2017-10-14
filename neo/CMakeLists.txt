@@ -905,8 +905,6 @@ IF(WIN32)
       tools/radiant/MediaPreviewDlg.h
       tools/radiant/MRU.CPP
       tools/radiant/MRU.H
-      tools/radiant/NewProjDlg.cpp
-      tools/radiant/NewProjDlg.h
       tools/radiant/NewTexWnd.cpp
       tools/radiant/NewTexWnd.h
       tools/radiant/PARSE.CPP
@@ -952,8 +950,6 @@ IF(WIN32)
       tools/radiant/VERTSEL.CPP
       tools/radiant/WaitDlg.cpp
       tools/radiant/WaitDlg.h
-      tools/radiant/WaveOpen.cpp
-      tools/radiant/WaveOpen.h
       tools/radiant/WIN_DLG.CPP
       tools/radiant/WIN_QE3.CPP
       #tools/radiant/WIN_QE3.RC2

@@ -830,13 +830,12 @@ bool idMapFile::Parse( const char *filename, bool ignoreRegion, bool osPath ) {
 idMapFile::Write
 ============
 */
-bool idMapFile::Write( const char *fileName, const char *ext, bool fromBasePath ) {
+bool idMapFile::Write( const char *fileName, bool fromBasePath ) {
 	int i;
 	idStr qpath;
 	idFile *fp;
 
 	qpath = fileName;
-	qpath.SetFileExtension( ext );
 
 	idLib::common->Printf( "writing %s...\n", qpath.c_str() );
 

@@ -1222,13 +1222,6 @@ void		GLimp_SwapBuffers( void );
 // other system specific cvar checks that happen every frame.
 // This will not be called if 'r_drawBuffer GL_FRONT'
 
-void		GLimp_SetGamma( unsigned short red[256],
-						    unsigned short green[256],
-							unsigned short blue[256] );
-// Sets the hardware gamma ramps for gamma and brightness adjustment.
-// These are now taken as 16 bit values, so we can take full advantage
-// of dacs with >8 bits of precision
-
 void		GLimp_ActivateContext( void );
 void		GLimp_DeactivateContext( void );
 // These are used for managing SMP handoffs of the OpenGL context

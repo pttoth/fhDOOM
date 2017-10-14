@@ -25,18 +25,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "Radiant_resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\0"
 END
@@ -313,13 +313,6 @@ BEGIN
         MENUITEM "Save &as...",                 ID_FILE_SAVEAS
         MENUITEM "Save s&elected...",           ID_FILE_EXPORTMAP
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
-        MENUITEM "Save re&gion...",             ID_FILE_SAVEREGION
-        MENUITEM SEPARATOR
-        MENUITEM "New p&roject...",             ID_FILE_NEWPROJECT, GRAYED
-        MENUITEM "Load &project...",            ID_FILE_LOADPROJECT
-        MENUITEM "Pro&ject settings...",        ID_FILE_PROJECTSETTINGS
-        MENUITEM SEPARATOR
         MENUITEM "&Pointfile...",               ID_FILE_POINTFILE
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_FILE_EXIT
@@ -498,10 +491,6 @@ BEGIN
             MENUITEM "To CM",                       ID_SELECTION_EXPORT_TOCM
         END
     END
-    POPUP "&Bsp"
-    BEGIN
-        MENUITEM SEPARATOR
-    END
     POPUP "&Grid"
     BEGIN
         MENUITEM "Grid 0.125 \t&Shift + 1",     ID_GRID_POINT125
@@ -548,7 +537,6 @@ BEGIN
     END
     POPUP "&Misc"
     BEGIN
-        MENUITEM "&Benchmark",                  ID_MISC_BENCHMARK
         POPUP "&Colors"
         BEGIN
             POPUP "Themes"
@@ -571,11 +559,9 @@ BEGIN
             MENUITEM "Clipper...",                  ID_COLORS_CLIPPER
             MENUITEM "Active View name...",         ID_COLORS_VIEWNAME
         END
-        MENUITEM "&Gamma...",                   ID_MISC_GAMMA
         MENUITEM "Find brush...",               ID_MISC_FINDBRUSH
         MENUITEM "Next leak spot\tctrl-l",      ID_MISC_NEXTLEAKSPOT
         MENUITEM "Previous leak spot\tctrl-p",  ID_MISC_PREVIOUSLEAKSPOT
-        MENUITEM "&Print XY View",              ID_MISC_PRINTXY
         MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR
         MENUITEM "Find or Replace Entity",      ID_MISC_FINDORREPLACEENTITY
         MENUITEM "SetViewPos",                  ID_MISC_SETVIEWPOS
@@ -677,17 +663,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Nurb Editor",                 ID_PATCH_NURBEDITOR
     END
-    POPUP "P&lugins"
-    BEGIN
-        MENUITEM "Refresh",                     ID_PLUGINS_REFRESH
-        MENUITEM SEPARATOR
-    END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Help\tF1",                    ID_HELP
-        MENUITEM SEPARATOR
-        MENUITEM "Command list...",             ID_HELP_COMMANDLIST
-        MENUITEM SEPARATOR
         MENUITEM "&About...",                   ID_HELP_ABOUT
     END
 END
@@ -2130,53 +2107,53 @@ END
 IDD_DIALOG_NEWCURVE DLGINIT
 BEGIN
     IDC_COMBO_CURVES, 0x403, 17, 0
-0x6143, 0x6d74, 0x6c75, 0x526c, 0x6d6f, 0x7053, 0x696c, 0x656e, "\000" 
+0x6143, 0x6d74, 0x6c75, 0x526c, 0x6d6f, 0x7053, 0x696c, 0x656e, "\000"
     IDC_COMBO_CURVES, 0x403, 6, 0
-0x754e, 0x6272, 0x0073, 
+0x754e, 0x6272, 0x0073,
     0
 END
 
 IDD_DIALOG_NEWPATCH DLGINIT
 BEGIN
     IDC_COMBO_WIDTH, 0x403, 2, 0
-0x0033, 
+0x0033,
     IDC_COMBO_WIDTH, 0x403, 2, 0
-0x0035, 
+0x0035,
     IDC_COMBO_WIDTH, 0x403, 2, 0
-0x0037, 
+0x0037,
     IDC_COMBO_WIDTH, 0x403, 2, 0
-0x0039, 
+0x0039,
     IDC_COMBO_WIDTH, 0x403, 3, 0
-0x3131, "\000" 
+0x3131, "\000"
     IDC_COMBO_WIDTH, 0x403, 3, 0
-0x3331, "\000" 
+0x3331, "\000"
     IDC_COMBO_WIDTH, 0x403, 3, 0
-0x3531, "\000" 
+0x3531, "\000"
     IDC_COMBO_HEIGHT, 0x403, 2, 0
-0x0033, 
+0x0033,
     IDC_COMBO_HEIGHT, 0x403, 2, 0
-0x0035, 
+0x0035,
     IDC_COMBO_HEIGHT, 0x403, 2, 0
-0x0037, 
+0x0037,
     IDC_COMBO_HEIGHT, 0x403, 2, 0
-0x0039, 
+0x0039,
     IDC_COMBO_HEIGHT, 0x403, 3, 0
-0x3131, "\000" 
+0x3131, "\000"
     IDC_COMBO_HEIGHT, 0x403, 3, 0
-0x3331, "\000" 
+0x3331, "\000"
     IDC_COMBO_HEIGHT, 0x403, 3, 0
-0x3531, "\000" 
+0x3531, "\000"
     0
 END
 
 IDD_DLG_PREFS DLGINIT
 BEGIN
     IDC_COMBO_SHADERS, 0x403, 5, 0
-0x6f4e, 0x656e, "\000" 
+0x6f4e, 0x656e, "\000"
     IDC_COMBO_SHADERS, 0x403, 7, 0
-0x6f43, 0x6d6d, 0x6e6f, "\000" 
+0x6f43, 0x6d6d, 0x6e6f, "\000"
     IDC_COMBO_SHADERS, 0x403, 4, 0
-0x6c41, 0x006c, 
+0x6c41, 0x006c,
     0
 END
 
@@ -2217,9 +2194,6 @@ BEGIN
     ID_FILE_SAVE            "Save the active map\nSave"
     ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
     ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
-    ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
-    ID_FILE_PRINT           "Print the active document\nPrint"
-    ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
 END
 
 STRINGTABLE
@@ -2326,7 +2300,6 @@ END
 STRINGTABLE
 BEGIN
     ID_BRUSH_SCRIPTS        "Define and run BrushScripts\nBrushScripts"
-    ID_HELP_COMMANDLIST     "Provides a list of the currently bound commands"
 END
 
 STRINGTABLE
@@ -2343,15 +2316,15 @@ STRINGTABLE
 BEGIN
     ID_SELECTION_MOVEONLY   "Move selection only ( No size )\nMove selection only ( No size )"
     ID_SELECT_BRUSHESONLY   "Brushes are your friend, only select them\nOnly select brushes."
-    ID_SELECT_BYBOUNDINGBRUSH 
+    ID_SELECT_BYBOUNDINGBRUSH
                             "Select primitives by bounding brush\nSelect primitives by bounding brush"
     ID_VIEW_RENDERMODE      "Camera view shows render data\nCamera view shows render data"
-    ID_VIEW_REBUILDRENDERDATA 
+    ID_VIEW_REBUILDRENDERDATA
                             "Rebuild render data now\nRebuild render data now"
     ID_VIEW_REALTIMEREBUILD "Rebuild render data in realtime\nRebuild render data in realtime"
-    ID_VIEW_RENDERENTITYOUTLINES 
+    ID_VIEW_RENDERENTITYOUTLINES
                             "Render light entities in render mode\nRender light entities in render mode"
-    ID_VIEW_MATERIALANIMATION 
+    ID_VIEW_MATERIALANIMATION
                             "Render material (shader) animation\nRender material (shader) animation"
 END
 
@@ -2360,7 +2333,7 @@ BEGIN
     ID_SELECT_NOMODELS      "Don't select models\nDon't select models"
     ID_VIEW_RENDERSOUND     "Render sound\nRender sound"
     ID_SOUND_POPUP          "Show sound volumes when selected\nShow sound volumes when selected"
-    ID_SOUND_SHOWSOUNDVOLUMES 
+    ID_SOUND_SHOWSOUNDVOLUMES
                             "Always show sound volumes\nAlways show sound volumes"
     ID_SPLINES_EDITPOINTS   "Edit Curve Points\nEdit Curve Points"
     ID_SPLINES_ADDPOINTS    "Add Curve Points\nAdd Curve Points"
@@ -2394,24 +2367,21 @@ END
 STRINGTABLE
 BEGIN
     ID_SELECT_MOUSEROTATE   "Free rotation\nFree Rotation"
-    ID_TEXTURE_REPLACESELECTED 
+    ID_TEXTURE_REPLACESELECTED
                             "Find and replace texture names in selected brushes/faces"
     ID_TEXTURE_REPLACEALL   "Find and replace texture names in all brushes/faces"
-    ID_SELECT_COMPLETE_ENTITY 
+    ID_SELECT_COMPLETE_ENTITY
                             "Select the entire entity from the currently selected brushes."
     ID_SCALELOCKX           "Scale X\nScale X"
     ID_SCALELOCKY           "Scale Y\nScale Y"
     ID_SCALELOCKZ           "Scale Z\nScale Z"
     ID_VIEW_CUBICCLIPPING   "Cubic clip the camera view\nCubic clip the camera view"
-    ID_FILE_PROJECTSETTINGS "View and edit project attributes"
     ID_VIEW_CUBEOUT         "Zoom cubic clip out"
     ID_VIEW_CUBEIN          "Zoom cubic clip in"
 END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_SAVEREGION      "Save defined region"
-    ID_FILE_LOADREGION      "Load saved region"
     ID_TOOLBAR_MAIN         "Standard toolbar"
     ID_TOOLBAR_TEXTURE      "Texture control toolbar"
     ID_TEXTURES_LOAD        "Load from a specific directory"
@@ -2431,7 +2401,7 @@ STRINGTABLE
 BEGIN
     ID_DONTSELECTCURVE      "Select all primitives with bounding brushes\nSelect all primitives with bounding brushes"
     ID_CONVERTCURVES        "Turns selected brush into a new test curve"
-    ID_PATCH_SHOWBOUNDINGBOX 
+    ID_PATCH_SHOWBOUNDINGBOX
                             "Show primitive bounding box\nShow primitive bounding box"
     ID_CURVE_SIMPLEPATCHMESH "Builds a flat patch mesh, you specify the size"
     ID_PATCH_WIREFRAME      "Show patches as wireframes\nShow patches as wireframes"
@@ -2450,18 +2420,18 @@ BEGIN
     ID_CURVE_DELETEROW      "Deletes a row in the current patch(s)\nDeletes a row in the current patch(s)"
     ID_CURVE_DELETECOLUMN   "Deletes a column in the current Patch(s)\nDeletes a column in the current Patch(s)"
     ID_PATCH_INSDEL         "Redisperse patch points\nRedisperse patch points"
-    ID_CURVE_INSERT_ADDCOLUMN 
+    ID_CURVE_INSERT_ADDCOLUMN
                             "Add a column to the end of the patch\nAdd a column to the end of the patch"
-    ID_CURVE_INSERT_INSERTCOLUMN 
+    ID_CURVE_INSERT_INSERTCOLUMN
                             "Insert a column at the beginning of the patch\nInsert a column at the beginning of the patch"
     ID_CURVE_INSERT_ADDROW  "Add a row at the end of the patch\nAdd a row at the end of the patch"
-    ID_CURVE_INSERT_INSERTROW 
+    ID_CURVE_INSERT_INSERTROW
                             "Insert a row at the beginning of the patch\nInsert a row at the beginning of the patch"
-    ID_CURVE_DELETE_FIRSTCOLUMN 
+    ID_CURVE_DELETE_FIRSTCOLUMN
                             "Delete the first (2) columns\nDelete the first (2) columns"
-    ID_CURVE_DELETE_LASTCOLUMN 
+    ID_CURVE_DELETE_LASTCOLUMN
                             "Delete the last (2) columns\nDelete the last (2) columns"
-    ID_CURVE_DELETE_FIRSTROW 
+    ID_CURVE_DELETE_FIRSTROW
                             "Delete the first (2) rows\nDelete the first (2) rows"
     ID_CURVE_DELETE_LASTROW "Delete the last (2) rows\nDelete the last (2) rows"
     ID_CURVE_NEGATIVE       "Toggle negative flag\nToggle negative flag"
@@ -2473,9 +2443,9 @@ END
 STRINGTABLE
 BEGIN
     ID_CURVE_CAP            "Put caps on the current patch\nPut caps on the current patch"
-    ID_CURVE_REDISPERSE_ROWS 
+    ID_CURVE_REDISPERSE_ROWS
                             "Re-disperse rows across the dimensions of the patch"
-    ID_CURVE_REDISPERSE_COLS 
+    ID_CURVE_REDISPERSE_COLS
                             "Re-disperse columns across the dimensions of the patch"
     ID_CURVE_PATCHSQUARE    "Create a very square cylinder"
     ID_TEXTURES_FLUSH       "Flush texture palette"
@@ -2483,7 +2453,7 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_TEXTURES_RELOADSHADERS 
+    ID_TEXTURES_RELOADSHADERS
                             "Reload Shaders and apply visual changes to current map"
     ID_SHOW_ENTITIES        "Show models as\nShow Models as"
 END
@@ -2515,7 +2485,8 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

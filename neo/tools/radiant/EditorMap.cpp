@@ -531,13 +531,6 @@ void Map_LoadFile(const char *filename) {
 	Sys_UpdateWindows(W_ALL);
 }
 
-
-void Map_VerifyCurrentMap(const char *map) {
-	if ( idStr::Icmp( map, currentmap ) != 0 ) {
-		Map_LoadFile( map );
-	}
-}
-
 idMapPrimitive *BrushToMapPrimitive( const brush_t *b, const idVec3 &origin ) {
 	if ( b->pPatch ) {
 		idMapPatch *patch = new idMapPatch( b->pPatch->width * 6, b->pPatch->height * 6 );
@@ -659,36 +652,29 @@ bool Map_SaveFile(const char *filename, bool use_region, bool autosave) {
 		}
 	}
 
-	MEMORYSTATUSEX statex;
-	statex.dwLength = sizeof (statex);
-	GlobalMemoryStatusEx (&statex);
-	if ( statex.dwMemoryLoad > 95 ) {
-		g_pParentWnd->MessageBox("Physical memory is over 95% utilized. Consider saving and restarting", "Memory");
-	}
-
 	CWaitDlg dlg;
 	Pointfile_Clear();
 
 	const idStr temp = filename;
 
 	if ( !use_region ) {
-    auto attributes = GetFileAttributesA(temp);
-    if(attributes != INVALID_FILE_ATTRIBUTES) {
-      idStr backup = temp;
-      backup.StripFileExtension();
-      backup.SetFileExtension(".bak");
+		auto attributes = GetFileAttributesA(temp);
+		if(attributes != INVALID_FILE_ATTRIBUTES) {
+			idStr backup = temp;
+			backup.StripFileExtension();
+			backup.SetFileExtension(".bak");
 
-      if (!CopyFileA(temp, backup, false)) {
-        g_pParentWnd->MessageBox(va("Unable to copy %s to %s: %s", temp.c_str(), backup.c_str(), strerror(errno)), "File Error");
-      }
-    }
+			if (!CopyFileA(temp, backup, false)) {
+				g_pParentWnd->MessageBox(va("Unable to copy %s to %s: %s", temp.c_str(), backup.c_str(), strerror(errno)), "File Error");
+			}
+		}
 	}
 
 	common->Printf("Map_SaveFile: %s\n", filename);
 
 	idStr mapFile;
 	bool localFile = (strstr(filename, ":") != NULL);
-	if (autosave || localFile) {
+	if (localFile) {
 		mapFile = filename;
 	} else {
 		mapFile = fileSystem->OSPathToRelativePath( filename );
@@ -759,10 +745,10 @@ bool Map_SaveFile(const char *filename, bool use_region, bool autosave) {
 	}
 
 	mapFile.StripFileExtension();
-	idStr mapExt = (use_region) ? ".reg" : ".map";
-	sprintf(status, "Writing file %s.%s...", mapFile.c_str(), mapExt.c_str());
+	mapFile.SetFileExtension(use_region ? "reg" : "map");
+	sprintf(status, "Writing file %s...", mapFile.c_str());
 	dlg.SetText(status);
-	map.Write(mapFile, mapExt, !(autosave || localFile));
+	map.Write(mapFile, !localFile);
 	mapModified = 0;
 
 	if (use_region) {

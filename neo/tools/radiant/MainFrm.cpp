@@ -37,7 +37,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "MainFrm.h"
 #include "RotateDlg.h"
 #include "EntityListDlg.h"
-#include "NewProjDlg.h"
 #include "CommandsDlg.h"
 #include "ScaleDialog.h"
 #include "FindTextureDlg.h"
@@ -357,12 +356,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_VIEW_CAMERATOGGLE, ToggleCamera)
 	ON_COMMAND(ID_FILE_CLOSE, OnFileClose)
 	ON_COMMAND(ID_FILE_EXIT, OnFileExit)
-	ON_COMMAND(ID_FILE_LOADPROJECT, OnFileLoadproject)
 	ON_COMMAND(ID_FILE_NEW, OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
 	ON_COMMAND(ID_FILE_POINTFILE, OnFilePointfile)
-	ON_COMMAND(ID_FILE_PRINT, OnFilePrint)
-	ON_COMMAND(ID_FILE_PRINT_PREVIEW, OnFilePrintPreview)
 	ON_COMMAND(ID_FILE_SAVE, OnFileSave)
 	ON_COMMAND(ID_FILE_SAVEAS, OnFileSaveas)
 	ON_COMMAND(D3XP_ID_FILE_SAVE_COPY, OnFileSaveCopy)
@@ -397,10 +393,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_TEXTURES_SHOWINUSE, OnTexturesShowinuse)
 	ON_COMMAND(ID_TEXTURES_INSPECTOR, OnTexturesInspector)
 	ON_COMMAND(ID_MISC_FINDBRUSH, OnMiscFindbrush)
-	ON_COMMAND(ID_MISC_GAMMA, OnMiscGamma)
 	ON_COMMAND(ID_MISC_NEXTLEAKSPOT, OnMiscNextleakspot)
 	ON_COMMAND(ID_MISC_PREVIOUSLEAKSPOT, OnMiscPreviousleakspot)
-	ON_COMMAND(ID_MISC_PRINTXY, OnMiscPrintxy)
 	ON_COMMAND(ID_MISC_SELECTENTITYCOLOR, OnMiscSelectentitycolor)
 	ON_COMMAND(ID_MISC_FINDORREPLACEENTITY, OnMiscFindOrReplaceEntity)
 	ON_COMMAND(ID_MISC_FINDNEXTENT, OnMiscFindNextEntity)
@@ -475,8 +469,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_EDIT_MAPINFO, OnEditMapinfo)
 	ON_COMMAND(ID_EDIT_ENTITYINFO, OnEditEntityinfo)
 	ON_COMMAND(ID_VIEW_NEXTVIEW, OnViewNextview)
-	ON_COMMAND(ID_HELP_COMMANDLIST, OnHelpCommandlist)
-	ON_COMMAND(ID_FILE_NEWPROJECT, OnFileNewproject)
 	ON_COMMAND(ID_FLIP_CLIP, OnFlipClip)
 	ON_COMMAND(ID_CLIP_SELECTED, OnClipSelected)
 	ON_COMMAND(ID_SPLIT_SELECTED, OnSplitSelected)
@@ -525,12 +517,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_SELECT_MOUSESCALE, OnSelectMousescale)
 	ON_COMMAND(ID_VIEW_CUBICCLIPPING, OnViewCubicclipping)
 	ON_COMMAND(ID_FILE_IMPORT, OnFileImport)
-	ON_COMMAND(ID_FILE_PROJECTSETTINGS, OnFileProjectsettings)
 	ON_UPDATE_COMMAND_UI(ID_FILE_IMPORT, OnUpdateFileImport)
 	ON_COMMAND(ID_VIEW_CUBEIN, OnViewCubein)
 	ON_COMMAND(ID_VIEW_CUBEOUT, OnViewCubeout)
-	ON_COMMAND(ID_FILE_SAVEREGION, OnFileSaveregion)
-	ON_UPDATE_COMMAND_UI(ID_FILE_SAVEREGION, OnUpdateFileSaveregion)
 	ON_COMMAND(ID_SELECTION_MOVEDOWN, OnSelectionMovedown)
 	ON_COMMAND(ID_SELECTION_MOVEUP, OnSelectionMoveup)
 	ON_COMMAND(ID_TOOLBAR_MAIN, OnToolbarMain)
@@ -711,50 +700,6 @@ static UINT indicators[] = {
  */
 void CMainFrame::OnDisplayChange(UINT wParam, long lParam) {
 	int n = wParam;
-}
-
-BOOL CMainFrame::OnEraseBkgnd(CDC* pDC) {
-  // Set brush to desired background color
-  int r = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][0] * 255.0f);
-  int g = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][1] * 255.0f);
-  int b = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][2] * 255.0f);
-
-  CBrush backBrush(RGB(r, g, b));
-
-  // Save old brush
-  CBrush* pOldBrush = pDC->SelectObject(&backBrush);
-
-  CRect rect;
-  pDC->GetClipBox(&rect);     // Erase the area needed
-
-  pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
-    PATCOPY);
-  pDC->SelectObject(pOldBrush);
-  return TRUE;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnBSPStatus(UINT wParam, long lParam) {
-	// lparam is an atom contain the text
-	char buff[1024];
-	if (::GlobalGetAtomName(static_cast<ATOM>(lParam), buff, sizeof(buff))) {
-		common->Printf("%s", buff);
-		::GlobalDeleteAtom(static_cast<ATOM>(lParam));
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnBSPDone(UINT wParam, long lParam) {
-	idStr str = cvarSystem->GetCVarString( "radiant_bspdone" );
-	if (str.Length()) {
-	    sndPlaySound(str.c_str(), SND_FILENAME | SND_ASYNC);
-	}
 }
 
 //
@@ -948,8 +893,6 @@ void CMainFrame::SetButtonMenuStates() {
 	}
 
 	if (g_qeglobals.d_project_entity) {
-		// FillTextureMenu(); // redundant but i'll clean it up later.. yeah right..
-		FillBSPMenu();
 		LoadMruInReg(g_qeglobals.d_lpMruMenu, "Software\\" EDITOR_REGISTRY_KEY "\\MRU" );
 		PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, ::GetSubMenu(::GetMenu(GetSafeHwnd()), 0), ID_FILE_EXIT);
 	}
@@ -1750,8 +1693,6 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext *pContext) {
 	m_pYZWnd->Create(XY_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1237);
 	m_pYZWnd->SetViewType(YZ);
 
-	m_pCamWnd->SetXYFriend(m_pXYWnd);
-
 	CRect	rctWork;
 
 	LoadWindowPlacement(m_pXYWnd->GetSafeHwnd(), "radiant_xywindow");
@@ -1851,16 +1792,6 @@ void CMainFrame::OnFileExit() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnFileLoadproject() {
-	if (ConfirmModified()) {
-		ProjectDialog();
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CMainFrame::OnFileNew() {
 	if (ConfirmModified()) {
 		Map_New();
@@ -1892,20 +1823,6 @@ void CMainFrame::OnFilePointfile() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnFilePrint() {
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnFilePrintPreview() {
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CMainFrame::OnFileSave() {
 	if (!strcmp(currentmap, "unnamed.map")) {
 		SaveAsDialog(false);
@@ -1924,6 +1841,19 @@ void CMainFrame::OnFileSave() {
  */
 void CMainFrame::OnFileSaveas() {
 	SaveAsDialog(false);
+}
+
+
+/*
+=======================================================================================================================
+=======================================================================================================================
+*/
+static void AddSlash(CString &strPath) {
+	if (strPath.GetLength() > 0) {
+		if (strPath.GetAt(strPath.GetLength() - 1) != '\\') {
+			strPath += '\\';
+		}
+	}
 }
 
 /*
@@ -2114,101 +2044,8 @@ void CMainFrame::OnTextureWad(unsigned int nID) {
 	Sys_UpdateWindows(W_ALL);
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-
-/*
-============
-RunBsp
-
-This is the new all-internal bsp
-============
-*/
-void RunBsp (const char *command) {
-	char	sys[2048];
-	char	name[2048];
-	char	*in;
-
-	// bring the console window forward for feedback
-	g_Inspectors->SetMode(W_CONSOLE);
-
-	// decide if we are doing a .map or a .reg
-	strcpy (name, currentmap);
-	if ( region_active ) {
-		Map_SaveFile (name, false);
-		StripExtension (name);
-		strcat (name, ".reg");
-	}
-
-	if ( !Map_SaveFile ( name, region_active ) ) {
-		return;
-	}
-
-	// name should be a full pathname, but we only
-	// want to pass the maps/ part to dmap
-	in = strstr(name, "maps/");
-	if ( !in ) {
-		in = strstr(name, "maps\\");
-	}
-	if ( !in ) {
-		in = name;
-	}
-
-	if (idStr::Icmpn(command, "bspext", strlen("runbsp")) == 0) {
-		PROCESS_INFORMATION ProcessInformation;
-		STARTUPINFO	startupinfo;
-		char buff[2048];
-
-		idStr base = cvarSystem->GetCVarString( "fs_basepath" );
-		idStr cd = cvarSystem->GetCVarString( "fs_cdpath" );
-		idStr paths;
-		if (base.Length()) {
-			paths += "+set fs_basepath ";
-			paths += base;
-		}
-		if (cd.Length()) {
-			paths += "+set fs_cdpath ";
-			paths += cd;
-		}
-
-		::GetModuleFileName(AfxGetApp()->m_hInstance, buff, sizeof(buff));
-		if (strlen(command) > strlen("bspext")) {
-			idStr::snPrintf( sys, sizeof(sys), "%s %s +set r_fullscreen 0 +dmap editorOutput %s %s +quit", buff, paths.c_str(), command + strlen("bspext"), in );
-		} else {
-			idStr::snPrintf( sys, sizeof(sys), "%s %s +set r_fullscreen 0 +dmap editorOutput %s +quit", buff, paths.c_str(), in );
-		}
-
-		::GetStartupInfo (&startupinfo);
-		if (!CreateProcess(NULL, sys, NULL, NULL, FALSE, 0, NULL, NULL, &startupinfo, &ProcessInformation)) {
-			common->Printf("Could not start bsp process %s %s/n", buff, sys);
-		}
-		g_pParentWnd->SetFocus();
-
-	} else { // assumes bsp is the command
-		if (strlen(command) > strlen("bsp")) {
-			idStr::snPrintf( sys, sizeof(sys), "dmap %s %s", command + strlen("bsp"), in );
-		} else {
-			idStr::snPrintf( sys, sizeof(sys), "dmap %s", in );
-		}
-
-		cmdSystem->BufferCommandText( CMD_EXEC_NOW, "disconnect\n" );
-
-		// issue the bsp command
-		Dmap_f( idCmdArgs( sys, false ) );
-	}
-}
-
 void CMainFrame::OnBspCommand(unsigned int nID) {
-	if (g_PrefsDlg.m_bSnapShots && stricmp(currentmap, "unnamed.map") != 0) {
-		Map_Snapshot();
-	}
 
-	RunBsp(bsp_commands[LOWORD(nID - CMD_BSPCOMMAND)]);
-
-	// DHM - _D3XP
-	SetTimer(QE_TIMER1, g_PrefsDlg.m_nAutoSave * 60 * 1000, NULL);
 }
 
 /*
@@ -2604,18 +2441,6 @@ void CMainFrame::OnMiscFindbrush() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnMiscGamma() {
-	float	fSave = g_qeglobals.d_savedinfo.fGamma;
-	DoGamma();
-	if (fSave != g_qeglobals.d_savedinfo.fGamma) {
-		MessageBox("You must restart Q3Radiant for Gamma settings to take place");
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CMainFrame::OnMiscNextleakspot() {
 	Pointfile_Next();
 }
@@ -2626,14 +2451,6 @@ void CMainFrame::OnMiscNextleakspot() {
  */
 void CMainFrame::OnMiscPreviousleakspot() {
 	Pointfile_Prev();
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnMiscPrintxy() {
-	common->Warning("Printing was removed");
 }
 
 /*
@@ -3863,31 +3680,6 @@ void CMainFrame::OnViewNextview() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnHelpCommandlist() {
-	CCommandsDlg	dlg;
-	dlg.DoModal();
-#if 0
-	if (g_b3Dfx) {
-		C3DFXCamWnd *pWnd = new C3DFXCamWnd();
-		CRect		rect(50, 50, 400, 400);
-		pWnd->Create(_3DFXCAMERA_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1234);
-		pWnd->ShowWindow(SW_SHOW);
-	}
-#endif
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnFileNewproject()
-{
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CMainFrame::UpdateStatusText() {
 	for (int n = 0; n < 6; n++) {
 		if (m_strStatus[n].GetLength() >= 0 && m_wndStatusBar.GetSafeHwnd()) {
@@ -4774,14 +4566,6 @@ void CMainFrame::OnFileImport() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnFileProjectsettings() {
-	DoProjectSettings();
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CMainFrame::OnUpdateFileImport(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(FALSE);
 }
@@ -4836,22 +4620,6 @@ void CMainFrame::OnViewCubicclipping() {
 	g_PrefsDlg.SavePrefs();
 	Map_BuildBrushData();
 	Sys_UpdateWindows(W_CAMERA);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnFileSaveregion() {
-	SaveAsDialog(true);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnUpdateFileSaveregion(CCmdUI *pCmdUI) {
-	pCmdUI->Enable (static_cast<BOOL>(region_active));
 }
 
 /*
@@ -5629,9 +5397,9 @@ void CMainFrame::OnPatchTab() {
 		Patch_InsDelHandleTAB();
 	}
 	else if (g_bAxialMode) {
-		int faceCount = g_ptrSelectedFaces.GetSize();
+		int faceCount = g_selectedFaces.Num();
 		if (faceCount > 0) {
-			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(0));
+			face_t	*selFace = g_selectedFaces[0].GetFace();
 			int *ip = (Sys_KeyDown(VK_SHIFT)) ? &g_axialAnchor : &g_axialDest;
 			(*ip)++;
 			if ( *ip >= selFace->face_winding->GetNumPoints() ) {
@@ -6608,11 +6376,11 @@ void CMainFrame::OnViewMaterialanimation()
 extern void Face_SetAxialScale_BrushPrimit(face_t *face, bool y);
 void CMainFrame::OnAxialTextureByWidth() {
 	// temp test code
-	int faceCount = g_ptrSelectedFaces.GetSize();
+	int faceCount = g_selectedFaces.Num();
 
 	if (faceCount > 0) {
 		for (int i = 0; i < faceCount; i++) {
-			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_SetAxialScale_BrushPrimit(selFace, false);
 		}
 		Sys_UpdateWindows(W_CAMERA);
@@ -6622,11 +6390,11 @@ void CMainFrame::OnAxialTextureByWidth() {
 
 void CMainFrame::OnAxialTextureByHeight() {
 	// temp test code
-	int faceCount = g_ptrSelectedFaces.GetSize();
+	int faceCount = g_selectedFaces.Num();
 
 	if (faceCount > 0) {
 		for (int i = 0; i < faceCount; i++) {
-			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
+			face_t	*selFace = g_selectedFaces[i].GetFace();
 			Face_SetAxialScale_BrushPrimit(selFace, true);
 		}
 		Sys_UpdateWindows(W_CAMERA);
@@ -6637,7 +6405,7 @@ void CMainFrame::OnAxialTextureArbitrary() {
 	if (g_bAxialMode) {
 		g_bAxialMode = false;
 	}
-	int faceCount = g_ptrSelectedFaces.GetSize();
+	int faceCount = g_selectedFaces.Num();
 	if (faceCount > 0) {
 		g_axialAnchor = 0;
 		g_axialDest = 1;

@@ -49,8 +49,6 @@ void	RadiantInit( void );
 void	RadiantShutdown( void );
 void	RadiantRun( void );
 void	RadiantPrint( const char *text );
-void	RadiantSync( const char *mapName, const idVec3 &viewOrg, const idAngles &viewAngles );
-
 
 // in-game Light Editor
 void	LightEditorInit( const idDict *spawnArgs );

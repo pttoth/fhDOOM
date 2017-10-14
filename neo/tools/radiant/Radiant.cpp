@@ -143,27 +143,6 @@ void RadiantInit( void ) {
 	}
 }
 
-
-extern void Map_VerifyCurrentMap(const char *map);
-
-void RadiantSync( const char *mapName, const idVec3 &viewOrg, const idAngles &viewAngles ) {
-	if ( g_DoomInstance == NULL ) {
-		RadiantInit();
-	}
-
-	if ( g_DoomInstance ) {
-		idStr osPath;
-		osPath = fileSystem->RelativePathToOSPath( mapName );
-		Map_VerifyCurrentMap( osPath );
-		idAngles flip = viewAngles;
-		flip.pitch = -flip.pitch;
-		g_pParentWnd->GetCamera()->SetView( viewOrg, flip );
-		g_pParentWnd->SetFocus();
-		Sys_UpdateWindows( W_ALL );
-		g_pParentWnd->RoutineProcessing();
-	}
-}
-
 void RadiantRun( void ) {
 	static bool exceptionErr = false;
 	int show = ::IsWindowVisible(win32.hWnd);

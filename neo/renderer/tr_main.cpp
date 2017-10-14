@@ -965,47 +965,52 @@ Setup that culling frustum planes for the current view
 FIXME: derive from modelview matrix times projection matrix
 =================
 */
-static void R_SetupViewFrustum( void ) {
-	int		i;
+static void R_SetupViewFrustumPlanes(idPlane planes[5], const idVec3& vieworg, const idMat3& viewaxis, const float fov_x, const float fov_y) {
 	float	xs, xc;
 	float	ang;
 
-	ang = DEG2RAD( tr.viewDef->renderView.fov_x ) * 0.5f;
-	idMath::SinCos( ang, xs, xc );
+	ang = DEG2RAD(fov_x) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
 
-	tr.viewDef->frustum[0] = xs * tr.viewDef->renderView.viewaxis[0] + xc * tr.viewDef->renderView.viewaxis[1];
-	tr.viewDef->frustum[1] = xs * tr.viewDef->renderView.viewaxis[0] - xc * tr.viewDef->renderView.viewaxis[1];
+	planes[0] = xs * viewaxis[0] + xc * viewaxis[1];
+	planes[1] = xs * viewaxis[0] - xc * viewaxis[1];
 
-	ang = DEG2RAD( tr.viewDef->renderView.fov_y ) * 0.5f;
-	idMath::SinCos( ang, xs, xc );
+	ang = DEG2RAD(fov_y) * 0.5f;
+	idMath::SinCos(ang, xs, xc);
 
-	tr.viewDef->frustum[2] = xs * tr.viewDef->renderView.viewaxis[0] + xc * tr.viewDef->renderView.viewaxis[2];
-	tr.viewDef->frustum[3] = xs * tr.viewDef->renderView.viewaxis[0] - xc * tr.viewDef->renderView.viewaxis[2];
+	planes[2] = xs * viewaxis[0] + xc * viewaxis[2];
+	planes[3] = xs * viewaxis[0] - xc * viewaxis[2];
 
 	// plane four is the front clipping plane
-	tr.viewDef->frustum[4] = /* vec3_origin - */ tr.viewDef->renderView.viewaxis[0];
+	planes[4] = /* vec3_origin - */ viewaxis[0];
 
-	for ( i = 0; i < 5; i++ ) {
+	for (int i = 0; i < 5; i++) {
 		// flip direction so positive side faces out (FIXME: globally unify this)
-		tr.viewDef->frustum[i] = -tr.viewDef->frustum[i].Normal();
-		tr.viewDef->frustum[i][3] = -( tr.viewDef->renderView.vieworg * tr.viewDef->frustum[i].Normal() );
+		planes[i] = -planes[i].Normal();
+		planes[i][3] = -(vieworg * planes[i].Normal());
 	}
+}
 
-	// eventually, plane five will be the rear clipping plane for fog
-
+static void R_SetupViewFrustum(idFrustum& viewFrustum, const idVec3& vieworg, const idMat3& viewaxis, const float fov_x, const float fov_y, const float nearClip, const float farClip) {
 	float dNear, dFar, dLeft, dUp;
+	dNear = nearClip;
+	dFar = farClip;
+	dLeft = dFar * tan(DEG2RAD(fov_x * 0.5f));
+	dUp = dFar * tan(DEG2RAD(fov_y * 0.5f));
+	viewFrustum.SetOrigin(vieworg);
+	viewFrustum.SetAxis(viewaxis);
+	viewFrustum.SetSize(dNear, dFar, dLeft, dUp);
+}
 
-	dNear = r_znear.GetFloat();
-	if ( tr.viewDef->renderView.cramZNear ) {
+static void R_SetupViewFrustum(void) {
+	R_SetupViewFrustumPlanes(tr.viewDef->frustum, tr.viewDef->renderView.vieworg, tr.viewDef->renderView.viewaxis, tr.viewDef->renderView.fov_x, tr.viewDef->renderView.fov_y);
+
+	float dNear = r_znear.GetFloat();
+	if (tr.viewDef->renderView.cramZNear) {
 		dNear *= 0.25f;
 	}
 
-	dFar = MAX_WORLD_SIZE;
-	dLeft = dFar * tan( DEG2RAD( tr.viewDef->renderView.fov_x * 0.5f ) );
-	dUp = dFar * tan( DEG2RAD( tr.viewDef->renderView.fov_y * 0.5f ) );
-	tr.viewDef->viewFrustum.SetOrigin( tr.viewDef->renderView.vieworg );
-	tr.viewDef->viewFrustum.SetAxis( tr.viewDef->renderView.viewaxis );
-	tr.viewDef->viewFrustum.SetSize( dNear, dFar, dLeft, dUp );
+	R_SetupViewFrustum(tr.viewDef->viewFrustum, tr.viewDef->renderView.vieworg, tr.viewDef->renderView.viewaxis, tr.viewDef->renderView.fov_x, tr.viewDef->renderView.fov_y, dNear, MAX_WORLD_SIZE);
 }
 
 /*

@@ -19,7 +19,6 @@
 #define IDD_DLG_MAPINFO                 10014
 #define IDD_DLG_ENTITYLIST              10015
 #define IDD_DLG_SCRIPTS                 10016
-#define IDD_DLG_NEWPROJECT              10017
 #define IDD_DLG_COMMANDLIST             10018
 #define IDD_DLG_INFORMATION             10019
 #define IDD_DLG_GROUP                   10020
@@ -468,8 +467,6 @@
 #define ID_EDIT_ENTITYINFO              30031
 #define ID_BRUSH_SCRIPTS                30032
 #define ID_VIEW_NEXTVIEW                30033
-#define ID_HELP_COMMANDLIST             30034
-#define ID_FILE_NEWPROJECT              30035
 #define ID_SNAPTOGRID                   30036
 #define ID_SPLIT_SELECTED               30037
 #define ID_CLIP_SELECTED                30038
@@ -495,7 +492,6 @@
 #define ID_SCALELOCKY                   30058
 #define ID_SCALELOCKZ                   30059
 #define ID_VIEW_CUBICCLIPPING           30060
-#define ID_FILE_PROJECTSETTINGS         30061
 #define ID_VIEW_CUBEOUT                 30062
 #define ID_VIEW_CUBEIN                  30063
 #define ID_NODES_LOADNODES              30064
@@ -504,8 +500,6 @@
 #define ID_NODES_REMOVEALLNODES         30067
 #define ID_NODES_COUNTNODES             30068
 #define ID_NODES_GIVEMONEYTONELNO       30069
-#define ID_FILE_SAVEREGION              30070
-#define ID_FILE_LOADREGION              30071
 #define ID_SELECTION_MOVEDOWN           30072
 #define ID_TOOLBAR_MAIN                 30073
 #define ID_SELECTION_MOVEUP             30074
@@ -585,7 +579,6 @@
 #define ID_CURVE_CYCLECAP               30148
 #define ID_CURVE_CYCLECAPALT            30149
 #define ID_CURVE_MATRIX_TRANSPOSE       30150
-#define ID_PLUGINS_REFRESH              30151
 #define ID_TEXTURES_RELOADSHADERS       30152
 #define ID_VIEW_ENTITIESAS_BOUNDINGBOX  30153
 #define ID_VIEW_ENTITIESAS_WRITEFRAME   30154
@@ -685,7 +678,6 @@
 #define ID_TEXTURES_TOGGLEVIEW          30248
 #define ID_SELECTION_CREATEENTITY       30249
 #define ID_SELECTION_EDITENTITY         30250
-#define ID_MISC_BENCHMARK               30251
 #define ID_REGION_OFF                   30252
 #define ID_REGION_SETXY                 30253
 #define ID_REGION_SETBRUSH              30254
@@ -718,7 +710,6 @@
 #define ID_SELECTION_SELECTINSIDE       30281
 #define ID_PROJECT_RELEAD               30282
 #define ID_PROJECT_CHANGE               30283
-#define ID_MISC_GAMMA                   30284
 #define ID_VIEW_SHOWENT                 30285
 #define ID_VIEW_SHOWPATH                30286
 #define ID_VIEW_SHOWLIGHTS              30287
@@ -735,7 +726,6 @@
 #define ID_COLORS_MAJOR                 30298
 #define ID_COLORS_MINOR                 30299
 #define ID_SELECTION_CONNECT            30300
-#define ID_FILE_LOADPROJECT             30301
 #define ID_MISC_FINDBRUSH               30302
 #define ID_MISC_NEXTLEAKSPOT            30303
 #define ID_MISC_PREVIOUSLEAKSPOT        30304
@@ -750,7 +740,6 @@
 #define ID_BRUSH_ARBITRARYSIDED         30313
 #define ID_SELECTION_UNGROUPENTITY      30314
 #define ID_MISC_SELECTENTITYCOLOR       30315
-#define ID_MISC_PRINTXY                 30316
 #define ID_HELP_ABOUT                   30317
 #define ID_EDIT_COPYBRUSH               30318
 #define ID_EDIT_PASTEBRUSH              30319

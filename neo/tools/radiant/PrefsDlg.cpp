@@ -292,10 +292,6 @@ bool GetCvarBinary( const char *name, void *pv, int size ) {
 
 void CPrefsDlg::LoadPrefs() {
 	CString strBuff;
-	CString strPrefab = g_strAppPath;
-	AddSlash(strPrefab);
-	strPrefab += "Prefabs\\";
-
 	m_nMouseButtons = 3;
 
 	m_bTextureLock = GetCvarInt( TLOCK_KEY, TLOCK_DEF );

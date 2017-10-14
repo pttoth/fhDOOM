@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 //=================================================================================
 
 
-void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFile);
+void Tris_ToOBJ(const idTriList& tris, const idMatList& mats, idFile* objFile, idFile* mtlFile);
 
 #if 0
 
@@ -794,7 +794,7 @@ void WriteOclFile( void ) {
 			idStr objPath;
 			sprintf( objPath, "%s/%s.obj", dmapGlobals.mapFileBase, light->name );
 			idFile* objFile = fileSystem->OpenFileWrite( objPath, "fs_devpath" );
-			Tris_ToOBJ( &trilist, &matlist, objFile, nullptr );
+			Tris_ToOBJ( trilist, matlist, objFile, nullptr );
 
 			fileSystem->CloseFile( objFile );
 		}

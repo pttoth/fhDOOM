@@ -187,10 +187,6 @@ typedef struct
 	// even in .INI mode we use the registry for all void* prefs
 	char		use_ini_registry[64];
 
-	//Timo
-	// tells we have surface properties plugin
-	bool	bSurfacePropertiesPlugin;
-
 	// the editor has its own soundWorld and renderWorld, completely distinct from the game
 	idRenderWorld	*rw;
 	idSoundWorld	*sw;
@@ -234,10 +230,7 @@ void SelectVertexByRay (idVec3 org, idVec3 dir);
 
 void ConnectEntities (void);
 
-void ProjectDialog (void);
-
 void FillTextureMenu (CStringArray* pArray = NULL);
-void FillBSPMenu (void);
 
 BOOL CALLBACK Win_Dialog (
     HWND hwndDlg,	// handle to dialog box
@@ -341,7 +334,6 @@ extern CFindTextureDlg& g_dlgFind;
 extern idCVar radiant_entityMode;
 
 // externs
-extern void AddSlash(CString&);
 extern void CleanUpEntities();
 extern void QE_CountBrushesAndUpdateStatusBar();
 extern void	QE_CheckAutoSave();
@@ -355,7 +347,6 @@ extern bool g_bPathMode;
 extern void RunScript(char* pBuffer);
 
 extern void FindReplaceTextures(const char* pFind, const char* pReplace, bool bSelected, bool bForce);
-extern void DoProjectSettings();
 extern bool region_active;
 extern void Map_ImportFile (char *filename);
 extern void Map_SaveSelected(char* pFilename);
@@ -370,12 +361,10 @@ extern SCommandInfo g_Commands[];
 extern int g_nCommandCount;
 extern SKeyInfo g_Keys[];
 extern int g_nKeyCount;
-extern const char	*bsp_commands[256];
 extern void HandlePopup(CWnd* pWindow, unsigned int uId);
 extern z_t z;
 extern CString g_strProject;
 extern void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv);
-extern bool QE_SaveProject (const char* pProjectFile);
 extern void Clamp(float& f, int nClamp);
 extern bool WriteFileString( FILE *fp, char *string, ... );
 extern void MemFile_fprintf(CMemFile* pMemFile, const char* pText, ...);

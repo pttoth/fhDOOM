@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ static void UpdatePatchGeometry( patchMesh_t* pm ) {
   for (int i = 0; i < width - 1; i++) {
     fhSimpleVert prev[2];
     for (int j = 0; j < height; j++) {
-      // v1-v2-v3-v4 makes a quad						
+      // v1-v2-v3-v4 makes a quad
       const int v1 = j * width + i;
       const int v2 = v1 + 1;
 
@@ -305,7 +305,7 @@ void Patch_Combine( patchMesh_t *p,patchMesh_t *p2,int sourceCol1,int sourceCol2
 			if ( sourceCol1 != 0 ) {
 				adj1 = -1;
 				col1 = p->width - 1;
-			} 
+			}
 			if ( sourceCol2 != 0 ) {
 				adj2 = -1;
 				col2 = p2->width - 2;
@@ -339,7 +339,7 @@ void Patch_Combine( patchMesh_t *p,patchMesh_t *p2,int sourceCol1,int sourceCol2
 			if ( sourceCol1 != 0 ) {
 				adj1 = -1;
 				col1 = p->width - 1;
-			} 
+			}
 			if ( sourceRow2 != 0 ) {
 				adj2 = -1;
 				row2 = p2->height - 2;
@@ -376,7 +376,7 @@ void Patch_Combine( patchMesh_t *p,patchMesh_t *p2,int sourceCol1,int sourceCol2
 			if ( sourceRow1 != 0 ) {
 				adj1 = -1;
 				row1 = p->height - 1;
-			} 
+			}
 			if ( sourceRow2 != 0 ) {
 				adj2 = -1;
 				row2 = p2->height - 2;
@@ -410,7 +410,7 @@ void Patch_Combine( patchMesh_t *p,patchMesh_t *p2,int sourceCol1,int sourceCol2
 			if ( sourceRow1 != 0 ) {
 				adj1 = -1;
 				row1 = p->height - 1;
-			} 
+			}
 			if ( sourceCol2 != 0 ) {
 				adj2 = -1;
 				col2 = p2->width - 2;
@@ -449,7 +449,7 @@ void Patch_Combine( patchMesh_t *p,patchMesh_t *p2,int sourceCol1,int sourceCol2
 void Patch_Weld( patchMesh_t *p,patchMesh_t *p2 ) {
 	// check against all 4 edges of p2
 	// could roll this up but left it out for some semblence of clarity
-	// 
+	//
 
 	if ( p->width == p2->width ) {
 		int	row		= 0;
@@ -679,9 +679,9 @@ void Patch_Weld( patchMesh_t *p,patchMesh_t *p2 ) {
 // used for a save spot
 patchMesh_t	*patchSave				= NULL;
 
-// Tracks the selected patch for point manipulation/update. FIXME: Need to revert back to a generalized 
+// Tracks the selected patch for point manipulation/update. FIXME: Need to revert back to a generalized
 // brush approach
-//--int  g_nSelectedPatch = -1;  
+//--int  g_nSelectedPatch = -1;
 
 // HACK: for tracking which view generated the click
 // as we dont want to deselect a point on a same point
@@ -937,7 +937,7 @@ Brush_RebuildBrush
 */
 void Brush_RebuildBrush( brush_t *b,idVec3 vMins,idVec3 vMaxs,bool patch ) {
 	//
-	// Total hack job 
+	// Total hack job
 	// Rebuilds a brush
 	int			i, j;
 	face_t		*f, *next;
@@ -1363,7 +1363,7 @@ brush_t * Cap( patchMesh_t *pParent,bool bByColumn,bool bFirst ) {
 	vMax[0] = vMax[1] = vMax[2] = -99999;
 
 	// we seam the column edge, FIXME: this might need to be able to seem either edge
-	// 
+	//
 	int	nSize	= (bByColumn) ? pParent->width : pParent->height;
 	int	nIndex	= (bFirst) ? 0 : (bByColumn) ? pParent->height - 1 : pParent->width - 1;
 
@@ -1568,7 +1568,7 @@ void Patch_CapCurrent( bool bInvertedBevel,bool bInvertedEndcap ) {
 			pParent = pb->pPatch;
 			// decide which if any ends we are going to cap
 			// if any of these compares hit, it is a closed patch and as such
-			// the generic capping will work.. if we do not find a closed edge 
+			// the generic capping will work.. if we do not find a closed edge
 			// then we need to ask which kind of cap to add
 			if ( pParent->ctrl(0, 0).xyz.Compare(pParent->ctrl(pParent->width - 1, 0).xyz) ) {
 				pCap = Cap(pParent, true, false);
@@ -1968,8 +1968,8 @@ void Patch_BrushToMesh( bool bCone,bool bBevel,bool bEndcap,bool bSquare,int nHe
 
 	if ( bCone ) {
 		p->type = PATCH_CONE;
-		float	xc	= (b->maxs[0] + b->mins[0]) * 0.5; 
-		float	yc	= (b->maxs[1] + b->mins[1]) * 0.5; 
+		float	xc	= (b->maxs[0] + b->mins[0]) * 0.5;
+		float	yc	= (b->maxs[1] + b->mins[1]) * 0.5;
 
 		for ( i = 0 ; i < p->width ; i ++ ) {
 			p->ctrl(i, 2).xyz[0] = xc;
@@ -2470,7 +2470,7 @@ void DrawPatchMeshWireframe(patchMesh_t *pm, const idVec3& color) {
   UpdatePatchGeometry(pm);
 
   for(int i=0; (i+1)<pm->wireframeVertNum; i += 2) {
-    g_qeglobals.lineBuffer.Add(pm->wireframeVerts[i], pm->wireframeVerts[i+1], color);      
+    g_qeglobals.lineBuffer.Add(pm->wireframeVerts[i], pm->wireframeVerts[i+1], color);
   }
 }
 
@@ -2498,7 +2498,7 @@ void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color) {
       pm->triangleVerts[i+2].xyz,
       color);
   }
-  
+
 /*
   int		nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
@@ -2527,7 +2527,7 @@ void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color) {
   for (int i = 0; i < width - 1; i++) {
     im.Begin(GL_QUAD_STRIP);
     for (int j = 0; j < height; j++) {
-      // v1-v2-v3-v4 makes a quad						
+      // v1-v2-v3-v4 makes a quad
       const int v1 = j * width + i;
       const int v2 = v1 + 1;
       im.TexCoord2fv(cp[v2].st.ToFloatPtr());
@@ -2558,7 +2558,7 @@ void Patch_DrawXY( patchMesh_t *pm ) {
 
 	DrawPatchMeshWireframe(pm, color);
   DrawPatchMeshHandles(pm);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 /*
@@ -2572,7 +2572,7 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
 
   idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
   if(selected)
-    color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];	
+    color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
 
 	if ( g_bPatchWireFrame || nDrawMode == cd_wire ) {
 		glDisable(GL_CULL_FACE);
@@ -2608,7 +2608,7 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
     /*
 		if ( !pm->bSelected && pm->d_texture->GetEditorAlpha() != 1.0f ) {
 			glDisable(GL_BLEND);
-		}		
+		}
 
     if(pm->bSelected) {
       glEnable(GL_BLEND);
@@ -2725,7 +2725,7 @@ Patch_Select
 ==================
 */
 void Patch_Select( patchMesh_t *p ) {
-	// maintained for point manip.. which i need to fix as this 
+	// maintained for point manip.. which i need to fix as this
 	// is pf error prone
 	//--g_nSelectedPatch = n;
 	p->bSelected = true;
@@ -2782,7 +2782,7 @@ void Patch_Scale( patchMesh_t *p,const idVec3 vOrigin,const idVec3 vAmt,bool bRe
 				p->ctrl(w, h).xyz[i] += vOrigin[i];
 			}
 		}
-	} 
+	}
 	if ( bRebuild ) {
 		idVec3	vMin, vMax;
 		Patch_CalcBounds(p, vMin, vMax);
@@ -3066,10 +3066,10 @@ void Patch_DisperseRows() {
 			patchMesh_t	*p	= pb->pPatch;
 			Patch_Rebuild(p);
 			for ( w = 0; w < p->width; w++ ) {
-				// for each row, we need to evenly disperse p->height number 
+				// for each row, we need to evenly disperse p->height number
 				// of points across the old bounds
 
-				// calc total distance to interpolate 
+				// calc total distance to interpolate
 				VectorSubtract(p->ctrl(w, p->height - 1).xyz, p->ctrl(w, 0).xyz, vTemp);
 
 				//vTemp[0] = vTemp[1] = vTemp[2] = 0;
@@ -3109,10 +3109,10 @@ void Patch_DisperseColumns() {
 			Patch_Rebuild(p);
 
 			for ( h = 0; h < p->height; h++ ) {
-				// for each column, we need to evenly disperse p->width number 
+				// for each column, we need to evenly disperse p->width number
 				// of points across the old bounds
 
-				// calc total distance to interpolate 
+				// calc total distance to interpolate
 				VectorSubtract(p->ctrl(p->width - 1, h).xyz, p->ctrl(0, h).xyz, vTemp);
 
 				// amount per cycle
@@ -3203,80 +3203,66 @@ brush_t * Patch_Parse( bool bOld ) {
 
 	patchMesh_t	*pm	= NULL;
 
-	if ( g_qeglobals.bSurfacePropertiesPlugin ) {
-		assert(true);
-		//GETPLUGINTEXDEF(pm)->ParsePatchTexdef();
-	} else {
-		// texture def
-		GetToken(true);
+	// texture def
+	GetToken(true);
 
-		// band-aid 
-		if ( strcmp(token, "(") ) {
-			if ( g_qeglobals.mapVersion < 2.0f ) {
-				tex = Texture_ForName(va("textures/%s", token));
-			} else {
-				tex = Texture_ForName(token);
-			}
-			GetToken(true);
+	// band-aid
+	if ( strcmp(token, "(") ) {
+		if ( g_qeglobals.mapVersion < 2.0f ) {
+			tex = Texture_ForName(va("textures/%s", token));
 		} else {
-			common->Printf("Warning: Patch read with no texture, using notexture... \n");
-		}   			
-
-		if ( strcmp(token, "(") ) {
-			return NULL;
+			tex = Texture_ForName(token);
 		}
-
-		// width, height, flags (currently only negative)
-		GetToken(false);
-		int	width	= atoi(token);
-
-		GetToken(false);
-		int	height	= atoi(token);
-
-		pm = MakeNewPatch(width, height);
-		pm->d_texture = tex;
-
-		if ( !bOld ) {
-			GetToken(false);
-			pm->horzSubdivisions = atoi(token);
-			GetToken(false);
-			pm->vertSubdivisions = atoi(token);
-			pm->explicitSubdivisions = true;
-		}
-
-		GetToken(false);
-		pm->contents = atoi(token);
-
-		GetToken(false);
-		pm->flags = atoi(token);
-
-		GetToken(false);
-		pm->value = atoi(token);
-
-		//if (!bOld)
-		//{
-		//	GetToken(false);
-		//	pm->type = atoi(token);
-		//}
-
-		GetToken(false);
-		if ( strcmp(token, ")") )
-			return NULL;
+		GetToken(true);
+	} else {
+		common->Printf("Warning: Patch read with no texture, using notexture... \n");
 	}
 
+	if ( strcmp(token, "(") ) {
+		return NULL;
+	}
 
+	// width, height, flags (currently only negative)
+	GetToken(false);
+	int	width	= atoi(token);
+
+	GetToken(false);
+	int	height	= atoi(token);
+
+	pm = MakeNewPatch(width, height);
+	pm->d_texture = tex;
+
+	if ( !bOld ) {
+		GetToken(false);
+		pm->horzSubdivisions = atoi(token);
+		GetToken(false);
+		pm->vertSubdivisions = atoi(token);
+		pm->explicitSubdivisions = true;
+	}
+
+	GetToken(false);
+	pm->contents = atoi(token);
+
+	GetToken(false);
+	pm->flags = atoi(token);
+
+	GetToken(false);
+	pm->value = atoi(token);
+
+	GetToken(false);
+	if (strcmp(token, ")")) {
+		return NULL;
+	}
 
 	float	ctrl[MAX_PATCH_WIDTH][MAX_PATCH_HEIGHT][5];
 	Parse3DMatrix(pm->width, pm->height, 5, reinterpret_cast< float*>(&ctrl));
 
-	int	w, h;
-
-	for ( w = 0; w < pm->width; w++ ) {
-		for ( h = 0; h < pm->height; h++ ) {
-			pm->ctrl(w, h).xyz[0] = ctrl[w][h][0];  
-			pm->ctrl(w, h).xyz[1] = ctrl[w][h][1];  
-			pm->ctrl(w, h).xyz[2] = ctrl[w][h][2];  
-			pm->ctrl(w, h).st[0] = ctrl[w][h][3]; 
+	for ( int w = 0; w < pm->width; w++ ) {
+		for ( int h = 0; h < pm->height; h++ ) {
+			pm->ctrl(w, h).xyz[0] = ctrl[w][h][0];
+			pm->ctrl(w, h).xyz[1] = ctrl[w][h][1];
+			pm->ctrl(w, h).xyz[2] = ctrl[w][h][2];
+			pm->ctrl(w, h).st[0] = ctrl[w][h][3];
 			pm->ctrl(w, h).st[1] = ctrl[w][h][4];
 		}
 	}
@@ -3303,14 +3289,10 @@ brush_t * Patch_Parse( bool bOld ) {
 
 /*
 ==================
-Patch_Write 
+Patch_Write
 ==================
 */
 void Patch_Write( patchMesh_t *p,CMemFile *file ) {
-	if ( g_qeglobals.bSurfacePropertiesPlugin ) {
-		common->Printf("WARNING: Patch_Write to a CMemFile and Surface Properties plugin not done\n");
-	}
-
 	if ( p->explicitSubdivisions ) {
 		MemFile_fprintf(file, " {\n  patchDef3\n  {\n");
 		MemFile_fprintf(file, "   \"%s\"\n", p->d_texture->GetName());
@@ -3553,7 +3535,7 @@ void Patch_InvertTexture( bool bY ) {
 ==================
 Patch_Save
 ==================
- Saves patch ctrl info (originally to deal with a 
+ Saves patch ctrl info (originally to deal with a
  cancel in the surface dialog
 */
 void Patch_Save( patchMesh_t *p ) {
@@ -3643,7 +3625,7 @@ void Patch_SetTextureInfo( texdef_t *pt ) {
 }
 
 bool WINAPI OnlyPatchesSelected() {
-	if ( g_ptrSelectedFaces.GetSize() > 0 || selected_brushes.next == &selected_brushes ) {
+	if ( g_selectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes ) {
 		return false;
 	}
 	for ( brush_t*pb = selected_brushes.next ; pb != &selected_brushes ; pb = pb->next ) {
@@ -3655,7 +3637,7 @@ bool WINAPI OnlyPatchesSelected() {
 }
 
 bool WINAPI AnyPatchesSelected() {
-	if ( g_ptrSelectedFaces.GetSize() > 0 || selected_brushes.next == &selected_brushes ) {
+	if (g_selectedFaces.Num() > 0 || selected_brushes.next == &selected_brushes) {
 		return false;
 	}
 	for ( brush_t*pb = selected_brushes.next ; pb != &selected_brushes ; pb = pb->next ) {
@@ -3768,7 +3750,7 @@ void Patch_BendHandleENTER() {
 		} else if ( g_nPatchBendState == BEND_SELECT_EDGE ) {
 			g_bPatchLowerEdge = true;
 		} else if ( g_nPatchBendState == BEND_BENDIT ) {
-			// basically we go into rotation mode, set the axis to the center of the 
+			// basically we go into rotation mode, set the axis to the center of the
 		}
 	} else {
 		// done
@@ -4115,7 +4097,7 @@ void Patch_Thicken( int nAmount,bool bSeam ) {
 
 		if ( bSeam ) {
 			// FIXME: this should detect if any edges of the patch are closed and act appropriately
-			// 
+			//
 			if ( !(p->type & PATCH_CYLINDER) ) {
 				b = Patch_GenericMesh(3, p->height, 2, false, true, p);
 				pSeam = b->pPatch;
@@ -4442,7 +4424,7 @@ void Patch_SetEpair( patchMesh_t *p,const char *pKey,const char *pValue ) {
 	}
 }
 
-/* 
+/*
 =================
 Patch_GetKeyValue
 =================

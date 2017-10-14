@@ -25,22 +25,15 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
-#if !defined(AFX_CAMWND_H__44B4BA03_781B_11D1_B53C_00AA00A410FC__INCLUDED_)
-#define AFX_CAMWND_H__44B4BA03_781B_11D1_B53C_00AA00A410FC__INCLUDED_
-
-#if _MSC_VER >= 1000
 #pragma once
-#endif // _MSC_VER >= 1000
 
-typedef enum
-{
+enum camera_draw_mode {
 	cd_wire,
 	cd_solid,
 	cd_texture
-} camera_draw_mode;
+};
 
-typedef struct
-{
+struct camera_t {
 	int			width, height;
 
 	idVec3		origin;
@@ -52,12 +45,11 @@ typedef struct
 
 	idVec3		forward, right, up;	// move matrix
 	idVec3		vup, vpn, vright;	// view matrix
-} camera_t;
+};
 
 
 /////////////////////////////////////////////////////////////////////////////
 // CCamWnd window
-class CXYWnd;
 
 class CCamWnd : public CWnd
 {
@@ -65,26 +57,12 @@ class CCamWnd : public CWnd
 // Construction
 public:
 	CCamWnd();
+	~CCamWnd();
 
-// Attributes
-public:
-
-// Operations
-public:
-
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CCamWnd)
-	protected:
+protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
 
-// Implementation
 public:
-	void ShiftTexture_BrushPrimit(face_t *f, int x, int y);
-	CXYWnd* m_pXYFriend;
-	void SetXYFriend(CXYWnd* pWnd);
-	virtual ~CCamWnd();
 	camera_t& Camera(){return m_Camera;};
 	void Cam_MouseControl(float dtime);
 	void Cam_ChangeFloor(bool up);
@@ -95,7 +73,6 @@ public:
 	void ToggleSelectMode();
 	void ToggleAnimationMode();
 	void ToggleSoundMode();
-	void SetProjectionMatrix();
 	void UpdateCameraView();
 
 	void BuildEntityRenderState( entity_t *ent, bool update );
@@ -118,16 +95,15 @@ public:
 		return soundMode;
 	}
 
-
-	bool UpdateRenderEntities();
 	void MarkWorldDirty();
 
-	void SetView( const idVec3 &origin, const idAngles &angles ) {
+protected:
+	void SetProjectionMatrix();
+	void SetView(const idVec3 &origin, const idAngles &angles) {
 		m_Camera.origin = origin;
 		m_Camera.angles = angles;
 	}
 
-protected:
 	void Cam_Init();
 	void Cam_BuildMatrix();
 	void Cam_PositionDrag();
@@ -167,6 +143,8 @@ protected:
 	idAngles saveAng;
 	bool saveValid;
 
+	idPlane m_viewPlanes[5];
+
 	// Generated message map functions
 protected:
 	void OriginalMouseDown(UINT nFlags, CPoint point);
@@ -192,8 +170,3 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Developer Studio will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_CAMWND_H__44B4BA03_781B_11D1_B53C_00AA00A410FC__INCLUDED_)

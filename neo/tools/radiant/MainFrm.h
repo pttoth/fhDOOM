@@ -171,13 +171,9 @@ public:
 		busy = b;
 	}
 
-
 	// these are public so i can easily reflect messages
 	// from child windows..
 	//{{AFX_MSG(CMainFrame)
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnBSPStatus(UINT wParam, long lParam);
-	afx_msg void OnBSPDone(UINT wParam, long lParam);
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnTimer(UINT nIDEvent);
@@ -189,12 +185,9 @@ public:
 	afx_msg void ToggleCamera();
 	afx_msg void OnFileClose();
 	afx_msg void OnFileExit();
-	afx_msg void OnFileLoadproject();
 	afx_msg void OnFileNew();
 	afx_msg void OnFileOpen();
 	afx_msg void OnFilePointfile();
-	afx_msg void OnFilePrint();
-	afx_msg void OnFilePrintPreview();
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveas();
 	afx_msg void OnFileSaveCopy();
@@ -229,10 +222,8 @@ public:
 	afx_msg void OnTexturesShowinuse();
 	afx_msg void OnTexturesInspector();
 	afx_msg void OnMiscFindbrush();
-	afx_msg void OnMiscGamma();
 	afx_msg void OnMiscNextleakspot();
 	afx_msg void OnMiscPreviousleakspot();
-	afx_msg void OnMiscPrintxy();
 	afx_msg void OnMiscSelectentitycolor();
 	afx_msg void OnMiscFindOrReplaceEntity();
 	afx_msg void OnMiscFindNextEntity();
@@ -317,8 +308,6 @@ public:
 	afx_msg void OnEditMapinfo();
 	afx_msg void OnEditEntityinfo();
 	afx_msg void OnViewNextview();
-	afx_msg void OnHelpCommandlist();
-	afx_msg void OnFileNewproject();
 	afx_msg void OnFlipClip();
 	afx_msg void OnClipSelected();
 	afx_msg void OnSplitSelected();
@@ -367,12 +356,9 @@ public:
 	afx_msg void OnSelectMousescale();
 	afx_msg void OnViewCubicclipping();
 	afx_msg void OnFileImport();
-	afx_msg void OnFileProjectsettings();
 	afx_msg void OnUpdateFileImport(CCmdUI* pCmdUI);
 	afx_msg void OnViewCubein();
 	afx_msg void OnViewCubeout();
-	afx_msg void OnFileSaveregion();
-	afx_msg void OnUpdateFileSaveregion(CCmdUI* pCmdUI);
 	afx_msg void OnSelectionMovedown();
 	afx_msg void OnSelectionMoveup();
 	afx_msg void OnToolbarMain();
