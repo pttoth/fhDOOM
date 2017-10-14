@@ -1092,8 +1092,8 @@ GL wrapper/helper functions
 ====================================================================
 */
 
-void	GL_SelectTexture( int unit );
-void	GL_CheckErrors( void );
+#define GL_CheckErrors(force) GL_CheckErrors_helper(force, __FILE__, __LINE__)
+void	GL_CheckErrors_helper(bool force, const char* file, int line);
 void	GL_State( int stateVector );
 void	GL_Cull( int cullType );
 void	GL_UseProgram( const fhRenderProgram* program );
@@ -1179,8 +1179,6 @@ const int GLS_DEFAULT							= GLS_DEPTHFUNC_ALWAYS;
 void R_InitOpenGL( void );
 
 void R_DoneFreeType( void );
-
-void R_SetColorMappings( void );
 
 void R_ScreenShot_f( const idCmdArgs &args );
 void R_StencilShot( void );
@@ -1407,7 +1405,6 @@ DRAW_*
 ============================================================
 */
 
-void	R_GLSL_Init( void );
 void	RB_GLSL_DrawInteractions( void );
 const	fhRenderProgram*  R_FindGlslProgram( const char* vertexShaderName, const char* fragmentShaderName );
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );

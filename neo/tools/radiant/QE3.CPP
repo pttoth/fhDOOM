@@ -41,25 +41,7 @@ QEGlobals_t g_qeglobals;
  =======================================================================================================================
  */
 void WINAPI QE_CheckOpenGLForErrors(void) {
-	CString strMsg;
-	int		i = glGetError();
-	if (i != GL_NO_ERROR) {
-		if (i == GL_OUT_OF_MEMORY) {
-			//
-			// strMsg.Format("OpenGL out of memory error %s\nDo you wish to save before
-			// exiting?", gluErrorString((GLenum)i));
-			//
-			if (g_pParentWnd->MessageBox(strMsg, EDITOR_WINDOWTEXT " Error", MB_YESNO) == IDYES) {
-				Map_SaveFile(NULL, false);
-			}
-
-			exit(1);
-		}
-		else {
-			// strMsg.Format("Warning: OpenGL Error %s\n ", gluErrorString((GLenum)i));
-			common->Printf(strMsg.GetBuffer(0));
-		}
-	}
+	GL_CheckErrors(true);
 }
 
 /*

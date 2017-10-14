@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "ImageData.h"
 #include "ImageProgram.h"
 #include "Sampler.h"
+#include "ImmediateMode.h"
 #include <mutex>
 
 // Vista OpenGL wrapper check
@@ -226,6 +227,7 @@ idCVar r_windowMode("r_windowMode", "-1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_IN
 idCVar r_useFramebuffer( "r_useFramebuffer", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
 idCVar r_useDisplayResolution("r_useDisplayResolution", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
+idCVar r_force_arb_dsa("r_force_arb_dsa", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
 
 namespace {
 
@@ -242,17 +244,12 @@ namespace {
 
 		bool ret = false;
 
-		if (ext_cnt != 0) {
-			for (int i = 0; i < ext_cnt; ++i) {
-				const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
-				if (stricmp( current, name ) == 0) {
-					ret = true;
-					break;
-				}
+		for (int i = 0; i < ext_cnt; ++i) {
+			const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
+			if (stricmp( current, name ) == 0) {
+				ret = true;
+				break;
 			}
-		}
-		else {
-			ret = glewIsSupported( name ) == GL_TRUE;
 		}
 
 		if (ret) {
@@ -268,11 +265,6 @@ namespace {
 	void R_CheckPortableExtensions( void ) {
 		glConfig.glVersion = atof( glConfig.version_string );
 
-		glGetIntegerv( GL_MAX_TEXTURE_UNITS, (GLint *)&glConfig.maxTextureUnits );
-		if (glConfig.maxTextureUnits > MAX_MULTITEXTURE_UNITS) {
-			glConfig.maxTextureUnits = MAX_MULTITEXTURE_UNITS;
-		}
-		glGetIntegerv( GL_MAX_TEXTURE_COORDS, (GLint *)&glConfig.maxTextureCoords );
 		glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits );
 
 		// GL_ARB_texture_compression + GL_S3_s3tc
@@ -295,6 +287,11 @@ namespace {
 		glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
 
 		glConfig.extDirectStateAccessAvailable = R_DoubleCheckExtension("GL_EXT_direct_state_access");
+		if (r_force_arb_dsa.GetBool() && glConfig.extDirectStateAccessAvailable) {
+			common->Printf("GL_EXT_direct_state_access disabled due to 'r_force_arb_dsa'\n");
+			glConfig.extDirectStateAccessAvailable = false;
+		}
+
 		glConfig.arbDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_ARB_direct_state_access" );
 	}
 
@@ -576,6 +573,8 @@ void R_InitOpenGL( void ) {
 		r_glCoreProfile.SetBool( false );
 	}
 
+	GL_CheckErrors(true);
+
 	// input and sound systems need to be tied to the new window
 	Sys_InitInput();
 	soundSystem->InitHW();
@@ -598,13 +597,18 @@ void R_InitOpenGL( void ) {
 
 	// recheck all the extensions (FIXME: this might be dangerous)
 	R_CheckPortableExtensions();
+	GL_CheckErrors(true);
+
 	GfxInfo_f( idCmdArgs() );
 
 	if (r_glDebugOutput.GetInteger() == 1 || r_glDebugOutput.GetInteger() == 2) {
+		common->Printf("OpenGL: debug output enabled ");
 		if (r_glDebugOutput.GetInteger() == 1) {
+			common->Printf("(async)\n");
 			glEnable( GL_DEBUG_OUTPUT );
 		}
 		else {
+			common->Printf("(sync)\n");
 			glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS );
 		}
 
@@ -613,29 +617,45 @@ void R_InitOpenGL( void ) {
 		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE );
 		glDebugMessageCallback( R_GLDebugOutput, NULL );
 	}
+	else {
+		common->Printf("OpenGL: debug output disabled");
+	}
+	GL_CheckErrors(true);
 
 	if (r_glCoreProfile.GetBool()) {
+		common->Printf("OpenGL: core profile enabled, creating global vao\n");
 		GLuint VaoID;
 		glGenVertexArrays( 1, &VaoID );
 		glBindVertexArray( VaoID );
 	}
+	else {
+		common->Printf("OpenGL: core profile disabled\n");
+	}
+	GL_CheckErrors(true);
 
 	// allocate the vertex array range or vertex objects
 	vertexCache.Init();
+	GL_CheckErrors(true);
+	common->Printf("OpenGL: vertex cache initialized\n");
 
 	// allocate memory for render lists
 	fhBaseRenderList::Init();
 
 	cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
 
-	R_GLSL_Init();
-	R_ReloadGlslPrograms_f( idCmdArgs() );
+	fhRenderProgram::Init();
+	R_ReloadGlslPrograms_f(idCmdArgs());
+	GL_CheckErrors(true);
+	common->Printf("OpenGL: render programs initialized\n");
+
+	fhImmediateMode::Init();
+	GL_CheckErrors(true);
+	common->Printf("OpenGL: immediate mode initialized\n");
 
 	// allocate the frame data, which may be more if smp is enabled
 	R_InitFrameData();
-
-	// Reset our gamma
-	R_SetColorMappings();
+	GL_CheckErrors(true);
+	common->Printf("OpenGL: frame data initialized\n");
 
 #ifdef _WIN32
 	static bool glCheck = false;
@@ -660,6 +680,7 @@ void R_InitOpenGL( void ) {
 #endif
 	glEnable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 	glEnable( GL_MULTISAMPLE );
+	GL_CheckErrors(true);
 }
 
 /*
@@ -667,7 +688,7 @@ void R_InitOpenGL( void ) {
 GL_CheckErrors
 ==================
 */
-void GL_CheckErrors( void ) {
+void GL_CheckErrors_helper(bool force, const char* file, int line) {
     int		err;
     char	s[64];
 	int		i;
@@ -702,8 +723,8 @@ void GL_CheckErrors( void ) {
 				break;
 		}
 
-		if ( !r_ignoreGLErrors.GetBool() ) {
-			common->Printf( "GL_CheckErrors: %s\n", s );
+		if (force || !r_ignoreGLErrors.GetBool()) {
+			common->Printf( "GL_CheckErrors: %s (%s:%d)\n", s, file, line);
 		}
 	}
 }
@@ -1654,47 +1675,6 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 
 //============================================================================
 
-
-/*
-===============
-R_SetColorMappings
-===============
-*/
-void R_SetColorMappings( void ) {
-#if 0
-	int		i, j;
-	float	g, b;
-	int		inf;
-
-	b = r_brightness.GetFloat();
-	g = r_gamma.GetFloat();
-
-	for ( i = 0; i < 256; i++ ) {
-		j = i * b;
-		if (j > 255) {
-			j = 255;
-		}
-
-		if ( g == 1 ) {
-			inf = (j<<8) | j;
-		} else {
-			inf = 0xffff * pow ( j/255.0f, 1.0f / g ) + 0.5f;
-		}
-		if (inf < 0) {
-			inf = 0;
-		}
-		if (inf > 0xffff) {
-			inf = 0xffff;
-		}
-
-		tr.gammaTable[i] = inf;
-	}
-
-	GLimp_SetGamma( tr.gammaTable, tr.gammaTable, tr.gammaTable );
-#endif
-}
-
-
 /*
 ================
 GfxInfo_f
@@ -1711,8 +1691,6 @@ void GfxInfo_f( const idCmdArgs &args ) {
 	common->Printf( "GL_RENDERER: %s\n", glConfig.renderer_string );
 	common->Printf( "GL_VERSION: %s\n", glConfig.version_string );
 	common->Printf( "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
-	common->Printf( "GL_MAX_TEXTURE_UNITS_ARB: %d\n", glConfig.maxTextureUnits );
-	common->Printf( "GL_MAX_TEXTURE_COORDS_ARB: %d\n", glConfig.maxTextureCoords );
 	common->Printf( "GL_MAX_TEXTURE_IMAGE_UNITS_ARB: %d\n", glConfig.maxTextureImageUnits );
 	common->Printf( "\nPIXELFORMAT: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
 	common->Printf( "MODE: %d, %d x %d %s hz:", r_mode.GetInteger(), glConfig.vidWidth, glConfig.vidHeight, fsstrings[r_fullscreen.GetBool()] );
@@ -1747,8 +1725,6 @@ R_VidRestart_f
 =================
 */
 void R_VidRestart_f( const idCmdArgs &args ) {
-	int	err;
-
 	// if OpenGL isn't started, do nothing
 	if ( !glConfig.isInitialized ) {
 		return;
@@ -1829,10 +1805,7 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 	R_RegenerateWorld_f( idCmdArgs() );
 
 	// check for problems
-	err = glGetError();
-	if ( err != GL_NO_ERROR ) {
-		common->Printf( "glGetError() = 0x%x\n", err );
-	}
+	GL_CheckErrors(true);
 
 	// start sound playing again
 	soundSystem->SetMute( false );
@@ -2022,9 +1995,6 @@ void idRenderSystemLocal::Init( void ) {
 
 	idCinematic::InitCinematic( );
 
-	// build brightness translation tables
-	R_SetColorMappings();
-
 	R_InitMaterials();
 
 	renderModelManager->Init();
@@ -2118,16 +2088,9 @@ idRenderSystemLocal::InitOpenGL
 void idRenderSystemLocal::InitOpenGL( void ) {
 	// if OpenGL isn't started, start it now
 	if ( !glConfig.isInitialized ) {
-		int	err;
-
 		R_InitOpenGL();
-
 		globalImages->ReloadAllImages();
-
-		err = glGetError();
-		if ( err != GL_NO_ERROR ) {
-			common->Printf( "glGetError() = 0x%x\n", err );
-		}
+		GL_CheckErrors(true);
 	}
 }
 

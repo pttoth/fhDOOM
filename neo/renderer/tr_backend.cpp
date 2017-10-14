@@ -134,37 +134,7 @@ void RB_LogComment( const char *comment, ... ) {
   va_end( marker );
 }
 
-
 //=============================================================================
-
-
-
-/*
-====================
-GL_SelectTexture
-====================
-*/
-void GL_SelectTexture( int unit ) {
-	if ( backEnd.glState.currenttmu == unit ) {
-		return;
-	}
-
-	if ( unit < 0 || (unit >= glConfig.maxTextureUnits && unit >= glConfig.maxTextureImageUnits) ) {
-		common->Warning( "GL_SelectTexture: unit = %i", unit );
-		return;
-	}
-
-	if(glConfig.extDirectStateAccessAvailable) {
-		RB_LogComment( "ignore GL_SelectTexture( %i );\n", unit );
-	}
-	else {
-		glActiveTexture( GL_TEXTURE0 + unit );
-		RB_LogComment( "glActiveTexture( %i );\n", unit );
-	}
-
-	backEnd.glState.currenttmu = unit;
-}
-
 
 /*
 ====================

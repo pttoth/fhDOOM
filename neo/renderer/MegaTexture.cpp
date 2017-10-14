@@ -276,8 +276,7 @@ need tracking
 */
 void idMegaTexture::Unbind( void ) {
 	for ( int i = 0 ; i < numLevels ; i++ ) {
-		GL_SelectTexture( 1+i );
-		globalImages->BindNull();
+		globalImages->BindNull(1 + i);
 	}
 }
 

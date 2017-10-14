@@ -250,20 +250,6 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 
 /*
 ==================
-R_GLSL_Init
-
-Load default shaders.
-==================
-*/
-void	R_GLSL_Init( void )
-{
-	fhRenderProgram::Init();
-	fhImmediateMode::Init();
-}
-
-
-/*
-==================
 RB_GLSL_FogPass
 ==================
 */

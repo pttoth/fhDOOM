@@ -273,7 +273,6 @@ static void R_CheckCvars( void ) {
 	if ( r_gamma.IsModified() || r_brightness.IsModified() ) {
 		r_gamma.ClearModified();
 		r_brightness.ClearModified();
-		R_SetColorMappings();
 	}
 
 	// check for changes to logging state
@@ -677,7 +676,7 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	R_CheckCvars();
 
     // check for errors
-	GL_CheckErrors();
+	GL_CheckErrors(false);
 
 	// add the swapbuffers command
 	auto cmd = R_GetCommandBuffer<emptyCommand_t>();
