@@ -984,8 +984,6 @@ extern idCVar r_skipDiffuse;			// use black for diffuse
 extern idCVar r_skipOverlays;			// skip overlay surfaces
 extern idCVar r_skipROQ;
 
-extern idCVar r_ignoreGLErrors;
-
 extern idCVar r_forceLoadImages;		// draw all images to screen after registration
 extern idCVar r_screenFraction;			// for testing fill rate, the resolution of the entire screen can be changed
 

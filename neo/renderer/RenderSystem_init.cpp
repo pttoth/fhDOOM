@@ -79,7 +79,6 @@ idCVar r_useInfiniteFarZ( "r_useInfiniteFarZ", "1", CVAR_RENDERER | CVAR_BOOL, "
 
 idCVar r_znear( "r_znear", "1", CVAR_RENDERER | CVAR_FLOAT, "near Z clip plane distance", 0.001f, 200.0f );
 
-idCVar r_ignoreGLErrors( "r_ignoreGLErrors", "1", CVAR_RENDERER | CVAR_BOOL, "ignore GL errors" );
 idCVar r_finish( "r_finish", "0", CVAR_RENDERER | CVAR_BOOL, "force a call to glFinish() every frame" );
 idCVar r_swapInterval( "r_swapInterval", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "changes wglSwapIntarval" );
 
@@ -595,7 +594,7 @@ void R_InitOpenGL( void ) {
 
 	glConfig.isInitialized = true;
 
-	// recheck all the extensions (FIXME: this might be dangerous)
+	// recheck all the extensions
 	R_CheckPortableExtensions();
 	GL_CheckErrors(true);
 
@@ -618,7 +617,7 @@ void R_InitOpenGL( void ) {
 		glDebugMessageCallback( R_GLDebugOutput, NULL );
 	}
 	else {
-		common->Printf("OpenGL: debug output disabled");
+		common->Printf("OpenGL: debug output disabled\n");
 	}
 	GL_CheckErrors(true);
 
@@ -725,7 +724,7 @@ void GL_CheckErrors_helper(bool force, const char* file, int line) {
 				break;
 		}
 
-		if (force || !r_ignoreGLErrors.GetBool()) {
+		if (force || !r_glDebugOutput.GetInteger() != 0) {
 			common->Printf( "GL_CheckErrors: %s (%s:%d)\n", s, file, line);
 		}
 	}
