@@ -3,10 +3,10 @@
 ######################## GLEW #################################################
 ###############################################################################
 SET(SOURCES 
-  renderer/GL/glew.h
-  renderer/GL/glxew.h
-  renderer/GL/wglew.h
-  renderer/glew.c
+  glew/GL/glew.h
+  glew/GL/glxew.h
+  glew/GL/wglew.h
+  glew/glew.c
 )
 add_library(glew STATIC ${SOURCES})
 IF(MSVC)
@@ -1034,6 +1034,7 @@ IF(MSVC)
 ENDIF()  
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew)
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
 

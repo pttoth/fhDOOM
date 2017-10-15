@@ -36,13 +36,13 @@ If you have questions concerning this license or the applicable additional terms
 #define GLEW_STATIC
 #endif
 
+#include "../glew/GL/glew.h"
+
 #if defined( _WIN32 )
-#include "GL/glew.h"
-#include "GL/wglew.h"
+#include "../glew/GL/wglew.h"
 #define wglSwapBuffers ::SwapBuffers
 #elif defined( __linux__ )
-#include "GL/glew.h"
-#include "GL/glxew.h"
+#include "../glew/GL/glxew.h"
 #endif
 
 #ifndef APIENTRY
