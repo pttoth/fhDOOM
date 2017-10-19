@@ -1141,9 +1141,6 @@ Automatically enables 2D mapping, cube mapping, or 3D texturing if needed
 ==============
 */
 void idImage::Bind(int textureUnit) {
-	if ( tr.logFile ) {
-		RB_LogComment( "idImage::Bind( %s )\n", imgName.c_str() );
-	}
 
 	// if this is an image that we are caching, move it to the front of the LRU chain
 	if ( partialImage ) {

@@ -292,6 +292,10 @@ namespace {
 		}
 
 		glConfig.arbDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_ARB_direct_state_access" );
+
+		if (!glConfig.arbDirectStateAccessAvailable && !glConfig.extDirectStateAccessAvailable) {
+			common->Error("Missing OpenGL extension: GL_EXT_direct_state_access or GL_ARB_direct_state_access must be available!\n");
+		}
 	}
 
 
@@ -554,22 +558,30 @@ void R_InitOpenGL( void ) {
 		parms.minorVersion = 3;
 		parms.debug = r_glDebugOutput.GetInteger() != 0;
 
+		common->Printf("OpenGL: parms: width=%d height=%d (%s)\n", glConfig.windowWidth, glConfig.windowHeight, (parms.fullScreen ? "fullscreen" : "windowed"));
+		common->Printf("OpenGL: parms: displayHz=%d\n", parms.displayHz);
+		common->Printf("OpenGL: parms: core profile=%s (debug=%s)\n", (parms.coreProfile ? "on" : "off"), (parms.debug ? "on" : "off"));
+		common->Printf("OpenGL: parms: version major=%d, minor=%d\n", parms.majorVersion, parms.minorVersion );
+
 		if (GLimp_Init( parms )) {
 			// it worked
 			break;
 		}
 
+		GL_CheckErrors(true);
+
 		if (i == 1) {
 			common->FatalError( "Unable to initialize OpenGL" );
 		}
 
-		// if we failed, set everything back to "safe mode"
-		// and try again
+		common->Printf("Failed to initialize OpenGL, set everything to 'safe mode'\n");
 		r_mode.SetInteger( 5 );
 		r_fullscreen.SetInteger( 1 );
 		r_displayRefresh.SetInteger( 0 );
 		r_multiSamples.SetInteger( 0 );
 		r_glCoreProfile.SetBool( false );
+		r_useFramebuffer.SetBool( false );
+		r_useDisplayResolution.SetBool( false );
 	}
 
 	GL_CheckErrors(true);
@@ -1929,13 +1941,11 @@ idRenderSystemLocal::Clear
 ===============
 */
 void idRenderSystemLocal::Clear( void ) {
-	registered = false;
 	frameCount = 0;
 	viewCount = 0;
 	staticAllocCount = 0;
 	frameShaderTime = 0.0f;
 
-	ambientLightVector.Zero();
 	sortOffset = 0;
 	worlds.Clear();
 	primaryWorld = NULL;
@@ -1943,18 +1953,15 @@ void idRenderSystemLocal::Clear( void ) {
 	primaryView = NULL;
 	defaultMaterial = NULL;
 	testImage = NULL;
-	ambientCubeImage = NULL;
 	viewDef = NULL;
 	memset( &pc, 0, sizeof( pc ) );
 	memset( &lockSurfacesCmd, 0, sizeof( lockSurfacesCmd ) );
 	memset( &identitySpace, 0, sizeof( identitySpace ) );
-	logFile = NULL;
 	memset( renderCrops, 0, sizeof( renderCrops ) );
 	currentRenderCrop = 0;
 	guiRecursionLevel = 0;
 	guiModel = NULL;
 	demoGuiModel = NULL;
-	memset( gammaTable, 0, sizeof( gammaTable ) );
 	takingScreenshot = false;
 }
 
@@ -1971,11 +1978,6 @@ void idRenderSystemLocal::Init( void ) {
 	viewCount = 1;		// so cleared structures never match viewCount
 	// we used to memset tr, but now that it is a class, we can't, so
 	// there may be other state we need to reset
-
-	ambientLightVector[0] = 0.5f;
-	ambientLightVector[1] = 0.5f - 0.385f;
-	ambientLightVector[2] = 0.8925f;
-	ambientLightVector[3] = 1.0f;
 
 	memset( &backEnd, 0, sizeof( backEnd ) );
 
@@ -2032,13 +2034,6 @@ void idRenderSystemLocal::Shutdown( void ) {
 	idCinematic::ShutdownCinematic( );
 
 	globalImages->Shutdown();
-
-	// close the r_logFile
-	if ( logFile ) {
-		fprintf( logFile, "*** CLOSING LOG ***\n" );
-		fclose( logFile );
-		logFile = 0;
-	}
 
 	// free frame memory
 	R_ShutdownFrameData();

@@ -830,8 +830,6 @@ public:
 
 public:
 	// renderer globals
-	bool					registered;		// cleared at shutdown, set at InitOpenGL
-
 	bool					takingScreenshot;
 
 	int						frameCount;		// incremented every frame
@@ -842,17 +840,9 @@ public:
 
 	float					frameShaderTime;	// shader time for all non-world 2D rendering
 
-	// determines which back end to use, and if vertex programs are in use
-
-	const float			backEndRendererMaxLight;	// 1.0 for standard, unlimited for floats
-														// determines how much overbrighting needs
-														// to be done post-process
-
-	idVec4					ambientLightVector;	// used for "ambient bump mapping"
-
 	float					sortOffset;				// for determinist sorting of equal sort materials
 
-	idList<idRenderWorldLocal*>worlds;
+	idList<idRenderWorldLocal*> worlds;
 
 	idRenderWorldLocal *	primaryWorld;
 	renderView_t			primaryRenderView;
@@ -864,8 +854,6 @@ public:
 	idCinematic *			testVideo;
 	float					testVideoStartTime;
 
-	idImage *				ambientCubeImage;	// hack for testing dependent ambient lighting
-
 	viewDef_t *				viewDef;
 
 	performanceCounters_t	pc;					// performance counters
@@ -873,7 +861,6 @@ public:
 	drawSurfsCommand_t		lockSurfacesCmd;	// use this when r_lockSurfaces = 1
 
 	viewEntity_t			identitySpace;		// can use if we don't know viewDef->worldSpace is valid
-	FILE *					logFile;			// for logging GL calls and frame breaks
 
 	renderCrop_t			renderCrops[MAX_RENDER_CROPS];
 	int						currentRenderCrop;
@@ -882,8 +869,6 @@ public:
 	int						guiRecursionLevel;		// to prevent infinite overruns
 	class idGuiModel *		guiModel;
 	class idGuiModel *		demoGuiModel;
-
-	unsigned short			gammaTable[256];	// brightness / gamma modify this
 };
 
 extern backEndState_t		backEnd;
@@ -1227,9 +1212,6 @@ void		GLimp_DeactivateContext( void );
 // most OpenGL implementations, this will result in all OpenGL calls
 // being immediate returns, which lets us guage how much time is
 // being spent inside OpenGL.
-
-void		GLimp_EnableLogging( bool enable );
-
 
 /*
 ====================================================================

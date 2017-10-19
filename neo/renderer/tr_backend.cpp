@@ -122,6 +122,7 @@ RB_LogComment
 ====================
 */
 void RB_LogComment( const char *comment, ... ) {
+#if 0
   va_list marker;
 
   if ( !tr.logFile ) {
@@ -132,6 +133,7 @@ void RB_LogComment( const char *comment, ... ) {
   va_start( marker, comment );
   vfprintf( tr.logFile, comment, marker );
   va_end( marker );
+#endif
 }
 
 //=============================================================================
