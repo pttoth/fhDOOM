@@ -14617,7 +14617,7 @@ windowDef MultiplayerLANParent {
 				noevents	1
 			}
 	//new advanced option selections
-		//FRAGMENT VERTEX
+		//Bloom Intensity
 			windowDef ADV1 {
 				rect		20, 38, 400, 16
 				windowDef ADV1L {
@@ -14640,24 +14640,30 @@ windowDef MultiplayerLANParent {
 				}
 				windowDef ADV1Title {
 					rect		1, 1, 280, 14
-					text		"#str_04122"
+					text		"Bloom Intensity"
 					font		"fonts/bank"
 					textscale	0.25
 					textalign	2
 					textaligny	-6
 					forecolor	1, 1, 1, 1
 				}
-				choiceDef ADV1Primary {
-					rect		320, 1, 50, 14
-					choices		"#str_04230"
-					cvar		"r_skipNewAmbient"
-					choiceType	0
-					font		"fonts/bank"
-					textscale	0.25
-					textalign	1
-					textaligny	-6
-					forecolor	0.6, 0.8, 0.8, 1
+				windowDef ADV1SliderBG {
+					//rect		220, 4, 128, 16
+					rect		320, 2, 128, 16
+					background	"guis/assets/mainmenu/slider_bg"
+					matcolor	0.6, 0.8, 0.8, 0.5
+					noevents	1
 				}
+				sliderDef ADV1Primary {
+					rect		320, 3, 71, 14
+					forecolor	0.8, 1, 1, 1
+					matcolor	1, 1, 1, 1
+					low			0.0
+					high		1.4
+					step		0.1
+					thumbShader	"guis/assets/mainmenu/slider_bar"
+					cvar		"r_bloomFactor"	
+				}				
 			}
 		//SHADOWS
 			windowDef ADV2 {
