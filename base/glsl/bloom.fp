@@ -32,7 +32,6 @@ layout(binding = 1) uniform sampler2D texture1;
 
 in vs_output
 {
-  vec4 color;
   vec2 texcoord;
 } frag;
 

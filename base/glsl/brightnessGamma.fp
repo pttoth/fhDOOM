@@ -39,19 +39,8 @@ out vec4 result;
 
 void main(void)
 {
-  vec2 stepSize = shaderParm0.xy;
-  float d = 2.3;
+  float brightness = shaderParm0.x;
+  float gamma = shaderParm0.y;
 
-  vec4 color = vec4(0,0,0,0);
-
-  float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
-
-  color += texture2D(texture1, frag.texcoord) * weight[0];
-
-  for (int i=1; i<5; ++i) {
-    color += texture2D(texture1, frag.texcoord + stepSize * i * d) * weight[i];
-    color += texture2D(texture1, frag.texcoord + stepSize * -i * d) * weight[i];
-  }
-
-  result = texture2D(texture1, frag.texcoord) * 0.05 + vec4(color.rgb, 1);
+  result = pow(texture2D(texture1, frag.texcoord), vec4(1.0/gamma)) * brightness;
 }

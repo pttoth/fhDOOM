@@ -33,19 +33,11 @@ layout(binding = 2) uniform sampler2D texture2;
 
 in vs_output
 {
-  vec4 color;
   vec2 texcoord;
 } frag;
 
 out vec4 result;
 
-// texture 0 is the cube map
-// texture 1 is the per-surface bump map
-// texture 2 is the light falloff texture
-// texture 3 is the light projection texture
-// texture 4 is the per-surface diffuse map
-// texture 5 is the per-surface specular map
-// texture 6 is the specular lookup table
 #ifndef FXAA_REDUCE_MIN
     #define FXAA_REDUCE_MIN   (1.0/ 128.0)
 #endif
@@ -110,18 +102,10 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
 
 void main(void)
 {
-
-//  vec4 color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));
-//  float f = (color.r + color.g + color.b) / 3;
-//  result = vec4(f,f,f,1);
-
-  float brightness = shaderParm0.x;
-  float gamma = shaderParm0.y;
-
   vec4 color;
-  if (shaderParm0.z > 0)
+  if (shaderParm0.x > 0)
   {
-    vec2 resolution = shaderParm0.zw;
+    vec2 resolution = shaderParm0.xy;
     vec2 fragCoord =  frag.texcoord * resolution;
     vec2 inverseVP = 1.0 / resolution.xy;
     vec2 nw = (fragCoord + vec2(-1.0, -1.0)) * inverseVP;
@@ -134,13 +118,14 @@ void main(void)
   }
   else
   {
-    color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));
+    color = texture2D(texture1, frag.texcoord);
   }
 
-  if (shaderParm1.x > 0) {
+  float bloomFactor = shaderParm0.z;
+  if (bloomFactor > 0) {
     vec4 bloom = texture2D(texture2, frag.texcoord);
-    color += bloom * shaderParm1.x;
+    color += bloom * bloomFactor;
   }
 
-  result = vec4(pow(color.rgb, vec3(1.0/gamma)), 1) * brightness;
+  result = color;
 }

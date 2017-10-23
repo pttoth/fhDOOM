@@ -71,6 +71,7 @@ public:
 	static fhFramebuffer* shadowmapFramebuffer;
 	static fhFramebuffer* currentDepthFramebuffer;
 	static fhFramebuffer* currentRenderFramebuffer;
+	static fhFramebuffer* currentRenderFramebuffer2;
 	static fhFramebuffer* bloomFramebuffer;
 	static fhFramebuffer* bloomTmpFramebuffer;
 

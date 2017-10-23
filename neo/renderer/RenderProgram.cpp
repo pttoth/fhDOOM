@@ -67,6 +67,7 @@ const fhRenderProgram* debugDepthProgram = nullptr;
 const fhRenderProgram* postprocessProgram = nullptr;
 const fhRenderProgram* bloomProgram = nullptr;
 const fhRenderProgram* blurProgram = nullptr;
+const fhRenderProgram* brightnessGammaProgram = nullptr;
 
 class fhParseException {
 public:
@@ -545,6 +546,7 @@ void fhRenderProgram::Init() {
 	intensityProgram = R_FindGlslProgram( "intensity.vp", "intensity.fp" );
 	debugDepthProgram = R_FindGlslProgram( "debugdepth.vp", "debugdepth.fp" );
 	postprocessProgram = R_FindGlslProgram("postprocess.vp", "postprocess.fp");
-	bloomProgram = R_FindGlslProgram("default.vp", "bloom.fp");
-	blurProgram = R_FindGlslProgram("default.vp", "blur.fp");
+	bloomProgram = R_FindGlslProgram("postprocess.vp", "bloom.fp");
+	blurProgram = R_FindGlslProgram("postprocess.vp", "blur.fp");
+	brightnessGammaProgram = R_FindGlslProgram("postprocess.vp", "brightnessGamma.fp");
 }

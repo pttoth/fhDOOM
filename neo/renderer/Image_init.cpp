@@ -1840,7 +1840,8 @@ void idImageManager::Init() {
 	scratchImage = ImageFromFunction("_scratch", R_DefaultImage<pixelFormat_t::RGBA>);
 	scratchImage2 = ImageFromFunction("_scratch2", R_DefaultImage<pixelFormat_t::RGBA>);
 	accumImage = ImageFromFunction("_accum", R_DefaultImage<pixelFormat_t::RGBA>);
-	currentRenderImage = ImageFromFunction("_currentRender", R_DefaultImage<pixelFormat_t::RGBA_32F>);
+	currentRenderImage = ImageFromFunction("_currentRender", R_DefaultImage<pixelFormat_t::RGBA>);
+	currentRenderImage2 = ImageFromFunction("_currentRender2", R_DefaultImage<pixelFormat_t::RGBA>);
 
 	//TODO(johl): using Depth only (instead of DepthStencil) would be fine for this. Unfortunately due to an AMD driver bug(?),
 	//            we can't blit from DepthStencil to Depth, so this needs to be DepthStencil as well ;(
@@ -1853,7 +1854,7 @@ void idImageManager::Init() {
 	jitterImage = ImageFromFunction( "_jitter", R_JitterImage );
 	testGammaBiasImage = ImageFromFunction( "_testGammaBias", R_TestGammaBiasImage );
 	shadowmapImage = ImageFromFunction("_shadowmapImage", R_ShadowMapImage);
-	renderColorImage = ImageFromFunction( "_renderColorImage", R_DefaultImage<pixelFormat_t::RGBA_32F>);
+	renderColorImage = ImageFromFunction("_renderColorImage", R_DefaultImage<pixelFormat_t::RGBA>);
 	renderDepthImage = ImageFromFunction("_renderDepthImage", R_DefaultImage<pixelFormat_t::DEPTH_24_STENCIL_8>);
 
 	bloomImageTmp = ImageFromFunction("_bloomTmp", R_DefaultImage<pixelFormat_t::RGBA, 512, 512>);

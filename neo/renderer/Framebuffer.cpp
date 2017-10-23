@@ -35,6 +35,7 @@ fhFramebuffer* fhFramebuffer::shadowmapFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::defaultFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentDepthFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentRenderFramebuffer = nullptr;
+fhFramebuffer* fhFramebuffer::currentRenderFramebuffer2 = nullptr;
 fhFramebuffer* fhFramebuffer::bloomFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::bloomTmpFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::renderFramebuffer = nullptr;
@@ -210,13 +211,17 @@ void fhFramebuffer::Allocate() {
 }
 
 void fhFramebuffer::Init() {
-	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, globalImages->shadowmapImage );
+	const int shadowMapFramebufferSize = 1024 * 4;
+	const int initialFramebufferSize = 16;
+	const int bloomFramebufferSize = 128;
+	shadowmapFramebuffer = new fhFramebuffer(shadowMapFramebufferSize, shadowMapFramebufferSize, nullptr, globalImages->shadowmapImage);
 	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr );
-	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
-	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
-	renderFramebuffer = new fhFramebuffer(1024, 1024, globalImages->renderColorImage, globalImages->renderDepthImage);
-	bloomFramebuffer = new fhFramebuffer(128, 128, globalImages->bloomImage, nullptr);
-	bloomTmpFramebuffer = new fhFramebuffer(128, 128, globalImages->bloomImageTmp, nullptr);
+	currentDepthFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, nullptr, globalImages->currentDepthImage);
+	currentRenderFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage, nullptr);
+	currentRenderFramebuffer2 = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage2, nullptr);
+	renderFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->renderColorImage, globalImages->renderDepthImage);
+	bloomFramebuffer = new fhFramebuffer(bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImage, nullptr);
+	bloomTmpFramebuffer = new fhFramebuffer(bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImageTmp, nullptr);
 	currentDrawBuffer = defaultFramebuffer;
 }
 
@@ -227,6 +232,7 @@ void fhFramebuffer::PurgeAll() {
 	defaultFramebuffer->Purge();
 	currentDepthFramebuffer->Purge();
 	currentRenderFramebuffer->Purge();
+	currentRenderFramebuffer2->Purge();
 	bloomFramebuffer->Purge();
 	renderFramebuffer->Purge();
 	bloomTmpFramebuffer->Purge();

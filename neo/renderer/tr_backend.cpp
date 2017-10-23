@@ -733,12 +733,48 @@ void RB_ShowImages( void ) {
 	common->Printf( "%i msec to draw all images\n", end - start );
 }
 
-static void RB_PostProcess() {
+static const fhRenderMatrix projMatrix2D = fhRenderMatrix::CreateOrthographicMatrix(0, 1, 0, 1, -1, 1);
+
+static void RB_RenderFullscreenPass() {
+	fhImmediateMode im(true);
+	im.Begin(GL_TRIANGLES);
+	im.Color4f(1, 1, 1, 1);
+
+	im.TexCoord2f(-1, 0);
+	im.Vertex2f(-1, 0);
+
+	im.TexCoord2f(0.5, 1.5);
+	im.Vertex2f(0.5, 1.5);
+
+	im.TexCoord2f(2, 0);
+	im.Vertex2f(2, 0);
+	im.End();
+}
+
+static void RB_BrightnessGamma(fhFramebuffer* src, fhFramebuffer* dst) {
+	assert(r_useFramebuffer.GetBool());
+	assert(src->GetSamples() <= 1);
+
+	GL_State(GLS_DEFAULT);
+
+	dst->Bind();
+	glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
+	glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
+
+	GL_UseProgram(brightnessGammaProgram);
+	src->GetColorAttachment()->Bind(1);
+	fhRenderProgram::SetModelViewMatrix(fhRenderMatrix::identity.ToFloatPtr());
+	fhRenderProgram::SetProjectionMatrix(projMatrix2D.ToFloatPtr());
+	fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), 0, 0));
+
+	RB_RenderFullscreenPass();
+
+	dst->Bind();
+}
+
+static void RB_PostProcess(fhFramebuffer* src, fhFramebuffer* dst) {
 	assert(r_useFramebuffer.GetBool());
 	const bool enableBloom = r_bloomFactor.GetFloat() > 0.1f;
-
-	auto src = fhFramebuffer::renderFramebuffer;
-	auto def = fhFramebuffer::defaultFramebuffer;
 
 	if (src->GetSamples() > 1) {
 		auto resolve = fhFramebuffer::currentRenderFramebuffer;
@@ -751,105 +787,69 @@ static void RB_PostProcess() {
 		src = resolve;
 	}
 
-	auto prepareFullScreePass = []() {
-		GL_ModelViewMatrix.LoadIdentity();
-		GL_State(GLS_DEFAULT);
-		GL_ProjectionMatrix.Push();
-		GL_ProjectionMatrix.LoadIdentity();
-		GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
-	};
-
-	auto renderFullScreenPass = []() {
-		fhImmediateMode im(true);
-		im.Begin(GL_TRIANGLES);
-		im.Color4f(1, 1, 1, 1);
-
-		im.TexCoord2f(-1, 0);
-		im.Vertex2f(-1, 0);
-
-		im.TexCoord2f(0.5, 1.5);
-		im.Vertex2f(0.5, 1.5);
-
-		im.TexCoord2f(2, 0);
-		im.Vertex2f(2, 0);
-		im.End();
-		GL_ProjectionMatrix.Pop();
-	};
+	GL_State(GLS_DEFAULT);
 
 	if (enableBloom) {
-		prepareFullScreePass();
-
 		fhFramebuffer::bloomFramebuffer->Bind();
 		glViewport(0, 0, fhFramebuffer::bloomFramebuffer->GetWidth(), fhFramebuffer::bloomFramebuffer->GetHeight());
 		glScissor(0, 0, fhFramebuffer::bloomFramebuffer->GetWidth(), fhFramebuffer::bloomFramebuffer->GetHeight());
 
 		GL_UseProgram(bloomProgram);
 		src->GetColorAttachment()->Bind(1);
-		fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-		fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-		fhRenderProgram::SetBumpMatrix(idVec4(1, 0, 0, 0), idVec4(0, 1, 0, 0));
+		fhRenderProgram::SetModelViewMatrix(fhRenderMatrix::identity.ToFloatPtr());
+		fhRenderProgram::SetProjectionMatrix(projMatrix2D.ToFloatPtr());
 		idVec4 parm0;
 		parm0.x = r_bloomThreshold.GetFloat();
 		fhRenderProgram::SetShaderParm(0, parm0);
-		renderFullScreenPass();
+		RB_RenderFullscreenPass();
 
 		auto blurBloom = [&](){
-			prepareFullScreePass();
 			fhFramebuffer::bloomTmpFramebuffer->Bind();
-			GL_UseProgram(blurProgram);
 			fhFramebuffer::bloomFramebuffer->GetColorAttachment()->Bind(1);
-			fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-			fhRenderProgram::SetBumpMatrix(idVec4(1, 0, 0, 0), idVec4(0, 1, 0, 0));
 			fhRenderProgram::SetShaderParm(0, idVec4(1.0 / fhFramebuffer::bloomFramebuffer->GetWidth(), 0, 0, 0));
-			renderFullScreenPass();
+			RB_RenderFullscreenPass();
 
-			prepareFullScreePass();
 			fhFramebuffer::bloomFramebuffer->Bind();
 			fhFramebuffer::bloomTmpFramebuffer->GetColorAttachment()->Bind(1);
-			fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 			fhRenderProgram::SetShaderParm(0, idVec4(0, 1.0 / fhFramebuffer::bloomFramebuffer->GetHeight(), 0, 0));
-			renderFullScreenPass();
+			RB_RenderFullscreenPass();
 		};
+
+		GL_UseProgram(blurProgram);
+		fhRenderProgram::SetModelViewMatrix(fhRenderMatrix::identity.ToFloatPtr());
+		fhRenderProgram::SetProjectionMatrix(projMatrix2D.ToFloatPtr());
 
 		for (int i = 0; i < r_bloomBlurPasses.GetInteger(); ++i) {
 			blurBloom();
 		}
 	}
 
-	def->Bind();
-	glViewport(0, 0, def->GetWidth(), def->GetHeight());
-	glScissor(0, 0, def->GetWidth(), def->GetHeight());
-
-	prepareFullScreePass();
+	dst->Bind();
+	glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
+	glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
 
 	GL_UseProgram(postprocessProgram);
 	src->GetColorAttachment()->Bind(1);
 	fhFramebuffer::bloomTmpFramebuffer->GetColorAttachment()->Bind(2);
-	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-	fhRenderProgram::SetDiffuseColor(idVec4::one);
-	fhRenderProgram::SetColorAdd(idVec4::zero);
-	fhRenderProgram::SetColorModulate(idVec4::one);
-	fhRenderProgram::SetBumpMatrix(idVec4(1, 0, 0, 0), idVec4(0, 1, 0, 0));
+	fhRenderProgram::SetModelViewMatrix(fhRenderMatrix::identity.ToFloatPtr());
+	fhRenderProgram::SetProjectionMatrix(projMatrix2D.ToFloatPtr());
+
+	auto shaderparms = idVec4(0, 0, 0, 0);
+
 	if (r_fxaa.GetBool()) {
-		fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), src->GetWidth(), src->GetHeight()));
-	}
-	else {
-		fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), 0, 0));
+		shaderparms.x = src->GetWidth();
+		shaderparms.y = src->GetHeight();
 	}
 
 	if (enableBloom) {
-		fhRenderProgram::SetShaderParm(1, idVec4(r_bloomFactor.GetFloat(), 0, 0, 0));
-	}
-	else {
-		fhRenderProgram::SetShaderParm(1, idVec4(0, 0, 0, 0));
+		shaderparms.z = r_bloomFactor.GetFloat();
 	}
 
-	renderFullScreenPass();
+	fhRenderProgram::SetShaderParm(0, shaderparms);
 
-	def->Bind();
+	RB_RenderFullscreenPass();
+
+	dst->Bind();
 }
 
 
@@ -860,6 +860,10 @@ RB_SwapBuffers
 =============
 */
 static void	RB_SwapBuffers( const void *data ) {
+	if (r_useFramebuffer.GetBool()) {
+		RB_BrightnessGamma(fhFramebuffer::currentRenderFramebuffer2, fhFramebuffer::defaultFramebuffer);
+	}
+
 	// force a gl sync if requested
 	if ( r_finish.GetBool() ) {
 		glFinish();
@@ -958,7 +962,14 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 				else {
 					c_draw2d++;
 					if (!postprocessDone) {
-						RB_PostProcess();
+						fhFramebuffer::currentRenderFramebuffer2->Resize(
+							fhFramebuffer::renderFramebuffer->GetWidth(),
+							fhFramebuffer::renderFramebuffer->GetHeight(),
+							1,
+							pixelFormat_t::RGBA,
+							pixelFormat_t::DEPTH_24); //depth will be ignored
+
+						RB_PostProcess(fhFramebuffer::renderFramebuffer, fhFramebuffer::currentRenderFramebuffer2);
 						postprocessDone = true;
 					}
 				}

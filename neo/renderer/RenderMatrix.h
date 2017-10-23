@@ -131,6 +131,23 @@ public:
 	static fhRenderMatrix CreateLookAtMatrix( const idVec3& dir, const idVec3& up );
 	static fhRenderMatrix CreateViewMatrix( const idVec3& origin );
 	static fhRenderMatrix FlipMatrix();
+	static fhRenderMatrix CreateOrthographicMatrix(float left, float right, float bottom, float top, float nearClip, float farClip) {
+		const float a = 2.0f / (right - left);
+		const float b = 2.0f/(top - bottom);
+		const float c = -2.0f/(farClip - nearClip);
+		const float d = -((right + left)/(right - left));
+		const float e = -((top + bottom)/(top - bottom));
+		const float f = -((farClip + nearClip)/(farClip - nearClip));
+
+		const float m[] = {
+			a, 0, 0, 0,
+			0, b, 0, 0,
+			0, 0, c, 0,
+			d, e, f, 1
+		};
+
+		return fhRenderMatrix(m);
+	}
 
 	static idVec3 OpenGL2Doom( const idVec3& v ) {
 #if 0

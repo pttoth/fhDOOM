@@ -202,6 +202,7 @@ extern const fhRenderProgram* debugDepthProgram;
 extern const fhRenderProgram* postprocessProgram;
 extern const fhRenderProgram* bloomProgram;
 extern const fhRenderProgram* blurProgram;
+extern const fhRenderProgram* brightnessGammaProgram;
 
 
 ID_INLINE void fhRenderProgram::SetModelMatrix( const float* m ) {
