@@ -14572,23 +14572,23 @@ windowDef MultiplayerLANParent {
 			noevents	1
 		}
 		windowDef RDCBgMain4 {
-			rect		136, 72, 444, 170
+			rect		136, 72, 444, 196
 			backcolor	0.18 ,0.25 ,0.3 ,1
 			noevents	1
 		}
 		windowDef RDCBgMain5 {
-			rect		136, 242, -32, 32
+			rect		136, 268, -32, 32
 			background	"gui/mainmenu/content_smallcorner"
 			matcolor	0.18 ,0.25 ,0.3 ,1
 			noevents	1
 		}
 		windowDef RDCBgMain6 {
-			rect		168, 242, 380, 32
+			rect		168, 268, 380, 32
 			backcolor	0.18 ,0.25 ,0.3 ,1
 			noevents	1
 		}
 		windowDef RDCBgMain7 {
-			rect		548, 242, 32, 32
+			rect		548, 268, 32, 32
 			background	"gui/mainmenu/content_smallcorner"
 			matcolor	0.18 ,0.25 ,0.3 ,1
 			noevents	1
@@ -14616,271 +14616,317 @@ windowDef MultiplayerLANParent {
 				backcolor	0.6 ,0.8 ,1 ,0.2
 				noevents	1
 			}
-//new advanced option selections
-	//FRAGMENT VERTEX
-		windowDef ADV1 {
-			rect		20, 38, 400, 16
-			windowDef ADV1L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV1M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV1R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV1Title {
-				rect		1, 1, 280, 14
-				text		"#str_04122"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV1Primary {
-				rect		320, 1, 50, 14
-				choices		"#str_04230"
-				cvar		"r_skipNewAmbient"
-				choiceType	0
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-			}
-		}
-	//SHADOWS
-		windowDef ADV2 {
-			rect		20, 64, 400, 16
-			windowDef ADV2L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV2M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV2R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV2Title {
-				rect		1, 1, 280, 14
-				text		"#str_04123"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV2Primary {
-				rect		320, 1, 50, 14
-				choices		"Off;Hard;Soft"
-				cvar		"r_shadows"
-				choiceType	0
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-			}
-		}
-	//SHADOW QUALITY
-		windowDef ADV3 {
-			rect		20, 90, 400, 16
-			windowDef ADV3L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV3M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV3R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV3Title {
-				rect		1, 1, 280, 14
-				text		"Soft Shadows Quality"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV3Primary {
-				rect		320, 1, 50, 14
-				choices		"High;Medium;Low"
-				cvar		"r_smLodBias"
-				choiceType	0
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-			}
-		}	
-	//SOFT PARTICLES
-		windowDef ADV4 {
-			rect		20, 116, 400, 16
-			windowDef ADV4L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV4M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV4R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV4Title {
-				rect		1, 1, 280, 14
-				text		"Soft Particles"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV4Primary {
-				rect		320, 1, 50, 14
-				choices		"Off;On"
-				cvar		"r_softParticles"
-				choiceType	0
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-			}
-		}	
-
-	//Video Sync
-		windowDef ADV5 {
-			rect		20, 142, 400, 16
-			windowDef ADV5L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV5M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV5R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV5Title {
-				rect		1, 1, 280, 14
-				text		"#str_04126"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV5Primary {
-				rect		320, 1, 50, 14
-				choices		"#str_04221"
-				cvar		"r_swapInterval"
-				choiceType	0
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-			}
-		}
-
-	//Force texture down sample -- CHANGED TO AA
-		windowDef ADV7 {
-			rect		20, 168, 400, 16
-			windowDef ADV7L {
-				rect		0, 0, 8, 16
-				background	"gui/mainmenu/select_edge"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV7M {
-				rect		8, 0, 384, 16
-				background	"gui/mainmenu/select_border"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV7R {
-				rect		392, 0, 8, 16
-				background	"gui/mainmenu/select_angle"
-				matcolor	0, 0, 0, 1
-				noevents	1
-			}
-			windowDef ADV7Title {
-				rect		1, 1, 280, 14
-				text		"#str_04128"
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	2
-				textaligny	-6
-				forecolor	1, 1, 1, 1
-			}
-			choiceDef ADV7Primary {
-				rect		320, 1, 50, 14
-				choices		"#str_04231"
-				values		"0;2;4;8;16"
-				cvar		"r_multisamples"
-				choiceType	1
-				font		"fonts/bank"
-				textscale	0.25
-				textalign	1
-				textaligny	-6
-				forecolor	0.6, 0.8, 0.8, 1
-				
-				onAction {
-					set "ResetSystemBtnText::vidrestrt" "1" ;
-					set "OSWarning::forecolor" "1 1 1 1" ;
+	//new advanced option selections
+		//FRAGMENT VERTEX
+			windowDef ADV1 {
+				rect		20, 38, 400, 16
+				windowDef ADV1L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV1M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV1R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV1Title {
+					rect		1, 1, 280, 14
+					text		"#str_04122"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV1Primary {
+					rect		320, 1, 50, 14
+					choices		"#str_04230"
+					cvar		"r_skipNewAmbient"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
 				}
 			}
-		}
+		//SHADOWS
+			windowDef ADV2 {
+				rect		20, 64, 400, 16
+				windowDef ADV2L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV2M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV2R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV2Title {
+					rect		1, 1, 280, 14
+					text		"#str_04123"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV2Primary {
+					rect		320, 1, 50, 14
+					choices		"Off;Hard;Soft"
+					cvar		"r_shadows"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+				}
+			}
+		//SHADOW QUALITY
+			windowDef ADV3 {
+				rect		20, 90, 400, 16
+				windowDef ADV3L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV3M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV3R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV3Title {
+					rect		1, 1, 280, 14
+					text		"Soft Shadows Quality"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV3Primary {
+					rect		320, 1, 50, 14
+					choices		"High;Medium;Low"
+					cvar		"r_smLodBias"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+				}
+			}	
+		//SOFT PARTICLES
+			windowDef ADV4 {
+				rect		20, 116, 400, 16
+				windowDef ADV4L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV4M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV4R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV4Title {
+					rect		1, 1, 280, 14
+					text		"Soft Particles"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV4Primary {
+					rect		320, 1, 50, 14
+					choices		"Off;On"
+					cvar		"r_softParticles"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+				}
+			}	
+
+		//Video Sync
+			windowDef ADV5 {
+				rect		20, 142, 400, 16
+				windowDef ADV5L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV5M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV5R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV5Title {
+					rect		1, 1, 280, 14
+					text		"#str_04126"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV5Primary {
+					rect		320, 1, 50, 14
+					choices		"#str_04221"
+					cvar		"r_swapInterval"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+				}
+			}
+
+			windowDef ADV7 {
+				rect		20, 168, 400, 16
+				windowDef ADV7L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV7M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV7R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV7Title {
+					rect		1, 1, 280, 14
+					text		"Antialiasing (Multisampling)"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV7Primary {
+					rect		320, 1, 50, 14
+					choices		"#str_04231"
+					values		"0;2;4;8"
+					cvar		"r_multisamples"
+					choiceType	1
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+					
+					onAction {
+						set "ResetSystemBtnText::vidrestrt" "1" ;
+						set "OSWarning::forecolor" "1 1 1 1" ;
+					}
+				}
+			}
+
+			windowDef ADV8 {
+				rect		20, 194, 400, 16
+				windowDef ADV8L {
+					rect		0, 0, 8, 16
+					background	"gui/mainmenu/select_edge"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV8M {
+					rect		8, 0, 384, 16
+					background	"gui/mainmenu/select_border"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV8R {
+					rect		392, 0, 8, 16
+					background	"gui/mainmenu/select_angle"
+					matcolor	0, 0, 0, 1
+					noevents	1
+				}
+				windowDef ADV8Title {
+					rect		1, 1, 280, 14
+					text		"Antialiasing (Post Process)"
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	2
+					textaligny	-6
+					forecolor	1, 1, 1, 1
+				}
+				choiceDef ADV8Primary {
+					rect		320, 1, 50, 14					
+					choices		"Off;FXAA"
+					cvar		"r_fxaa"
+					choiceType	0
+					font		"fonts/bank"
+					textscale	0.25
+					textalign	1
+					textaligny	-6
+					forecolor	0.6, 0.8, 0.8, 1
+					
+					onAction {
+						set "ResetSystemBtnText::vidrestrt" "1" ;
+						set "OSWarning::forecolor" "1 1 1 1" ;
+					}
+				}
+			}		
 
 			//select button 1
 			windowDef RDCBtn1 {
-				rect		150, 192, 300, 32
+				rect		150, 218, 300, 32
 
 				windowDef RDCBtn1Border {
 					rect		4, 6, 236, 19
@@ -14914,7 +14960,7 @@ windowDef MultiplayerLANParent {
 			}
 
 			windowDef RDCYesBtnText {
-				rect		155, 198, 240, 19
+				rect		155, 224, 240, 19
 				text		"#str_04129"
 				textscale	0.25
 				textalign	1
