@@ -74,8 +74,8 @@ void idVertexCache::ActuallyFree( vertCache_t *block ) {
 #if 0
       // this isn't really necessary, it will be reused soon enough
 			// filling with zero length data is the equivalent of freeing
-			glBindBufferARB(GL_ARRAY_BUFFER_ARB, block->vbo);
-			glBufferDataARB(GL_ARRAY_BUFFER_ARB, 0, 0, GL_DYNAMIC_DRAW_ARB);
+			glBindBuffer(GL_ARRAY_BUFFER, block->vbo);
+			glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_DYNAMIC_DRAW);
 #endif
 	}
 	block->tag = TAG_FREE;		// mark as free
@@ -104,9 +104,6 @@ idVertexCache::Position
 
 this will be a real pointer with virtual memory,
 but it will be an int offset cast to a pointer with
-ARB_vertex_buffer_object
-
-The ARB_vertex_buffer_object will be bound
 ==============
 */
 const void *idVertexCache::Position( const vertCache_t *buffer ) {
@@ -118,18 +115,18 @@ const void *idVertexCache::Position( const vertCache_t *buffer ) {
 
 	if ( r_showVertexCache.GetInteger() == 2 ) {
 		if ( buffer->tag == TAG_TEMP ) {
-			common->Printf( "GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size );
+			common->Printf( "GL_ARRAY_BUFFER = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size );
 		} else {
-			common->Printf( "GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size );
+			common->Printf( "GL_ARRAY_BUFFER = %i (%i bytes)\n", buffer->vbo, buffer->size );
 		}
 	}
 	if ( buffer->indexBuffer ) {
-		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, buffer->vbo );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buffer->vbo );
 	} else {
-		glBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer->vbo );
+		glBindBuffer( GL_ARRAY_BUFFER, buffer->vbo );
 	}
 
-  assert(buffer->offset >= 0);
+	assert(buffer->offset >= 0);
 	return reinterpret_cast<const void *>(buffer->offset);
 }
 
@@ -137,10 +134,7 @@ const void *idVertexCache::Position( const vertCache_t *buffer ) {
 ==============
 idVertexCache::Bind
 
-it will be an int offset cast to a pointer with
-ARB_vertex_buffer_object
-
-The ARB_vertex_buffer_object will be bound
+it will be an int offset cast to a pointer
 ==============
 */
 int idVertexCache::Bind(const vertCache_t *buffer) {
@@ -156,24 +150,24 @@ int idVertexCache::Bind(const vertCache_t *buffer) {
 
   if (r_showVertexCache.GetInteger() == 2) {
     if (buffer->tag == TAG_TEMP) {
-      common->Printf("GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size);
+      common->Printf("GL_ARRAY_BUFFER = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size);
     }
     else {
-      common->Printf("GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size);
+      common->Printf("GL_ARRAY_BUFFER = %i (%i bytes)\n", buffer->vbo, buffer->size);
     }
   }
   if (buffer->indexBuffer) {
-    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, buffer->vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->vbo);
   }
   else {
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, buffer->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
   }
 
   return buffer->offset;
 }
 
 void idVertexCache::UnbindIndex() {
-	glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
 
@@ -200,7 +194,7 @@ void idVertexCache::Init() {
 
 	byte	*junk = (byte *)Mem_Alloc( frameBytes );
 	for ( int i = 0 ; i < NUM_VERTEX_FRAMES ; i++ ) {
-		allocatingTempBuffer = true;	// force the alloc to use GL_STREAM_DRAW_ARB
+		allocatingTempBuffer = true;	// force the alloc to use GL_STREAM_DRAW
 		tempBuffers[i] = Alloc( junk, frameBytes, false );
 		allocatingTempBuffer = false;
 		tempBuffers[i]->tag = TAG_FIXED;
@@ -261,7 +255,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 			block->next->prev = block;
 			block->prev->next = block;
 
-			glGenBuffersARB( 1, & block->vbo );
+			glGenBuffers( 1, & block->vbo );
 		}
 	}
 
@@ -299,14 +293,14 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 	assert(block->vbo);
 
 	if ( indexBuffer ) {
-		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, block->vbo );
-		glBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, block->vbo );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)size, data, GL_STATIC_DRAW );
 	} else {
-		glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
+		glBindBuffer( GL_ARRAY_BUFFER, block->vbo );
 		if ( allocatingTempBuffer ) {
-			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STREAM_DRAW_ARB );
+			glBufferData( GL_ARRAY_BUFFER, (GLsizeiptr)size, data, GL_STREAM_DRAW );
 		} else {
-			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
+			glBufferData( GL_ARRAY_BUFFER, (GLsizeiptr)size, data, GL_STATIC_DRAW );
 		}
 	}
 
@@ -432,9 +426,9 @@ vertCache_t	*idVertexCache::AllocFrameTemp( void *data, int size ) {
 	// copy the data
 	block->vbo = tempBuffers[listNum]->vbo;
 
-  assert(block->vbo);
-	glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
-	glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, block->offset, (GLsizeiptrARB)size, data );
+	assert(block->vbo);
+	glBindBuffer( GL_ARRAY_BUFFER, block->vbo );
+	glBufferSubData( GL_ARRAY_BUFFER, block->offset, (GLsizeiptr)size, data );
 
 	return block;
 }
@@ -476,8 +470,8 @@ void idVertexCache::EndFrame() {
 
 	// unbind vertex buffers so normal virtual memory will be used in case
 	// r_useVertexBuffers / r_useIndexBuffers
-	glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
-	glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 
 	currentFrame = tr.frameCount;
 	listNum = currentFrame % NUM_VERTEX_FRAMES;
@@ -540,7 +534,6 @@ void idVertexCache::List( void ) {
 	common->Printf( "%5i active static headers\n", numActive );
 	common->Printf( "%5i free static headers\n", numFreeStaticHeaders );
 	common->Printf( "%5i free dynamic headers\n", numFreeDynamicHeaders );
-	common->Printf( "Vertex cache is in ARB_vertex_buffer_object memory (FAST).\n");
 
 	if ( r_useIndexBuffers.GetBool() ) {
 		common->Printf( "Index buffers are accelerated.\n" );

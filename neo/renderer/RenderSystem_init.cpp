@@ -553,7 +553,7 @@ void R_InitOpenGL( void ) {
 		parms.coreProfile = r_glCoreProfile.GetBool();
 		parms.majorVersion = 3;
 		parms.minorVersion = 3;
-		parms.debug = false;
+		parms.debug = r_glDebugOutput.GetInteger() != 0;
 
 		if (GLimp_Init( parms )) {
 			// it worked
@@ -692,6 +692,8 @@ void GL_CheckErrors_helper(bool force, const char* file, int line) {
     int		err;
     char	s[64];
 	int		i;
+
+	RB_PrintDebugOutput();
 
 	// check for up to 10 errors pending
 	for ( i = 0 ; i < 10 ; i++ ) {
