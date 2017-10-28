@@ -90,6 +90,10 @@ void fhFramebuffer::Bind() {
 	currentDrawBuffer = this;
 
 	SetDrawBuffer();
+
+	if (r_useScissor.GetBool()) {
+		glScissor(0, 0, GetWidth(), GetHeight());
+	}
 }
 
 bool fhFramebuffer::IsDefault() const {
@@ -274,7 +278,7 @@ void fhFramebuffer::Blit(
 	dest->Bind();
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, source->name );
 
-	glBlitFramebufferEXT( sourceX, sourceY, sourceWidth, sourceHeight,
+	glBlitFramebuffer( sourceX, sourceY, sourceWidth, sourceHeight,
 		destX, destY, destWidth, destHeight,
 		bufferMask,
 		filter == TF_LINEAR ? GL_LINEAR : GL_NEAREST );
