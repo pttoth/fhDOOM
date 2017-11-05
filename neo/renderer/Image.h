@@ -439,16 +439,12 @@ public:
 	//--------------------------------------------------------
 
 	idImage *			AllocImage( const char *name );
-	void				SetNormalPalette();
 
 	idList<idImage*>	images;
 	idStrList			ddsList;
 	idHashIndex			ddsHash;
 
 	bool				insideLevelLoad;			// don't actually load images now
-
-	byte				originalToCompressed[256];	// maps normal maps to 8 bit textures
-	byte				compressedPalette[768];		// the palette that normal maps use
 
 	// default filter modes for images
 	GLenum				textureMinFilter;
