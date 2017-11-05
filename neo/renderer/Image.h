@@ -377,6 +377,8 @@ public:
 
 	void				PrintMemInfo( MemInfo_t *mi );
 
+	void				Update(bool force = false);
+
 	// cvars
 	static idCVar		image_roundDown;			// round bad sizes down to nearest power of two
 	static idCVar		image_colorMipLevels;		// development aid to see texture mip usage
@@ -438,7 +440,6 @@ public:
 
 	idImage *			AllocImage( const char *name );
 	void				SetNormalPalette();
-	void				ChangeTextureFilter();
 
 	idList<idImage*>	images;
 	idStrList			ddsList;
@@ -452,8 +453,6 @@ public:
 	// default filter modes for images
 	GLenum				textureMinFilter;
 	GLenum				textureMaxFilter;
-	float				textureAnisotropy;
-	float				textureLODBias;
 
 	idImage *			imageHashTable[FILE_HASH_SIZE];
 

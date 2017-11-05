@@ -32,6 +32,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImageProgram.h"
+#include "Sampler.h"
+#include "Framebuffer.h"
 
 namespace {
 	const char *imageFilter[] = {
@@ -789,90 +791,6 @@ static void R_QuadraticImage( idImage *image ) {
 
 /*
 ===============
-ChangeTextureFilter
-
-This resets filtering on all loaded images
-New images will automatically pick up the current values.
-===============
-*/
-void idImageManager::ChangeTextureFilter( void ) {
-	int		i;
-
-	typedef struct {
-		const char *name;
-		int	minimize, maximize;
-	} filterName_t;
-
-	static filterName_t textureFilters[] = {
-		{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
-		{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR},
-		{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
-		{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
-		{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
-		{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST}
-	};
-
-	// if these are changed dynamically, it will force another ChangeTextureFilter
-	image_filter.ClearModified();
-	image_anisotropy.ClearModified();
-	image_lodbias.ClearModified();
-
-	const char* string = image_filter.GetString();
-	for ( i = 0; i < 6; i++ ) {
-		if ( !idStr::Icmp( textureFilters[i].name, string ) ) {
-			break;
-		}
-	}
-
-	if ( i == 6 ) {
-		common->Warning( "bad r_textureFilter: '%s'", string);
-		// default to LINEAR_MIPMAP_NEAREST
-		i = 0;
-	}
-
-	// set the values for future images
-	textureMinFilter = textureFilters[i].minimize;
-	textureMaxFilter = textureFilters[i].maximize;
-	textureAnisotropy = image_anisotropy.GetFloat();
-	if ( textureAnisotropy < 1 ) {
-		textureAnisotropy = 1;
-	} else if ( textureAnisotropy > glConfig.maxTextureAnisotropy ) {
-		textureAnisotropy = glConfig.maxTextureAnisotropy;
-	}
-	textureLODBias = image_lodbias.GetFloat();
-
-	// change all the existing mipmap texture objects with default filtering
-
-	for ( i = 0 ; i < images.Num() ; i++ ) {
-		unsigned int	texEnum = GL_TEXTURE_2D;
-
-		idImage* glt = images[i];
-
-		switch( glt->type ) {
-		case TT_2D:
-			texEnum = GL_TEXTURE_2D;
-			break;
-		case TT_CUBIC:
-			texEnum = GL_TEXTURE_CUBE_MAP;
-			break;
-		case TT_DISABLED:
-			texEnum = GL_INVALID_ENUM;
-			break;
-		}
-
-		// make sure we don't start a background load
-		if ( glt->texnum == idImage::TEXTURE_NOT_LOADED ) {
-			continue;
-		}
-
-		//TODO(johl): do we need this bind? does some caller rely on the image being bound to 0 after calling this fucntion?
-		glt->Bind(0);
-		glt->SetImageFilterAndRepeat();
-	}
-}
-
-/*
-===============
 idImage::Reload
 ===============
 */
@@ -927,9 +845,6 @@ static void R_ReloadImages_f( const idCmdArgs &args ) {
 	bool	all;
 	bool	checkPrecompressed;
 
-	// this probably isn't necessary...
-	globalImages->ChangeTextureFilter();
-
 	all = false;
 	checkPrecompressed = false;		// if we are doing this as a vid_restart, look for precompressed like normal
 
@@ -944,6 +859,8 @@ static void R_ReloadImages_f( const idCmdArgs &args ) {
 			return;
 		}
 	}
+
+	fhFramebuffer::PurgeAll();
 
 	for ( i = 0 ; i < globalImages->images.Num() ; i++ ) {
 		image = globalImages->images[ i ];
@@ -1731,21 +1648,6 @@ void idImageManager::CompleteBackgroundImageLoads() {
 
 /*
 ===============
-CheckCvars
-===============
-*/
-void idImageManager::CheckCvars() {
-	// textureFilter stuff
-	if ( image_filter.IsModified() || image_anisotropy.IsModified() || image_lodbias.IsModified() ) {
-		ChangeTextureFilter();
-		image_filter.ClearModified();
-		image_anisotropy.ClearModified();
-		image_lodbias.ClearModified();
-	}
-}
-
-/*
-===============
 SumOfUsedImages
 ===============
 */
@@ -1814,7 +1716,7 @@ void idImageManager::Init() {
 	cacheLRU.cacheUsagePrev = &cacheLRU;
 
 	// set default texture filter modes
-	ChangeTextureFilter();
+	Update(true);
 
 	// create built in images
 	defaultImage = ImageFromFunction( "_default", R_DefaultImage );
@@ -2094,4 +1996,52 @@ void idImageManager::PrintMemInfo( MemInfo_t *mi ) {
 
 	f->Printf( "\nTotal image bytes allocated: %s\n", idStr::FormatNumber( total ).c_str() );
 	fileSystem->CloseFile( f );
+}
+
+/*
+===============
+idImageManager::Update
+===============
+*/
+void idImageManager::Update(bool force) {
+	if (!force && !image_lodbias.IsModified() && !image_anisotropy.IsModified() && !image_filter.IsModified()) {
+		return;
+	}
+
+	if (force || image_filter.IsModified()) {
+		struct filterName_t {
+			const char *name;
+			int	minimize, maximize;
+		};
+
+		static const filterName_t textureFilters[] = {
+			{ "GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR },
+			{ "GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR },
+			{ "GL_NEAREST", GL_NEAREST, GL_NEAREST },
+			{ "GL_LINEAR", GL_LINEAR, GL_LINEAR },
+			{ "GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST },
+			{ "GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST }
+		};
+
+		bool filterOk = false;
+		for (int i = 0; i < 6; i++) {
+			if (!idStr::Icmp(textureFilters[i].name, image_filter.GetString())) {
+				textureMinFilter = textureFilters[i].minimize;
+				textureMaxFilter = textureFilters[i].maximize;
+				filterOk = true;
+			}
+		}
+
+		if (!filterOk) {
+			common->Warning("bad image_filter: '%s'", image_filter.GetString());
+			textureMinFilter = textureFilters[0].minimize;
+			textureMaxFilter = textureFilters[0].maximize;
+		}
+	}
+
+	image_filter.ClearModified();
+	image_lodbias.ClearModified();
+	image_anisotropy.ClearModified();
+
+	fhSampler::PurgeAll();
 }

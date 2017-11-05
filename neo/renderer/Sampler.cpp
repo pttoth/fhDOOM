@@ -99,8 +99,9 @@ fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat
 }
 
 void fhSampler::Purge() {
-	if(num > 0)
+	if (num > 0) {
 		glDeleteSamplers(1, &num);
+	}
 
 	num = 0;
 }
@@ -149,7 +150,9 @@ void fhSampler::Init() {
 	if (glConfig.anisotropicAvailable) {
 		// only do aniso filtering on mip mapped images
 		if (filter == TF_DEFAULT && useAf) {
-			glSamplerParameterf( num, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
+			float af = Max(1.0f, Min(idImageManager::image_anisotropy.GetFloat(), glConfig.maxTextureAnisotropy));
+
+			glSamplerParameterf( num, GL_TEXTURE_MAX_ANISOTROPY_EXT, af );
 		}
 		else {
 			glSamplerParameterf( num, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );;
@@ -157,7 +160,7 @@ void fhSampler::Init() {
 	}
 
 	if (useLodBias) {
-		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
+		glSamplerParameterf(num, GL_TEXTURE_LOD_BIAS, idImageManager::image_lodbias.GetFloat());
 	} else {
 		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, 0 );
 	}

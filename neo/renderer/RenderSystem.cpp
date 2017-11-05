@@ -264,26 +264,6 @@ void R_LockSurfaceScene( viewDef_t *parms ) {
 
 /*
 =============
-R_CheckCvars
-
-See if some cvars that we watch have changed
-=============
-*/
-static void R_CheckCvars( void ) {
-	globalImages->CheckCvars();
-
-	// gamma stuff
-	if ( r_gamma.IsModified() || r_brightness.IsModified() ) {
-		r_gamma.ClearModified();
-		r_brightness.ClearModified();
-	}
-
-	// check for changes to logging state
-	//GLimp_EnableLogging( r_logFile.GetInteger() != 0 );
-}
-
-/*
-=============
 idRenderSystemLocal::idRenderSystemLocal
 =============
 */
@@ -598,6 +578,8 @@ void idRenderSystemLocal::BeginFrame( int renderWidth, int renderHeight ) {
 		return;
 	}
 
+	globalImages->Update();
+
 	guiModel->Clear();
 
 	glConfig.vidWidth = renderWidth;
@@ -688,9 +670,6 @@ frameInfo_t idRenderSystemLocal::LocalEndFrame() {
 
 	// print any other statistics and clear all of them
 	R_PerformanceCounters();
-
-	// check for dynamic changes that require some initialization
-	R_CheckCvars();
 
 	// check for errors
 	GL_CheckErrors(false);
