@@ -768,6 +768,11 @@ typedef struct {
 } renderCrop_t;
 static const int	MAX_RENDER_CROPS = 8;
 
+struct frameInfo_t {
+	renderSystemTime time;
+	fhFramebuffer* framebuffer;
+};
+
 /*
 ** Most renderer globals are defined here.
 ** backend functions should never modify any of these fields,
@@ -827,6 +832,8 @@ public:
 
 	void					Clear( void );
 	void					RenderViewToViewport( const renderView_t *renderView, idScreenRect *viewport );
+
+	frameInfo_t             LocalEndFrame();
 
 public:
 	// renderer globals
@@ -1618,7 +1625,7 @@ void RB_LogComment( const char *comment, ... ) id_attribute((format(printf,1,2))
 
 void RB_ShowImages( void );
 
-void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds );
+fhFramebuffer* RB_ExecuteBackEndCommands( const emptyCommand_t *cmds );
 
 
 /*

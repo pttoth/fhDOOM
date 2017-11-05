@@ -772,10 +772,7 @@ static void RB_BrightnessGamma(fhFramebuffer* src, fhFramebuffer* dst) {
 	dst->Bind();
 }
 
-static void RB_PostProcess(fhFramebuffer* src, fhFramebuffer* dst) {
-	assert(r_useFramebuffer.GetBool());
-	const bool enableBloom = r_bloomFactor.GetFloat() > 0.1f;
-
+static fhFramebuffer* RB_Resolve(fhFramebuffer* src) {
 	if (src->GetSamples() > 1) {
 		auto resolve = fhFramebuffer::currentRenderFramebuffer;
 		resolve->Resize(src->GetWidth(), src->GetHeight(), 1, src->GetColorFormat(), src->GetDepthFormat());
@@ -786,6 +783,15 @@ static void RB_PostProcess(fhFramebuffer* src, fhFramebuffer* dst) {
 
 		src = resolve;
 	}
+
+	return src;
+}
+
+static void RB_PostProcess(fhFramebuffer* src, fhFramebuffer* dst) {
+	assert(r_useFramebuffer.GetBool());
+	const bool enableBloom = r_bloomFactor.GetFloat() > 0.1f;
+
+	src = RB_Resolve(src);
 
 	GL_State(GLS_DEFAULT);
 
@@ -859,9 +865,9 @@ RB_SwapBuffers
 
 =============
 */
-static void	RB_SwapBuffers( const void *data ) {
+static void	RB_SwapBuffers(const void *data, fhFramebuffer* src) {
 	if (r_useFramebuffer.GetBool()) {
-		RB_BrightnessGamma(fhFramebuffer::currentRenderFramebuffer2, fhFramebuffer::defaultFramebuffer);
+		RB_BrightnessGamma(src, fhFramebuffer::defaultFramebuffer);
 	}
 
 	// force a gl sync if requested
@@ -901,7 +907,7 @@ static void	RB_CopyRender( const void *data, bool copyFromDefaultFramebuffer ) {
 		//            CopyRender and CropRender commands are stored in demo files, is that an issue?
 		image->AllocateStorage( pixelFormat_t::RGB, cmd->imageWidth, cmd->imageHeight, 1, 1 );
 
-		auto src = copyFromDefaultFramebuffer ? fhFramebuffer::defaultFramebuffer : fhFramebuffer::renderFramebuffer;
+		auto src = fhFramebuffer::GetCurrentDrawBuffer();
 
 		if (src->GetSamples() > 1) {
 			//TODO(johl): resolving the full buffer seems like overkill for small subviews (things like security cameras are usually only 512x512)
@@ -915,7 +921,7 @@ static void	RB_CopyRender( const void *data, bool copyFromDefaultFramebuffer ) {
 			src = resolve;
 		}
 
-		fhFramebuffer framebuffer( cmd->imageWidth, cmd->imageHeight, image, nullptr );
+		fhFramebuffer framebuffer("tmp", cmd->imageWidth, cmd->imageHeight, image, nullptr );
 		fhFramebuffer::BlitColor( src, cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight, &framebuffer );
 		framebuffer.Purge();
 	}
@@ -929,12 +935,14 @@ This function will be called syncronously if running without
 smp extensions, or asyncronously by another thread.
 ====================
 */
-void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
+fhFramebuffer* RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
+	fhFramebuffer* finalFramebuffer = nullptr;
+
 	// r_debugRenderToTexture
 	int	c_draw3d = 0, c_draw2d = 0, c_setBuffers = 0, c_swapBuffers = 0, c_copyRenders = 0;
 
 	if ( cmds->commandId == RC_NOP && !cmds->next ) {
-		return;
+		return finalFramebuffer;
 	}
 
 	const auto backEndStartTime = Sys_Milliseconds();
@@ -981,7 +989,8 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 			c_setBuffers++;
 			break;
 		case RC_SWAP_BUFFERS:
-			RB_SwapBuffers( cmds );
+			finalFramebuffer = RB_Resolve(postprocessDone ? fhFramebuffer::currentRenderFramebuffer2 : fhFramebuffer::renderFramebuffer);
+			RB_SwapBuffers(cmds, finalFramebuffer);
 			c_swapBuffers++;
 			break;
 		case RC_COPY_RENDER:
@@ -1006,4 +1015,6 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 		common->Printf( "3d: %i, 2d: %i, SetBuf: %i, SwpBuf: %i, CpyRenders: %i, CpyFrameBuf: %i\n", c_draw3d, c_draw2d, c_setBuffers, c_swapBuffers, c_copyRenders, backEnd.c_copyFrameBuffer );
 		backEnd.c_copyFrameBuffer = 0;
 	}
+
+	return finalFramebuffer;
 }

@@ -40,15 +40,16 @@ fhFramebuffer* fhFramebuffer::bloomFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::bloomTmpFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::renderFramebuffer = nullptr;
 
-fhFramebuffer::fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
+fhFramebuffer::fhFramebuffer(const char* name, int w, int h, idImage* color, idImage* depth) {
 	width = w;
 	height = h;
-	name = (!color && !depth) ? 0 : -1;
+	num = (!color && !depth) ? 0 : -1;
 	colorAttachment = color;
 	depthAttachment = depth;
 	samples = 1;
 	colorFormat = color ? color->pixelFormat : pixelFormat_t::RGBA;
 	depthFormat = depth ? depth->pixelFormat : pixelFormat_t::DEPTH_24_STENCIL_8;
+	this->name = name;
 }
 
 static const char* GetFrameBufferStatusMessage( int status ) {
@@ -82,11 +83,11 @@ void fhFramebuffer::Bind() {
 		return;
 	}
 
-	if (name == -1) {
+	if (num == -1) {
 		Allocate();
 	}
 
-	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, num);
 	currentDrawBuffer = this;
 
 	SetDrawBuffer();
@@ -97,7 +98,7 @@ void fhFramebuffer::Bind() {
 }
 
 bool fhFramebuffer::IsDefault() const {
-	return (name == 0);
+	return (num == 0);
 }
 
 void fhFramebuffer::Resize(int width, int height, int samples, pixelFormat_t colorFormat, pixelFormat_t depthFormat) {
@@ -149,13 +150,13 @@ int fhFramebuffer::GetSamples() const {
 }
 
 void fhFramebuffer::Purge() {
-	if (name != 0 && name != -1) {
+	if (num != 0 && num != -1) {
 		if (currentDrawBuffer == this) {
 			defaultFramebuffer->Bind();
 		}
 
-		glDeleteFramebuffers( 1, &name );
-		name = -1;
+		glDeleteFramebuffers(1, &num);
+		num = -1;
 	}
 }
 
@@ -176,8 +177,8 @@ void fhFramebuffer::Allocate() {
 		return;
 	}
 
-	glGenFramebuffers( 1, &name );
-	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+	glGenFramebuffers(1, &num);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, num);
 	currentDrawBuffer = this;
 
 	auto target = samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
@@ -210,7 +211,7 @@ void fhFramebuffer::Allocate() {
 	auto status = GetFrameBufferStatusMessage( glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) );
 	if (status) {
 		common->Warning( "failed to generate framebuffer: %s", status );
-		name = 0;
+		num = 0;
 	}
 }
 
@@ -218,14 +219,14 @@ void fhFramebuffer::Init() {
 	const int shadowMapFramebufferSize = 1024 * 4;
 	const int initialFramebufferSize = 16;
 	const int bloomFramebufferSize = 128;
-	shadowmapFramebuffer = new fhFramebuffer(shadowMapFramebufferSize, shadowMapFramebufferSize, nullptr, globalImages->shadowmapImage);
-	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr );
-	currentDepthFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, nullptr, globalImages->currentDepthImage);
-	currentRenderFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage, nullptr);
-	currentRenderFramebuffer2 = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage2, nullptr);
-	renderFramebuffer = new fhFramebuffer(initialFramebufferSize, initialFramebufferSize, globalImages->renderColorImage, globalImages->renderDepthImage);
-	bloomFramebuffer = new fhFramebuffer(bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImage, nullptr);
-	bloomTmpFramebuffer = new fhFramebuffer(bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImageTmp, nullptr);
+	shadowmapFramebuffer = new fhFramebuffer("shadowmap", shadowMapFramebufferSize, shadowMapFramebufferSize, nullptr, globalImages->shadowmapImage);
+	defaultFramebuffer = new fhFramebuffer("default", 0, 0, nullptr, nullptr );
+	currentDepthFramebuffer = new fhFramebuffer("currentdepth", initialFramebufferSize, initialFramebufferSize, nullptr, globalImages->currentDepthImage);
+	currentRenderFramebuffer = new fhFramebuffer("currentrender", initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage, nullptr);
+	currentRenderFramebuffer2 = new fhFramebuffer("currentrender2", initialFramebufferSize, initialFramebufferSize, globalImages->currentRenderImage2, nullptr);
+	renderFramebuffer = new fhFramebuffer("render", initialFramebufferSize, initialFramebufferSize, globalImages->renderColorImage, globalImages->renderDepthImage);
+	bloomFramebuffer = new fhFramebuffer("bloom1", bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImage, nullptr);
+	bloomTmpFramebuffer = new fhFramebuffer("bloom", bloomFramebufferSize, bloomFramebufferSize, globalImages->bloomImageTmp, nullptr);
 	currentDrawBuffer = defaultFramebuffer;
 }
 
@@ -271,12 +272,12 @@ void fhFramebuffer::Blit(
 
 	fhFramebuffer* currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
 
-	if (dest->name == -1) {
+	if (dest->num == -1) {
 		dest->Allocate();
 	}
 
 	dest->Bind();
-	glBindFramebuffer( GL_READ_FRAMEBUFFER, source->name );
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, source->num);
 
 	glBlitFramebuffer( sourceX, sourceY, sourceWidth, sourceHeight,
 		destX, destY, destWidth, destHeight,

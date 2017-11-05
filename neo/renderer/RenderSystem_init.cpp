@@ -1132,53 +1132,59 @@ void R_Benchmark_f( const idCmdArgs &args ) {
 
 /*
 ====================
-R_ReadTiledPixels
+R_ReadPixels
 
 Allows the rendering of an image larger than the actual window by
-tiling it into window-sized chunks and rendering each chunk separately
+rendering into a resized off-screen framebuffer.
 
 If ref isn't specified, the full session UpdateScreen will be done.
 ====================
 */
-static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t *ref = NULL ) {
+static void R_ReadPixels( int width, int height, byte *buffer, renderView_t *ref = nullptr ) {
 	// include extra space for OpenGL padding to word boundaries
-	byte *temp = nullptr;
-	if (r_useFramebuffer.GetBool()) {
-		temp = (byte *)R_StaticAlloc( (width + 3) * height * 3 );
+
+	const int tempSize = (width + 3) * height * 3;
+	auto temp = (byte *)R_StaticAlloc(tempSize);
+
+	const int oldWidth = glConfig.vidWidth;
+	const int oldHeight = glConfig.vidHeight;
+
+	fhFramebuffer* src = r_useFramebuffer.GetBool() ? fhFramebuffer::currentRenderFramebuffer2 : fhFramebuffer::defaultFramebuffer;
+
+	if (ref) {
+		tr.BeginFrame(width, height);
+		tr.primaryWorld->RenderScene(ref);
+		src = tr.LocalEndFrame().framebuffer;
 	}
 	else {
-		temp = (byte *)R_StaticAlloc( (glConfig.vidWidth + 3) * glConfig.vidHeight * 3 );
-	}
-
-	int	oldWidth = glConfig.vidWidth;
-	int oldHeight = glConfig.vidHeight;
-
-	if ( ref ) {
-		tr.BeginFrame( width, height );
-		tr.primaryWorld->RenderScene( ref );
-		tr.EndFrame();
-	} else {
 		glConfig.vidWidth = width;
 		glConfig.vidHeight = height;
 		session->UpdateScreen();
 	}
 
-	if (r_useFramebuffer.GetBool()) {
-		auto src = fhFramebuffer::renderFramebuffer;
+	if (src && src != fhFramebuffer::defaultFramebuffer) {
 		auto dst = fhFramebuffer::currentRenderFramebuffer;
 
 		glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
 		glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
 		fhFramebuffer::BlitColor(src, dst);
 
-		glGetTextureImageEXT(globalImages->currentRenderImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
+		if (glConfig.extDirectStateAccessAvailable) {
+			glGetTextureImageEXT(globalImages->currentRenderImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
+		}
+		else {
+			assert(glConfig.arbDirectStateAccessAvailable);
+			glGetTextureImage(globalImages->currentRenderImage->texnum, 0, GL_RGB, GL_UNSIGNED_BYTE, tempSize, temp);
+		}
 	}
 	else {
+		//FIXME(johl): remove this, src should never be null
+		common->Warning("reading pixel data from default framebuffer is deprecated!");
 		glReadBuffer( GL_FRONT );
 		glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, temp );
 	}
 
-	int	row = (width * 3 + 3) & ~3;		// OpenGL pads to dword boundaries
+	const int row = (width * 3 + 3) & ~3;		// OpenGL pads to dword boundaries
 
 	for (int y = 0; y < height; y++) {
 		memcpy( buffer + (y* width) * 3, temp + y * row, width * 3 );
@@ -1204,14 +1210,13 @@ If ref == NULL, session->updateScreen will be used
 void idRenderSystemLocal::TakeScreenshot( int width, int height, const char *fileName, int blends, renderView_t *ref ) {
 	takingScreenshot = true;
 
-	int	pix = width * height;
+	const int pix = width * height;
 
 	byte* buffer = (byte *)R_StaticAlloc(pix*3 + 18);
 	memset (buffer, 0, 18);
 
 	if ( blends <= 1 ) {
-		//R_ReadPixels( width, height, buffer + 18, ref );
-		R_ReadTiledPixels( width, height, buffer + 18, ref );
+		R_ReadPixels(width, height, buffer + 18, ref);
 	} else {
 		unsigned short *shortBuffer = (unsigned short *)R_StaticAlloc(pix*2*3);
 		memset (shortBuffer, 0, pix*2*3);
@@ -1220,7 +1225,7 @@ void idRenderSystemLocal::TakeScreenshot( int width, int height, const char *fil
 		r_jitter.SetBool( true );
 
 		for ( int i = 0 ; i < blends ; i++ ) {
-			R_ReadTiledPixels( width, height, buffer + 18, ref );
+			R_ReadPixels(width, height, buffer + 18, ref);
 
 			for ( int j = 0 ; j < pix*3 ; j++ ) {
 				shortBuffer[j] += buffer[18+j];
@@ -1262,7 +1267,6 @@ void idRenderSystemLocal::TakeScreenshot( int width, int height, const char *fil
 	R_StaticFree( buffer );
 
 	takingScreenshot = false;
-
 }
 
 
@@ -1322,15 +1326,13 @@ screenshot [width] [height]
 screenshot [width] [height] [samples]
 ==================
 */
-#define	MAX_BLENDS	256	// to keep the accumulation in shorts
 void R_ScreenShot_f( const idCmdArgs &args ) {
+	static const int maxBlends = 256; // to keep the accumulation in shorts
 	static int lastNumber = 0;
 	idStr checkname;
 
-	int width = r_useFramebuffer.GetBool() ? fhFramebuffer::renderFramebuffer->GetWidth() : glConfig.vidWidth;
-	int height = r_useFramebuffer.GetBool() ? fhFramebuffer::renderFramebuffer->GetHeight() : glConfig.vidHeight;
-	int	x = 0;
-	int y = 0;
+	int width = tr.GetScreenWidth();
+	int height = tr.GetScreenHeight();
 	int	blends = 1;
 
 	switch ( args.Argc() ) {
@@ -1352,8 +1354,9 @@ void R_ScreenShot_f( const idCmdArgs &args ) {
 		if ( blends < 1 ) {
 			blends = 1;
 		}
-		if ( blends > MAX_BLENDS ) {
-			blends = MAX_BLENDS;
+
+		if (blends > maxBlends) {
+			blends = maxBlends;
 		}
 		R_ScreenshotFilename( lastNumber, "screenshots/shot", checkname );
 		break;
@@ -1479,8 +1482,6 @@ void R_EnvShot_f( const idCmdArgs &args ) {
 		renderView_t ref = tr.primaryView->renderView;
 		ref.x = ref.y = 0;
 		ref.fov_x = ref.fov_y = 90;
-		//ref.width = size;
-		//ref.height = size;
 		ref.viewaxis = axis[i];
 		idStr		fullname;
 		sprintf( fullname, "env/%s%s", baseName, extensions[i] );
@@ -1499,7 +1500,7 @@ static idMat3		cubeAxis[6];
 R_SampleCubeMap
 ==================
 */
-void R_SampleCubeMap( const idVec3 &dir, int size, byte *buffers[6], byte result[4] ) {
+static void R_SampleCubeMap( const idVec3 &dir, int size, byte *buffers[6], byte result[4] ) {
 	float	adir[3];
 	int		axis, x, y;
 
@@ -1557,7 +1558,6 @@ Saves out env/<basename>_amb_ft.tga, etc
 void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 	idStr fullname;
 	const char	*baseName;
-	int			i;
 	renderView_t	ref;
 	viewDef_t	primary;
 	int			downSample;
@@ -1606,7 +1606,7 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 	cubeAxis[5][2][1] = 1;
 
 	// read all of the images
-	for ( i = 0 ; i < 6 ; i++ ) {
+	for ( int i = 0 ; i < 6 ; i++ ) {
 		sprintf( fullname, "env/%s%s", baseName, extensions[i] );
 		common->Printf( "loading %s\n", fullname.c_str() );
 		session->UpdateScreen();
@@ -1621,12 +1621,12 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 	}
 
 	// resample with hemispherical blending
-	int	samples = 1000;
+	const int	samples = 1000;
 
 	byte	*outBuffer = (byte *)_alloca( outSize * outSize * 4 );
 
 	for ( int map = 0 ; map < 2 ; map++ ) {
-		for ( i = 0 ; i < 6 ; i++ ) {
+		for ( int i = 0 ; i < 6 ; i++ ) {
 			for ( int x = 0 ; x < outSize ; x++ ) {
 				for ( int y = 0 ; y < outSize ; y++ ) {
 					idVec3	dir;
@@ -1635,7 +1635,7 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 					dir = cubeAxis[i][0] + -( -1 + 2.0*x/(outSize-1) ) * cubeAxis[i][1] + -( -1 + 2.0*y/(outSize-1) ) * cubeAxis[i][2];
 					dir.Normalize();
 					total[0] = total[1] = total[2] = 0;
-	//samples = 1;
+
 					float	limit = map ? 0.95 : 0.25;		// small for specular, almost hemisphere for ambient
 
 					for ( int s = 0 ; s < samples ; s++ ) {
@@ -1679,7 +1679,7 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 		}
 	}
 
-	for ( i = 0 ; i < 6 ; i++ ) {
+	for ( int i = 0 ; i < 6 ; i++ ) {
 		if ( buffers[i] ) {
 			Mem_Free( buffers[i] );
 		}
@@ -1896,15 +1896,6 @@ void R_TouchGui_f( const idCmdArgs &args ) {
 
 /*
 =================
-R_InitCvars
-=================
-*/
-void R_InitCvars( void ) {
-	// update latched cvars here
-}
-
-/*
-=================
 R_InitCommands
 =================
 */
@@ -1980,8 +1971,6 @@ void idRenderSystemLocal::Init( void ) {
 	// there may be other state we need to reset
 
 	memset( &backEnd, 0, sizeof( backEnd ) );
-
-	R_InitCvars();
 
 	R_InitCommands();
 

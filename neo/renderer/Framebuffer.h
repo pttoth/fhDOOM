@@ -33,7 +33,7 @@ enum class pixelFormat_t;
 
 class fhFramebuffer {
 public:
-	     fhFramebuffer( int w, int h, idImage* color, idImage* depth );
+	     fhFramebuffer( const char* name, int w, int h, idImage* color, idImage* depth );
 
 	bool IsDefault() const;
 	int  GetWidth() const;
@@ -48,8 +48,6 @@ public:
 		Resize(width, height, samples, colorFormat, depthFormat);
 	}
 	void Resize(int width, int height, int samples, pixelFormat_t colorFormat, pixelFormat_t depthFormat);
-
-	GLuint GetName() const { return name; }
 
 	idImage* GetColorAttachment() {
 		return colorAttachment;
@@ -96,8 +94,9 @@ private:
 	int      samples;
 	pixelFormat_t colorFormat;
 	pixelFormat_t depthFormat;
-	GLuint   name;
+	GLuint   num;
 	idImage* colorAttachment;
 	idImage* depthAttachment;
+	idStr    name;
 };
 

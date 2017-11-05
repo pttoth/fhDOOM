@@ -127,11 +127,13 @@ R_IssueRenderCommands
 Called by R_EndFrame each frame
 ====================
 */
-static void R_IssueRenderCommands( void ) {
+static fhFramebuffer* R_IssueRenderCommands( void ) {
+	fhFramebuffer* framebuffer = nullptr;
+
 	if ( frameData->cmdHead->commandId == RC_NOP
 		&& !frameData->cmdHead->next ) {
 		// nothing to issue
-		return;
+		return framebuffer;
 	}
 
 	// r_skipBackEnd allows the entire time of the back end
@@ -143,10 +145,11 @@ static void R_IssueRenderCommands( void ) {
 	// r_skipRender is usually more usefull, because it will still
 	// draw 2D graphics
 	if ( !r_skipBackEnd.GetBool() ) {
-		RB_ExecuteBackEndCommands( frameData->cmdHead );
+		framebuffer = RB_ExecuteBackEndCommands(frameData->cmdHead);
 	}
 
 	R_ClearCommandChain();
+	return framebuffer;
 }
 
 /*
@@ -656,8 +659,23 @@ Returns the number of msec spent in the back end
 =============
 */
 renderSystemTime idRenderSystemLocal::EndFrame() {
-	if ( !glConfig.isInitialized ) {
-		return renderSystemTime{ 0, 0 };
+	return LocalEndFrame().time;
+}
+
+/*
+=====================
+RenderViewToViewport
+
+Converts from SCREEN_WIDTH / SCREEN_HEIGHT coordinates to current cropped pixel coordinates
+=====================
+*/
+
+frameInfo_t idRenderSystemLocal::LocalEndFrame() {
+	frameInfo_t info;
+	memset(&info, 0, sizeof(info));
+
+	if (!glConfig.isInitialized) {
+		return info;
 	}
 
 	// close any gui drawing
@@ -665,9 +683,8 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	guiModel->Clear();
 
 	// save out timing information
-	renderSystemTime time;
-	time.frontEndMsec = pc.frontEndMsec;
-	time.backEndMsec = backEnd.pc.msec;
+	info.time.frontEndMsec = pc.frontEndMsec;
+	info.time.backEndMsec = backEnd.pc.msec;
 
 	// print any other statistics and clear all of them
 	R_PerformanceCounters();
@@ -675,7 +692,7 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	// check for dynamic changes that require some initialization
 	R_CheckCvars();
 
-    // check for errors
+	// check for errors
 	GL_CheckErrors(false);
 
 	// add the swapbuffers command
@@ -683,7 +700,7 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	cmd->commandId = RC_SWAP_BUFFERS;
 
 	// start the back end up again with the new command list
-	R_IssueRenderCommands();
+	info.framebuffer = R_IssueRenderCommands();
 
 	// use the other buffers next frame, because another CPU
 	// may still be rendering into the current buffers
@@ -695,15 +712,15 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	// release all memory allocated for render lists
 	fhBaseRenderList::EndFrame();
 
-	if ( session->writeDemo ) {
-		session->writeDemo->WriteInt( DS_RENDER );
-		session->writeDemo->WriteInt( DC_END_FRAME );
-		if ( r_showDemo.GetBool() ) {
-			common->Printf( "write DC_END_FRAME\n" );
+	if (session->writeDemo) {
+		session->writeDemo->WriteInt(DS_RENDER);
+		session->writeDemo->WriteInt(DC_END_FRAME);
+		if (r_showDemo.GetBool()) {
+			common->Printf("write DC_END_FRAME\n");
 		}
 	}
 
-	return time;
+	return info;
 }
 
 /*
