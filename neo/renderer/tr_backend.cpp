@@ -640,6 +640,7 @@ static void	RB_SetBuffer( const void *data ) {
 
 		fhFramebuffer::renderFramebuffer->Resize(renderWidth, renderHeight, samples, colorFormat, fhFramebuffer::renderFramebuffer->GetDepthFormat());
 		fhFramebuffer::currentRenderFramebuffer->Resize(renderWidth, renderHeight, 1, colorFormat, fhFramebuffer::currentRenderFramebuffer->GetDepthFormat());
+		fhFramebuffer::currentRenderFramebuffer2->Resize(renderWidth, renderHeight, 1, colorFormat, fhFramebuffer::currentRenderFramebuffer2->GetDepthFormat());
 		fhFramebuffer::renderFramebuffer->Bind();
 
 		glViewport(0, 0, renderWidth, renderHeight);
@@ -970,13 +971,8 @@ fhFramebuffer* RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 				else {
 					c_draw2d++;
 					if (!postprocessDone) {
-						fhFramebuffer::currentRenderFramebuffer2->Resize(
-							fhFramebuffer::renderFramebuffer->GetWidth(),
-							fhFramebuffer::renderFramebuffer->GetHeight(),
-							1,
-							pixelFormat_t::RGBA,
-							pixelFormat_t::DEPTH_24); //depth will be ignored
-
+						assert(fhFramebuffer::currentRenderFramebuffer2->GetWidth() == fhFramebuffer::renderFramebuffer->GetWidth());
+						assert(fhFramebuffer::currentRenderFramebuffer2->GetHeight() == fhFramebuffer::renderFramebuffer->GetHeight());
 						RB_PostProcess(fhFramebuffer::renderFramebuffer, fhFramebuffer::currentRenderFramebuffer2);
 						postprocessDone = true;
 					}
@@ -989,7 +985,15 @@ fhFramebuffer* RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 			c_setBuffers++;
 			break;
 		case RC_SWAP_BUFFERS:
-			finalFramebuffer = RB_Resolve(postprocessDone ? fhFramebuffer::currentRenderFramebuffer2 : fhFramebuffer::renderFramebuffer);
+			{
+				if (c_draw2d > 0) {
+					finalFramebuffer = RB_Resolve(postprocessDone ? fhFramebuffer::currentRenderFramebuffer2 : fhFramebuffer::renderFramebuffer);
+				}
+				else {
+					RB_PostProcess(fhFramebuffer::renderFramebuffer, fhFramebuffer::currentRenderFramebuffer2);
+					finalFramebuffer = fhFramebuffer::currentRenderFramebuffer2;
+				}
+			}
 			RB_SwapBuffers(cmds, finalFramebuffer);
 			c_swapBuffers++;
 			break;
