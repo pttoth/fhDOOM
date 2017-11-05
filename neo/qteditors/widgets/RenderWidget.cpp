@@ -113,6 +113,8 @@ public:
 
 		const auto oldWindowWidth = glConfig.windowWidth;
 		const auto oldWindowHeight = glConfig.windowHeight;
+		const auto oldVidWidth = glConfig.vidWidth;
+		const auto oldVidHeight = glConfig.vidHeight;
 
 		QSize rect = size();
 
@@ -140,6 +142,8 @@ public:
 
 		glConfig.windowWidth = oldWindowWidth;
 		glConfig.windowHeight = oldWindowHeight;
+		glConfig.vidWidth = oldVidWidth;
+		glConfig.vidHeight = oldVidHeight;
 
 		glViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );

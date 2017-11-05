@@ -504,6 +504,11 @@ void idGLDrawableView::draw(int x, int y, int w, int h) {
 	const idMaterial		*mat = material;
 
 	if (mat) {
+		const auto oldWindowWidth = glConfig.windowWidth;
+		const auto oldWindowHeight = glConfig.windowHeight;
+		const auto oldVidWidth = glConfig.vidWidth;
+		const auto oldVidHeight = glConfig.vidHeight;
+
 		glViewport(x, y, w, h);
 		glScissor(x, y, w, h);
 
@@ -539,9 +544,14 @@ void idGLDrawableView::draw(int x, int y, int w, int h) {
 
 		renderSystem->EndFrame();
 
+		glConfig.windowWidth = oldWindowWidth;
+		glConfig.windowHeight = oldWindowHeight;
+		glConfig.vidWidth = oldVidWidth;
+		glConfig.vidHeight = oldVidHeight;
+
 		world->DebugClearLines( refdef.time );
 
-    GL_ModelViewMatrix.LoadIdentity();
+		GL_ModelViewMatrix.LoadIdentity();
 	}
 }
 

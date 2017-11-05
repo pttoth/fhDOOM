@@ -1913,6 +1913,9 @@ void CCamWnd::Cam_Render() {
 
 	const auto oldWindowWidth = glConfig.windowWidth;
 	const auto oldWindowHeight = glConfig.windowHeight;
+	const auto oldVidWidth = glConfig.vidWidth;
+	const auto oldVidHeight = glConfig.vidHeight;
+
 	glConfig.windowWidth = m_Camera.width;
 	glConfig.windowHeight = m_Camera.height;
 
@@ -1944,6 +1947,8 @@ void CCamWnd::Cam_Render() {
 	GL_ModelViewMatrix.LoadIdentity();
 	glConfig.windowWidth = oldWindowWidth;
 	glConfig.windowHeight = oldWindowHeight;
+	glConfig.vidWidth = oldVidWidth;
+	glConfig.vidHeight = oldVidHeight;
 }
 
 
