@@ -3849,13 +3849,9 @@ DrawLight
 */
 static void DrawLight(const brush_t *b, bool bSelected) {
 	idVec3	vTriColor;
-	bool	bTriPaint = false;
-
-	vTriColor[0] = vTriColor[2] = 1.0f;
-	vTriColor[1] = 1.0f;
-	bTriPaint = true;
-
-	b->owner->GetVectorForKey("_color", vTriColor);
+	if (!b->owner->GetVectorForKey("_color", vTriColor)) {
+		vTriColor = idVec3(1, 1, 1);
+	}
 
 	idVec3	vCorners[4];
 	float	fMid = b->mins[2] + (b->maxs[2] - b->mins[2]) / 2;

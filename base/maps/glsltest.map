@@ -719,13 +719,15 @@ Version 2
 "classname" "light"
 "name" "light_4"
 "origin" "264 256 200"
-"noshadows" "0"
+"falloff" "0.000000"
+"texture" "lights/tabletest"
+"parallel" "0"
+"light_radius" "300 300 300"
+"light_center" "0 0 0"
+"_color" "0.53 1 0.53"
+"shadowMode" "0"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0"
-"texture" "lights/tabletest"
-"_color" "0.91 0.97 1"
-"light_radius" "300 300 300"
 }
 // entity 14
 {
