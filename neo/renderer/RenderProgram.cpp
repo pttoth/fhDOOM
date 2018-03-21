@@ -167,16 +167,16 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 			try	{
 				idStr includeFilePath;
 				filename.ExtractFilePath(includeFilePath);
-				includeFilePath.AppendPath( includeFilename.c_str(), includeFilename.Length() );
+				includeFilePath.AppendPath( includeFilename.Ptr(), includeFilename.Length() );
 
 				includeContent = R_LoadPreprocessed( includeFilePath, previoulsyLoadedFiles, includeStack );
-				ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
+				ret.Append( remaining.Ptr(), ptr.Ptr() - remaining.Ptr() );
 				ret.Append( includeContent );
 				//ret.Append( "\n#line " + toString( currentLine + 1 ) + " \"" + filename + "\"" );
 			} catch (const fhFileNotFoundException&) {
 				try	{
 					includeContent = R_LoadPreprocessed( includeFilename.ToString(), previoulsyLoadedFiles, includeStack );
-					ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
+					ret.Append( remaining.Ptr(), ptr.Ptr() - remaining.Ptr() );
 					ret.Append( includeContent );
 					//ret.append( "\n#line " + ToString( currentLine + 1 ) + " \"" + filename + "\"" );
 				} catch (const fhFileNotFoundException&) {

@@ -450,10 +450,6 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 		}
 	}
 
-#ifndef _NDEBUG
-	OutputDebugStringA( msg );
-#endif
-
 #endif
 }
 
@@ -2858,6 +2854,8 @@ void idCommonLocal::Init( int argc, const char **argv, const char *cmdline ) {
 
 		ClearCommandLine();
 
+		console->LoadHistory( "console.history" );
+
 		com_fullyInitialized = true;
 	}
 
@@ -2875,6 +2873,8 @@ idCommonLocal::Shutdown
 void idCommonLocal::Shutdown( void ) {
 
 	com_shuttingDown = true;
+
+	console->SaveHistory( "console.history" );
 
 	idAsyncNetwork::server.Kill();
 	idAsyncNetwork::client.Shutdown();

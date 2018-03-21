@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../../idlib/StrRef.h"
 #include "../../sys/win32/win_local.h"
 
 #include "MaterialEditor.h"
@@ -130,7 +131,7 @@ void MaterialEditorShutdown( void ) {
 /**
 * Allows the doom engine to reflect console output to the material editors console.
 */
-void MaterialEditorPrintConsole( const char *msg ) {
+void MaterialEditorPrintConsole( fhStrRef msg ) {
 	if(com_editors & EDITOR_MATERIAL)
 		meMainFrame->PrintConsoleMessage(msg);
 }

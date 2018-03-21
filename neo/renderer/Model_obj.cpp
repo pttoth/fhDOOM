@@ -33,21 +33,21 @@ static idVec3 ParseVec3(fhStrRef s) {
 	idVec3 ret;
 
 	s = s.TrimmedLeft();
-	ret.x = atof(s.c_str());
+	ret.x = atof( s.Ptr() );
 
 	while(!s.IsEmpty() && s[0] != ' ') {
 		++s;
 	}
 	s = s.TrimmedLeft();
 
-	ret.y = atof(s.c_str());
+	ret.y = atof( s.Ptr() );
 
 	while (!s.IsEmpty() && s[0] != ' ') {
 		++s;
 	}
 
 	s = s.TrimmedLeft();
-	ret.z = atof(s.c_str());
+	ret.z = atof( s.Ptr() );
 
 	return ret;
 }
@@ -56,14 +56,14 @@ static idVec2 ParseVec2( fhStrRef s ) {
 	idVec2 ret;
 
 	s = s.TrimmedLeft();
-	ret.x = atof( s.c_str() );
+	ret.x = atof( s.Ptr() );
 
 	while (!s.IsEmpty() && s[0] != ' ') {
 		++s;
 	}
 	s = s.TrimmedLeft();
 
-	ret.y = atof( s.c_str() );
+	ret.y = atof( s.Ptr() );
 
 	return ret;
 }
@@ -72,21 +72,21 @@ static objVertex_t ParseVertex( fhStrRef s ) {
 	objVertex_t ret;
 
 	s = s.TrimmedLeft();
-	ret.xyz = atoi(s.c_str());
+	ret.xyz = atoi( s.Ptr() );
 
 	while (!s.IsEmpty() && s[0] != '/') {
 		++s;
 	}
 	++s;
 
-	ret.st = atoi(s.c_str());
+	ret.st = atoi( s.Ptr() );
 
 	while (!s.IsEmpty() && s[0] != '/') {
 		++s;
 	}
 	++s;
 
-	ret.normal = atoi(s.c_str());
+	ret.normal = atoi( s.Ptr() );
 
 	return ret;
 }
@@ -160,7 +160,7 @@ static fhStrRef OBJ_ParseLine(fhStrRef line, objModel_t* model) {
 			++to;
 		}
 
-		idStr name = fhStrRef(line.c_str(), int((std::ptrdiff_t) to.c_str() - (std::ptrdiff_t)line.c_str())).ToString();
+		idStr name = fhStrRef( line.Ptr(), int( (std::ptrdiff_t) to.Ptr() - (std::ptrdiff_t)line.Ptr() ) ).ToString();
 
 		for(int i=0; i<model->surface.Num(); ++i) {
 			if(model->surface[i].material == name) {

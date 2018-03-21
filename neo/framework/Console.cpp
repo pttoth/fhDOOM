@@ -186,14 +186,16 @@ class idConsoleLocal : public idConsole {
 public:
 	idConsoleLocal();
 
-	virtual	void		Init( void );
-	virtual void		Shutdown( void );
-	virtual	void		LoadGraphics( void );
-	virtual	bool		ProcessEvent( const sysEvent_t *event, bool forceAccept );
-	virtual	bool		Active( void );
-	virtual	void		Close( void );
-	virtual	void		Print( const char *text );
-	virtual	void		Draw( bool forceFullScreen );
+	virtual	void		Init( void ) override;
+	virtual void		Shutdown( void ) override;
+	virtual	void		LoadGraphics( void ) override;
+	virtual	bool		ProcessEvent( const sysEvent_t *event, bool forceAccept ) override;
+	virtual	bool		Active( void ) override;
+	virtual	void		Close( void ) override;
+	virtual	void		Print( const char *text ) override;
+	virtual	void		Draw( bool forceFullScreen ) override;
+	virtual void        SaveHistory(const char* file) override;
+	virtual void        LoadHistory(const char* file) override;
 
 	void				Dump( const char *toFile );
 	void				Clear();
@@ -233,7 +235,9 @@ private:
 	fhRingBuffer<consoleEntry_t, 1024> entries;
 	int					displayOffset;
 
-	int					display;		// bottom of console displays this line
+	fhRingBuffer<idEditField, COMMAND_HISTORY> history;
+	int					currentHistoryLine;
+
 	int					lastKeyEvent;	// time of last key event for scroll delay
 	int					nextKeyEvent;	// keyboard repeat rate
 
@@ -241,11 +245,6 @@ private:
 	float				finalFrac;		// 0.0 to 1.0 lines of console to display
 	int					fracTime;		// time of last displayFrac update
 
-	idEditField			historyEditLines[COMMAND_HISTORY];
-
-	int					nextHistoryLine;// the last line in the history buffer, not masked
-	int					historyLine;	// the line being displayed from history buffer
-									// will be <= nextHistoryLine
 	struct fhConsoleMetrics {
 		float fontScale;
 		float letterWidth;
@@ -608,11 +607,7 @@ void idConsoleLocal::Init( void ) {
 	consoleField.Clear();
 
 	consoleField.SetWidthInChars( LINE_WIDTH );
-
-	for ( int i = 0 ; i < COMMAND_HISTORY ; i++ ) {
-		historyEditLines[i].Clear();
-		historyEditLines[i].SetWidthInChars( LINE_WIDTH );
-	}
+	currentHistoryLine = -1;
 
 	cmdSystem->AddCommand( "clear", Con_Clear_f, CMD_FL_SYSTEM, "clears the console" );
 	cmdSystem->AddCommand( "conDump", Con_Dump_f, CMD_FL_SYSTEM, "dumps the console text to a file" );
@@ -812,9 +807,8 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "\n" );
 
 		// copy line to history buffer
-		historyEditLines[nextHistoryLine % COMMAND_HISTORY] = consoleField;
-		nextHistoryLine++;
-		historyLine = nextHistoryLine;
+		history.Append(consoleField);
+		currentHistoryLine = -1;
 
 		consoleField.Clear();
 		consoleField.SetWidthInChars( LINE_WIDTH );
@@ -835,20 +829,28 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 
 	if ( ( key == K_UPARROW ) ||
 		 ( ( tolower(key) == 'p' ) && idKeyInput::IsDown( K_CTRL ) ) ) {
-		if ( nextHistoryLine - historyLine < COMMAND_HISTORY && historyLine > 0 ) {
-			historyLine--;
+
+		if (currentHistoryLine < 0 && history.GetNum() > 0) {
+			currentHistoryLine = history.GetNum() - 1;
+			consoleField = history[currentHistoryLine];
+		} else if (currentHistoryLine > 0) {
+			currentHistoryLine -= 1;
+			consoleField = history[currentHistoryLine];
 		}
-		consoleField = historyEditLines[ historyLine % COMMAND_HISTORY ];
+
 		return;
 	}
 
 	if ( ( key == K_DOWNARROW ) ||
 		 ( ( tolower( key ) == 'n' ) && idKeyInput::IsDown( K_CTRL ) ) ) {
-		if ( historyLine == nextHistoryLine ) {
-			return;
+
+		if (currentHistoryLine < history.GetNum() - 1) {
+			currentHistoryLine += 1;;
+			consoleField = history[currentHistoryLine];
+		} else {
+			consoleField.Clear();
 		}
-		historyLine++;
-		consoleField = historyEditLines[ historyLine % COMMAND_HISTORY ];
+
 		return;
 	}
 
@@ -1005,12 +1007,7 @@ bool	idConsoleLocal::ProcessEvent( const sysEvent_t *event, bool forceAccept ) {
 				// if the shift key is down, don't open the console as much
 				SetDisplayFraction( 0.2f );
 			} else {
-        float consoleSize = con_size.GetFloat();
-        if(consoleSize < 0.1f)
-          consoleSize = 0.1f;
-        if(consoleSize > 1.0f)
-          consoleSize = 1.0f;
-
+				const float consoleSize = idMath::ClampFloat(0.1f, 1.0f, con_size.GetFloat());
 				SetDisplayFraction( consoleSize );
 			}
 			cvarSystem->SetCVarBool( "ui_chat", true );
@@ -1319,6 +1316,65 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 	DrawInput( inputLine, metrics.fontScale );
 
 	renderSystem->SetColor( colorCyan );
+}
+
+void idConsoleLocal::LoadHistory(const char* fileName) {
+	char *	f = nullptr;
+	const int len = fileSystem->ReadFile(fileName, reinterpret_cast<void **>(&f), NULL);
+	if (!f) {
+		common->Printf("couldn't load %s\n", fileName);
+		return;
+	}
+
+	idStaticList<char, MAX_EDIT_LINE + 1> buffer;
+
+	auto commit = [&]() {
+		if (buffer.Num() > 0) {
+			buffer.Append('\0');
+			idEditField editfield;
+			editfield.SetWidthInChars(LINE_WIDTH);
+			editfield.Clear();
+			editfield.SetBuffer(buffer.Ptr());
+			history.Append(editfield);
+		}
+		buffer.Clear();
+	};
+
+	for (int i = 0; i < len; ++i) {
+		const char c = f[i];
+		if (c == '\n') {
+			commit();
+			continue;
+		}
+		if (::isprint(c) && buffer.Num() < MAX_EDIT_LINE) {
+			buffer.Append(c);
+		}
+	}
+
+	commit();
+
+	currentHistoryLine = -1;
+	fileSystem->FreeFile(f);
+}
+
+void idConsoleLocal::SaveHistory(const char* fileName) {
+
+	fhFileHandle f = fileSystem->OpenFileWrite(fileName);
+	if (!f) {
+		common->Warning("couldn't open %s", fileName);
+		return;
+	}
+
+	for (int i=0; i<history.GetNum(); ++i) {
+		auto& line = history[i];
+
+		const char* text = line.GetBuffer();
+		const int len = text ? strlen(text) : 0;
+		if (len > 0) {
+			f->Write(text, len);
+			f->Write("\n", 1);
+		}
+	}
 }
 
 /*

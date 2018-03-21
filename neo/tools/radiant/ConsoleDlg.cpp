@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../../idlib/StrRef.h"
+
 #include "qe3.h"
 #include "Radiant.h"
 #include "ConsoleDlg.h"
@@ -56,11 +58,10 @@ void CConsoleDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_INPUT, editInput);
 }
 
-void CConsoleDlg::AddText( const char *msg ) {
-	idStr work;
+void CConsoleDlg::AddText( fhStrRef msg ) {
 	CString work2;
 
-	work = msg;
+	idStr work = msg.ToString();
 	work.RemoveColors();
 	work = CEntityDlg::TranslateString( work.c_str() );
 	editConsole.GetWindowText( work2 );

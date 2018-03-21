@@ -53,7 +53,7 @@ public:
 	virtual			~ConsoleView();
 
 	//Public Operations
-	void			AddText(const char *msg);
+	void			AddText( fhStrRef msg );
 	void			SetConsoleText ( const idStr& text );
 	void			ExecuteCommand ( const idStr& cmd = "" );
 

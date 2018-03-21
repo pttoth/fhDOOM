@@ -52,7 +52,7 @@ public:
 	virtual ~MEMainFrame();
 
 	//Public Operations
-	void						PrintConsoleMessage(const char *msg);
+	void						PrintConsoleMessage( fhStrRef msg );
 
 protected:
 	DECLARE_DYNAMIC(MEMainFrame)

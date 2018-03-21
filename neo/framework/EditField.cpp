@@ -518,9 +518,18 @@ idEditField::SetBuffer
 ===============
 */
 void idEditField::SetBuffer( const char *buf ) {
+	SetBuffer( buf, ::strlen( buf ) );
+}
+
+/*
+===============
+idEditField::SetBuffer
+===============
+*/
+void idEditField::SetBuffer( const char *buf, int len ) {
 	Clear();
-	idStr::Copynz( buffer, buf, sizeof( buffer ) );
-	SetCursor( strlen( buffer ) );
+	idStr::Copynz( buffer, buf, Min<int>(sizeof( buffer ), len+1) );
+	SetCursor( len );
 }
 
 /*

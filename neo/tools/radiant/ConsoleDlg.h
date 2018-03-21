@@ -49,7 +49,7 @@ protected:
 public:
 	CEdit editConsole;
 	CEdit editInput;
-	void AddText(const char *msg);
+	void AddText( fhStrRef msg );
 	void SetConsoleText ( const idStr& text );
 	void ExecuteCommand ( const idStr& cmd = "" );
 

@@ -28,6 +28,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../../idlib/StrRef.h"
+
 #include "MaterialEditor.h"
 #include "MEMainFrame.h"
 #include "MaterialDef.h"
@@ -118,7 +120,7 @@ MEMainFrame::~MEMainFrame() {
 * Called to add console text to the console view.
 * @param msg The text that is to be added to the console.
 */
-void MEMainFrame::PrintConsoleMessage(const char *msg) {
+void MEMainFrame::PrintConsoleMessage( fhStrRef msg ) {
 	m_consoleView->AddText(msg);
 }
 

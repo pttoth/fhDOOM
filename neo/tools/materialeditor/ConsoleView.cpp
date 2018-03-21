@@ -28,6 +28,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../../idlib/StrRef.h"
+
 #include "ConsoleView.h"
 
 #ifdef _DEBUG
@@ -62,15 +64,14 @@ ConsoleView::~ConsoleView() {
 * \todo: BMatt Nerve: Fix scroll code so the output window will scroll as text
 * is added if the cursor is at the end of the window.
 */
-void ConsoleView::AddText( const char *msg ) {
+void ConsoleView::AddText( fhStrRef msg ) {
 
 	if(!editConsole.GetSafeHwnd())
 		return;
 
-	idStr work;
 	CString work2;
 
-	work = msg;
+	idStr work = msg.ToString();
 	work.RemoveColors();
 	work = TranslateString( work.c_str() );
 

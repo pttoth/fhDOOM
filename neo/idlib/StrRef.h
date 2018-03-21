@@ -24,7 +24,7 @@ public:
 	bool IsValid() const;
 	bool IsEmpty() const;
 
-	const char* c_str() const;
+	const char* Ptr() const;
 	int Length() const;
 
 	bool operator==(const char* s) const;
@@ -105,7 +105,7 @@ inline bool fhStrRef::IsEmpty() const {
 	return !length;
 }
 
-inline const char* fhStrRef::c_str() const {
+inline const char* fhStrRef::Ptr() const {
 	return s;
 }
 
@@ -195,7 +195,7 @@ inline fhStrRef fhStrRef::TrimmedLeft() const {
 inline fhStrRef fhStrRef::TrimmedRight() const {
 	fhStrRef ret = *this;
 	while (!ret.IsEmpty() && idStr::CharIsWhitespace( ret[ret.Length()-1] )) {
-		ret = ret.Substr(ret.Length()-2);
+		ret = ret.Left(ret.Length()-1);
 	}
 	return ret;
 }
@@ -240,5 +240,5 @@ inline bool fhStrRef::EndsWith( const char* s ) const {
 
 
 inline idStr fhStrRef::ToString() const {
-	return idStr(this->c_str(), 0, this->Length());
+	return idStr(this->Ptr(), 0, this->Length());
 }

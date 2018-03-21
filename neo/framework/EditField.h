@@ -67,6 +67,7 @@ public:
 	char *			GetBuffer( void );
 	void			Draw( int x, int y, int width, bool showCursor, const idMaterial *material, float fontScale = 1.0f );
 	void			SetBuffer( const char *buffer );
+	void			SetBuffer( const char *buffer, int len );
 
 private:
 	int				cursor;

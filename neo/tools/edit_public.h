@@ -40,6 +40,7 @@ If you have questions concerning this license or the applicable additional terms
 
 class	idProgram;
 class	idInterpreter;
+class	fhStrRef;
 
 // Qt Stuff
 void    QtRun();
@@ -49,7 +50,7 @@ void	EfxEditorInit();
 void	RadiantInit( void );
 void	RadiantShutdown( void );
 void	RadiantRun( void );
-void	RadiantPrint( const char *text );
+void	RadiantPrint( fhStrRef text );
 
 // in-game Light Editor
 void	LightEditorInit( const idDict *spawnArgs );
@@ -112,6 +113,6 @@ void	DebuggerServerCheckBreakpoint( idInterpreter *interpreter, idProgram *progr
 void	MaterialEditorInit( void );
 void	MaterialEditorRun( void );
 void	MaterialEditorShutdown( void );
-void	MaterialEditorPrintConsole( const char *msg );
+void	MaterialEditorPrintConsole( fhStrRef msg );
 
 #endif /* !__EDIT_PUBLIC_H__ */

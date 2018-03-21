@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
+#include "../../idlib/StrRef.h"
+
 #include "qe3.h"
 #include "radiant.h"
 #include "MainFrm.h"
@@ -75,7 +77,7 @@ CRadiantApp theApp;
 HINSTANCE g_DoomInstance = NULL;
 bool g_editorAlive = false;
 
-void RadiantPrint( const char *text ) {
+void RadiantPrint( fhStrRef text ) {
 	if ( g_editorAlive && g_Inspectors ) {
 		if (g_Inspectors->consoleWnd.GetSafeHwnd()) {
 			g_Inspectors->consoleWnd.AddText( text );
