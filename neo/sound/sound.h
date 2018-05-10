@@ -126,11 +126,6 @@ struct EAXREVERBPROPERTIES {
 	unsigned long ulFlags;         // modifies the behavior of properties
 };
 
-struct EFXEAXREVERBPROPERTIES;
-
-void ConvertEAXToEFX( const EAXREVERBPROPERTIES *eax, EFXEAXREVERBPROPERTIES *efx );
-void ConvertEFXToEAX( const EFXEAXREVERBPROPERTIES *efx, EAXREVERBPROPERTIES *eax );
-
 class idSoundEffect
 {
 public:
