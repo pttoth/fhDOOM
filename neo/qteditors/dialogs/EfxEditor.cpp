@@ -157,6 +157,7 @@ fhEfxEditor::fhEfxEditor( QWidget* parent )
 
 	EFXEAXREVERBPROPERTIES efxDefaults = EFX_REVERB_PRESET_GENERIC;
 	EAXREVERBPROPERTIES defaults;
+	void ConvertEFXToEAX( const EFXEAXREVERBPROPERTIES *efx, EAXREVERBPROPERTIES *eax );
 	ConvertEFXToEAX( &efxDefaults, &defaults );
 
 	addEffectProperty( "env size", &eax.flEnvironmentSize, m_envSize, 1, 16, 2, defaults.flEnvironmentSize );

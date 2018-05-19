@@ -41,7 +41,9 @@ If you have questions concerning this license or the applicable additional terms
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
-#include "../openal-soft/include/AL/efx.h"
+#include <AL/alext.h>
+#include <AL/efx.h>
+#include <AL/efx-presets.h>
 #endif
 
 // =================================================================================
