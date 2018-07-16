@@ -583,36 +583,22 @@ ENDIF()
 IF(WIN32)
   SET(SOURCES ${SOURCES}
     sys/win32/eax.h
-    #sys/win32/rc/AFEditor.rc
     sys/win32/rc/AFEditor_resource.h
-    #sys/win32/rc/Common.rc
     sys/win32/rc/Common_resource.h
     sys/win32/rc/CreateResourceIDs.cpp
     sys/win32/rc/CreateResourceIDs.h
-    #sys/win32/rc/Debugger.rc
     sys/win32/rc/Debugger_resource.h
-    #sys/win32/rc/DeclEditor.rc
-    sys/win32/rc/DeclEditor_resource.h
-    sys/win32/rc/doom.rc
+    sys/win32/rc/DeclEditor_resource.h    
     sys/win32/rc/doom_resource.h
-    #sys/win32/rc/GuiEd.rc
     sys/win32/rc/GuiEd_resource.h
-    #sys/win32/rc/MaterialEditor.rc
     sys/win32/rc/MaterialEditor_Resource.h
-    #sys/win32/rc/ParticleEditor.rc
     sys/win32/rc/ParticleEditor_resource.h
-    #sys/win32/rc/PDAEditor.rc
     sys/win32/rc/PDAEditor_resource.h
-    #sys/win32/rc/PropTree.rc
     sys/win32/rc/PropTree_resource.h
-    #sys/win32/rc/Radiant.rc
     sys/win32/rc/Radiant_resource.h
-    #sys/win32/rc/ScriptEditor.rc
     sys/win32/rc/ScriptEditor_resource.h
-    #sys/win32/rc/SoundEditor.rc
     sys/win32/rc/SoundEditor_resource.h
     sys/win32/win_cpu.cpp
-    #sys/win32/win_gamma.cpp
     sys/win32/win_glimp.cpp
     sys/win32/win_input.cpp
     sys/win32/win_local.h
@@ -1037,6 +1023,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glew)
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
+
+IF(MSVC)
+  SET(SOURCES ${SOURCES} sys/win32/rc/doom.rc)
+ENDIF()
 
 if(UNIX)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sys/linux/oss/include)
