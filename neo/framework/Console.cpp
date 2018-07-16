@@ -1309,7 +1309,7 @@ void idConsoleLocal::DrawSolidConsole2( float frac ) {
 		lineBuffer.Clear();
 
 		for ( int x = 0; x < timeStampLen; ++x ) {
-			currentLine.Append( fhColoredChar{ timestamp[x], idStr::ColorIndex( C_COLOR_CYAN ) } );
+			currentLine.Append( fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex( C_COLOR_CYAN )) } );
 		}
 
 		for ( int x = 0; x < len; ) {
@@ -1334,7 +1334,7 @@ void idConsoleLocal::DrawSolidConsole2( float frac ) {
 				currentLine.Clear();
 
 				for ( int x = 0; x < timeStampLen; ++x ) {
-					currentLine.Append( fhColoredChar{ ' ', idStr::ColorIndex( C_COLOR_CYAN ) } );
+					currentLine.Append( fhColoredChar{ ' ', static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) } );
 				}
 				continue;
 			}
@@ -1354,7 +1354,7 @@ void idConsoleLocal::DrawSolidConsole2( float frac ) {
 				currentLine.Clear();
 
 				for ( int x = 0; x < timeStampLen; ++x ) {
-					currentLine.Append( fhColoredChar{ ' ', idStr::ColorIndex( C_COLOR_CYAN ) } );
+					currentLine.Append( fhColoredChar{ ' ', static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) } );
 				}
 			}
 		}
