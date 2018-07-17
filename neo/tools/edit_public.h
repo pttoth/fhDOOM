@@ -42,7 +42,7 @@ class	idProgram;
 class	idInterpreter;
 
 // Qt Stuff
-void    QtRun( void );
+void    QtRun();
 void	EfxEditorInit();
 
 // Radiant Level Editor

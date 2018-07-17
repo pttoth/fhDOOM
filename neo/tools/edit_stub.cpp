@@ -29,6 +29,11 @@ If you have questions concerning this license or the applicable additional terms
 #include "../idlib/precompiled.h"
 #pragma hdrstop
 
+#ifndef ID_ALLOW_QT
+void    QtRun() {}
+void	EfxEditorInit() {}
+#endif
+
 #ifndef ID_ALLOW_TOOLS
 
 void	RadiantInit( void ) { common->Printf( "The level editor Radiant only runs on Win32\n" ); }
