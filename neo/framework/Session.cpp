@@ -1705,9 +1705,6 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 	// don't bother spinning over all the tics we spent loading
 	lastGameTic = latchedTicNumber = com_ticNumber;
 
-	// remove any prints from the notify lines
-	console->ClearNotifyLines();
-
 	// stop drawing the laoding screen
 	insideExecuteMapChange = false;
 
@@ -2557,9 +2554,6 @@ void idSessionLocal::Frame() {
 			}
 		}
 		aviTicStart = aviDemoFrameCount;
-
-		// remove any printed lines at the top before taking the screenshot
-		console->ClearNotifyLines();
 
 		// this will call Draw, possibly multiple times if com_aviDemoSamples is > 1
 		renderSystem->TakeScreenshot( com_aviDemoWidth.GetInteger(), com_aviDemoHeight.GetInteger(), name, com_aviDemoSamples.GetInteger(), NULL );

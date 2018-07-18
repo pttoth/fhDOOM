@@ -57,9 +57,6 @@ public:
 	// the system code can release the mouse pointer when the console is active
 	virtual bool	Active( void ) = 0;
 
-	// clear the timers on any recent prints that are displayed in the notify lines
-	virtual void	ClearNotifyLines( void ) = 0;
-
 	// some console commands, like timeDemo, will force the console closed before they start
 	virtual void	Close( void ) = 0;
 

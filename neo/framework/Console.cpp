@@ -30,114 +30,135 @@ If you have questions concerning this license or the applicable additional terms
 #include "../idlib/StrRef.h"
 #pragma hdrstop
 
-void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) id_attribute((format(printf,2,3)));
-void SCR_DrawTextRightAlign( float &y, const char *text, ... ) id_attribute((format(printf,2,3)));
-
 #define	LINE_WIDTH				78
-#define	NUM_CON_TIMES			20
-#define	CON_TEXTSIZE			0x30000
-#define	TOTAL_LINES				(CON_TEXTSIZE / LINE_WIDTH)
 #define CONSOLE_FIRSTREPEAT		200
 #define CONSOLE_REPEAT			100
 
 #define	COMMAND_HISTORY			64
 
-#define MAX_ENTRIES             1024
-
 // the console will query the cvar and command systems for
 // command completion information
 
 namespace {
+	struct fhColoredChar {
+		char c;
+		char color;
+	};
+
 	struct consoleEntry_t {
 		char buffer[512];
 		int time;
 	};
-}
 
+	template<typename OnNewLine, typename OnChar>
+	void processEntryBuffer(const consoleEntry_t& entry, OnNewLine&& onNewLine, OnChar&& onChar) {
+		const int len = ::strlen(entry.buffer);
 
-#if 0
-namespace {
+		char timestamp[16] = { 0 };
+		::sprintf(timestamp, "%7d ", entry.time);
+		const int timeStampLen = ::strlen(timestamp);
 
-class fhTextBuffer {
-public:
-	void Print( const char *txt );
-private:
-	void Linefeed();
-	short text[CON_TEXTSIZE];
-	int current;
-	int x;
-};
+		char currentColor = idStr::ColorIndex(C_COLOR_CYAN);
 
-void fhTextBuffer::Print( const char *txt ) {
-	int color = idStr::ColorIndex( C_COLOR_CYAN );
-
-	while ( true ) {
-		const int c = *(const unsigned char*)txt;
-		if ( !c ) {
-			break;
+		for (int x = 0; x < timeStampLen; ++x) {
+			onChar(fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) });
 		}
 
-		if ( idStr::IsColor( txt ) ) {
-			if ( *(txt + 1) == C_COLOR_DEFAULT ) {
-				color = idStr::ColorIndex( C_COLOR_CYAN );
-			}
-			else {
-				color = idStr::ColorIndex( *(txt + 1) );
-			}
-			txt += 2;
-			continue;
-		}
+		for (int x = 0; x < len; ) {
+			const char* text = &entry.buffer[x];
 
-		const int y = current % TOTAL_LINES;
-
-		// if we are about to print a new word, check to see
-		// if we should wrap to the new line
-		if ( c > ' ' && (x == 0 || text[y*LINE_WIDTH + x - 1] <= ' ') ) {
-			int l = 0;
-			// count word length
-			for ( ; l< LINE_WIDTH; l++ ) {
-				if ( txt[l] <= ' ' ) {
-					break;
+			if (idStr::IsColor(text)) {
+				if (*(text + 1) == C_COLOR_DEFAULT) {
+					currentColor = idStr::ColorIndex(C_COLOR_CYAN);
 				}
-			}
-
-			// word wrap
-			if ( l != LINE_WIDTH && (x + l >= LINE_WIDTH) ) {
-				Linefeed();
-			}
-		}
-
-		txt++;
-
-		switch ( c ) {
-		case '\n':
-			Linefeed();
-			break;
-		case '\t':
-			do {
-				text[y*LINE_WIDTH + x] = (color << 8) | ' ';
-				x++;
-				if ( x >= LINE_WIDTH ) {
-					Linefeed();
-					x = 0;
+				else {
+					currentColor = idStr::ColorIndex(*(text + 1));
 				}
-			} while ( x & 3 );
-			break;
-		case '\r':
-			x = 0;
-			break;
-		default:	// display character and advance
-			text[y*LINE_WIDTH + x] = (color << 8) | c;
-			x++;
-			if ( x >= LINE_WIDTH ) {
-				Linefeed();
-				x = 0;
+
+				x += 2;
+				continue;
 			}
-			break;
+
+			x += 1;
+
+			if (*text == '\n') {
+				onNewLine();
+				continue;
+			}
+
+			if (*text == '\r') {
+				continue;
+			}
+
+			if (*text == '\t') {
+				continue;
+			}
+
+			onChar(fhColoredChar{ *text, currentColor });
 		}
 	}
+
+	class fhConsoleLine : public idStaticList<fhColoredChar, 256> {
+	public:
+		void AppendText(char colorIndex, const char* text) {
+			const int len = strlen(text);
+			for (int i = 0; i < len && Num() < Max(); ++i) {
+				this->Append(fhColoredChar{text[i], colorIndex});
+			}
+		}
+	};
+
+	template<typename T, int Capacity>
+	class fhRingBuffer {
+	public:
+		fhRingBuffer()
+			: num(0)
+			, start(0)
+		{}
+
+		T& operator[](int index) {
+			assert(index < num);
+			return buffer[GetRingIndex(index)];
+		}
+
+		const T& operator[](int index) const {
+			assert(index < num);
+			return buffer[GetRingIndex(index)];
+		}
+
+		T& Append(const T& value) {
+			const auto ringIndex = GetRingIndex(num);
+			buffer[ringIndex] = value;
+
+			if (num < Capacity) {
+				num += 1;
+			} else {
+				start = (start + 1) % Capacity;
+			}
+
+			return buffer[ringIndex];
+		}
+
+		int GetNum() const {
+			return num;
+		}
+
+		void Clear() {
+			num = 0;
+			start = 0;
+		}
+
+	private:
+		int GetRingIndex(int index) const {
+			return (start + index) % Capacity;
+		}
+
+		T buffer[Capacity];
+		int num = 0;
+		int start = 0;
+	};
 }
-#endif
+
 
 class idConsoleLocal : public idConsole {
 public:
@@ -148,12 +169,9 @@ public:
 	virtual	void		LoadGraphics( void );
 	virtual	bool		ProcessEvent( const sysEvent_t *event, bool forceAccept );
 	virtual	bool		Active( void );
-	virtual	void		ClearNotifyLines( void );
 	virtual	void		Close( void );
 	virtual	void		Print( const char *text );
 	virtual	void		Draw( bool forceFullScreen );
-
-	void				Print2( const char *text );
 
 	void				Dump( const char *toFile );
 	void				Clear();
@@ -165,18 +183,20 @@ public:
 private:
 	void				KeyDownEvent( int key );
 
-	void				Linefeed();
-
 	void				PageUp();
 	void				PageDown();
 	void				Top();
 	void				Bottom();
 
-	void				DrawInput(float fontScale);
 	void				DrawInput( float y, float fontScale );
 	void				DrawNotify();
+
+	template<int BufferSize>
+	void				FormatConsoleEntry(idStaticList<fhConsoleLine, BufferSize>& buffer, const consoleEntry_t& entry);
+
+	void                DrawConsoleLine(float y, const fhConsoleLine& line, char* currentColor = nullptr, bool right = false);
+	void                PrintConsoleEntry(const consoleEntry_t& entry, float& y);
 	void				DrawSolidConsole( float frac );
-	void				DrawSolidConsole2( float frac );
 
 	void				Scroll();
 	void				SetDisplayFraction( float frac );
@@ -186,12 +206,9 @@ private:
 
 	bool				keyCatching;
 
-	consoleEntry_t		entries[MAX_ENTRIES];
-	int                 numEntries;
+	fhRingBuffer<consoleEntry_t, 1024> entries;
+	int					displayOffset;
 
-	short				text[CON_TEXTSIZE];
-	int					current;		// line where next message will be printed
-	int					x;				// offset in current line for next print
 	int					display;		// bottom of console displays this line
 	int					lastKeyEvent;	// time of last key event for scroll delay
 	int					nextKeyEvent;	// keyboard repeat rate
@@ -200,22 +217,26 @@ private:
 	float				finalFrac;		// 0.0 to 1.0 lines of console to display
 	int					fracTime;		// time of last displayFrac update
 
-	int					vislines;		// in scanlines
-
-	int					times[NUM_CON_TIMES];	// cls.realtime time the line was generated
-									// for transparent notify lines
-	idVec4				color;
-
 	idEditField			historyEditLines[COMMAND_HISTORY];
 
 	int					nextHistoryLine;// the last line in the history buffer, not masked
 	int					historyLine;	// the line being displayed from history buffer
 									// will be <= nextHistoryLine
+	struct fhConsoleMetrics {
+		float fontScale;
+		float letterWidth;
+		float letterHeight;
+		float lineHeight;
+		int maxLetterPerLine;
+	};
+
+	fhConsoleMetrics	metrics;
 
 	idEditField			consoleField;
 
 	static idCVar		con_speed;
 	static idCVar		con_notifyTime;
+	static idCVar		con_notifyLines;
 	static idCVar		con_noPrint;
 	static idCVar		con_fontScale;
 	static idCVar		con_size;
@@ -228,8 +249,9 @@ private:
 static idConsoleLocal localConsole;
 idConsole	*console = &localConsole;
 
-idCVar idConsoleLocal::con_speed( "con_speed", "3", CVAR_SYSTEM, "speed at which the console moves up and down" );
-idCVar idConsoleLocal::con_notifyTime( "con_notifyTime", "3", CVAR_SYSTEM, "time messages are displayed onscreen when console is pulled up" );
+idCVar idConsoleLocal::con_speed( "con_speed", "3", CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "speed at which the console moves up and down" );
+idCVar idConsoleLocal::con_notifyTime( "con_notifyTime", "3", CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "time messages are displayed onscreen when console is pulled up" );
+idCVar idConsoleLocal::con_notifyLines("con_notifyLines", "10", CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "max number of console lines displayed onscreen when console is pulled up");
 #ifdef DEBUG
 idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT|CVAR_ARCHIVE, "print on the console but not onscreen when console is pulled up" );
 #else
@@ -237,7 +259,6 @@ idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CV
 #endif
 idCVar idConsoleLocal::con_fontScale( "con_fontScale", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "scale of console font" );
 idCVar idConsoleLocal::con_size("con_size", "0.3", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "screen size of console");
-
 
 
 /*
@@ -253,7 +274,7 @@ idCVar idConsoleLocal::con_size("con_size", "0.3", CVAR_SYSTEM|CVAR_FLOAT|CVAR_N
 SCR_DrawTextLeftAlign
 ==================
 */
-void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) {
+static void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) {
 	char string[MAX_STRING_CHARS];
 	va_list argptr;
 	va_start( argptr, text );
@@ -268,7 +289,7 @@ void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) {
 SCR_DrawTextRightAlign
 ==================
 */
-void SCR_DrawTextRightAlign( float &y, const char *text, ... ) {
+static void SCR_DrawTextRightAlign( float &y, const char *text, ... ) {
 	char string[MAX_STRING_CHARS];
 	va_list argptr;
 	va_start( argptr, text );
@@ -414,7 +435,7 @@ float SCR_DrawBackEndStats( float y ) {
 SCR_DrawMemoryUsage
 ==================
 */
-float SCR_DrawMemoryUsage( float y ) {
+static float SCR_DrawMemoryUsage( float y ) {
 	memoryStats_t allocs, frees;
 
 	Mem_GetStats( allocs );
@@ -433,7 +454,7 @@ float SCR_DrawMemoryUsage( float y ) {
 SCR_DrawAsyncStats
 ==================
 */
-float SCR_DrawAsyncStats( float y ) {
+static float SCR_DrawAsyncStats( float y ) {
 	int i, outgoingRate, incomingRate;
 	float outgoingCompression, incomingCompression;
 
@@ -487,7 +508,7 @@ float SCR_DrawAsyncStats( float y ) {
 SCR_DrawSoundDecoders
 ==================
 */
-float SCR_DrawSoundDecoders( float y ) {
+static float SCR_DrawSoundDecoders( float y ) {
 	int index, numActiveDecoders;
 	soundDecoderInfo_t decoderInfo;
 
@@ -544,7 +565,7 @@ static void Con_Dump_f( const idCmdArgs &args ) {
 
 idConsoleLocal::idConsoleLocal()
 {
-	numEntries = 0;
+	displayOffset = 0;
 }
 
 /*
@@ -602,21 +623,8 @@ void idConsoleLocal::LoadGraphics() {
 idConsoleLocal::Active
 ================
 */
-bool	idConsoleLocal::Active( void ) {
+bool idConsoleLocal::Active( void ) {
 	return keyCatching;
-}
-
-/*
-================
-idConsoleLocal::ClearNotifyLines
-================
-*/
-void	idConsoleLocal::ClearNotifyLines() {
-	int		i;
-
-	for ( i = 0 ; i < NUM_CON_TIMES ; i++ ) {
-		times[i] = 0;
-	}
 }
 
 /*
@@ -624,11 +632,10 @@ void	idConsoleLocal::ClearNotifyLines() {
 idConsoleLocal::Close
 ================
 */
-void	idConsoleLocal::Close() {
+void idConsoleLocal::Close() {
 	keyCatching = false;
 	SetDisplayFraction( 0 );
 	displayFrac = 0;	// don't scroll to that point, go immediately
-	ClearNotifyLines();
 }
 
 /*
@@ -637,15 +644,8 @@ idConsoleLocal::Clear
 ================
 */
 void idConsoleLocal::Clear() {
-	int		i;
-
-	for ( i = 0 ; i < CON_TEXTSIZE ; i++ ) {
-		text[i] = (idStr::ColorIndex(C_COLOR_CYAN)<<8) | ' ';
-	}
-
-	numEntries = 0;
-
 	Bottom();		// go to end
+	entries.Clear();
 }
 
 /*
@@ -656,52 +656,33 @@ Save the console contents out to a file
 ================
 */
 void idConsoleLocal::Dump( const char *fileName ) {
-	int		l, x, i;
-	short *	line;
-	idFile *f;
-	char	buffer[LINE_WIDTH + 3];
-
-	f = fileSystem->OpenFileWrite( fileName );
+	fhFileHandle f = fileSystem->OpenFileWrite( fileName );
 	if ( !f ) {
 		common->Warning( "couldn't open %s", fileName );
 		return;
 	}
 
-	// skip empty lines
-	l = current - TOTAL_LINES + 1;
-	if ( l < 0 ) {
-		l = 0;
-	}
-	for ( ; l <= current ; l++ )
-	{
-		line = text + ( l % TOTAL_LINES ) * LINE_WIDTH;
-		for ( x = 0; x < LINE_WIDTH; x++ )
-			if ( ( line[x] & 0xff ) > ' ' )
-				break;
-		if ( x != LINE_WIDTH )
-			break;
-	}
+	for (int i = 0; i < entries.GetNum(); ++i) {
+		const auto& entry = entries[i];
 
-	// write the remaining lines
-	for ( ; l <= current; l++ ) {
-		line = text + ( l % TOTAL_LINES ) * LINE_WIDTH;
-		for( i = 0; i < LINE_WIDTH; i++ ) {
-			buffer[i] = line[i] & 0xff;
-		}
-		for ( x = LINE_WIDTH-1; x >= 0; x-- ) {
-			if ( buffer[x] <= ' ' ) {
-				buffer[x] = 0;
-			} else {
-				break;
+		bool newLine = false;
+		const auto onNewLine = [&newLine]() {
+			newLine = true;
+		};
+
+		const auto onChar = [&f, &newLine](fhColoredChar c) {
+			if (newLine) {
+				f->Write("\n", 1);
+				for (int x = 0; x < 7 + 1; ++x) { //FIXME 7==timestampLen
+					f->Write(" ", 1);
+				}
+				newLine = false;
 			}
-		}
-		buffer[x+1] = '\r';
-		buffer[x+2] = '\n';
-		buffer[x+3] = 0;
-		f->Write( buffer, strlen( buffer ) );
+			f->Write(&c.c, 1);
+		};
+		processEntryBuffer(entry, onNewLine, onChar);
+		f->Write("\n", 1);
 	}
-
-	fileSystem->CloseFile( f );
 }
 
 /*
@@ -710,10 +691,7 @@ idConsoleLocal::PageUp
 ================
 */
 void idConsoleLocal::PageUp( void ) {
-	display -= 2;
-	if ( current - display >= TOTAL_LINES ) {
-		display = current - TOTAL_LINES + 1;
-	}
+	displayOffset = Min(displayOffset + 1, entries.GetNum());
 }
 
 /*
@@ -722,10 +700,7 @@ idConsoleLocal::PageDown
 ================
 */
 void idConsoleLocal::PageDown( void ) {
-	display += 2;
-	if ( display > current ) {
-		display = current;
-	}
+	displayOffset = Max(displayOffset - 1, 0);
 }
 
 /*
@@ -734,7 +709,7 @@ idConsoleLocal::Top
 ================
 */
 void idConsoleLocal::Top( void ) {
-	display = 0;
+	displayOffset = Max(entries.GetNum() - 1, 0);
 }
 
 /*
@@ -743,7 +718,7 @@ idConsoleLocal::Bottom
 ================
 */
 void idConsoleLocal::Bottom( void ) {
-	display = current;
+	displayOffset = 0;
 }
 
 
@@ -910,6 +885,13 @@ Scrolls the console up or down based on conspeed
 ==============
 */
 void idConsoleLocal::UpdateDisplayFraction( void ) {
+
+	metrics.fontScale = idMath::ClampFloat(0.2f, 2.0f, con_fontScale.GetFloat());
+	metrics.letterHeight = SMALLCHAR_HEIGHT * metrics.fontScale;
+	metrics.letterWidth = SMALLCHAR_WIDTH * metrics.fontScale;
+	metrics.lineHeight = metrics.letterHeight * 1.35f;
+	metrics.maxLetterPerLine = (SCREEN_WIDTH / metrics.letterWidth) - 2;
+
 	if ( con_speed.GetFloat() <= 0.1f ) {
 		fracTime = com_frameTime;
 		displayFrac = finalFrac;
@@ -1021,30 +1003,6 @@ PRINTING
 */
 
 /*
-===============
-Linefeed
-===============
-*/
-void idConsoleLocal::Linefeed() {
-	int		i;
-
-	// mark time for transparent overlay
-	if ( current >= 0 ) {
-		times[current % NUM_CON_TIMES] = com_frameTime;
-	}
-
-	x = 0;
-	if ( display == current ) {
-		display++;
-	}
-	current++;
-	for ( i = 0; i < LINE_WIDTH; i++ ) {
-		text[(current%TOTAL_LINES)*LINE_WIDTH+i] = (idStr::ColorIndex(C_COLOR_CYAN)<<8) | ' ';
-	}
-}
-
-
-/*
 ================
 Print
 
@@ -1052,95 +1010,21 @@ Handles cursor positioning, line wrapping, etc
 ================
 */
 void idConsoleLocal::Print( const char *txt ) {
-	int index = numEntries % MAX_ENTRIES;
-	::strncpy( entries[index].buffer, txt, sizeof( entries[index].buffer ) - 1 );
-	entries[index].time = Sys_Milliseconds() - startTime;
-	++numEntries;
-}
-
-void idConsoleLocal::Print2( const char *txt ) {
 #ifdef ID_ALLOW_TOOLS
-	RadiantPrint( txt );
+	RadiantPrint(txt);
 
-	if( com_editors & EDITOR_MATERIAL ) {
+	if (com_editors & EDITOR_MATERIAL) {
 		MaterialEditorPrintConsole(txt);
 	}
 #endif
+	auto& entry = entries.Append(consoleEntry_t());
+	::strncpy(entry.buffer, txt, sizeof(entry.buffer) - 1 );
+	entry.time = Sys_Milliseconds() - startTime;
 
-	int color = idStr::ColorIndex( C_COLOR_CYAN );
-
-	while ( true ) {
-		const int c = *(const unsigned char*)txt;
-		if ( !c ) {
-			break;
-		}
-
-		if ( idStr::IsColor( txt ) ) {
-			if ( *(txt+1) == C_COLOR_DEFAULT ) {
-				color = idStr::ColorIndex( C_COLOR_CYAN );
-			} else {
-				color = idStr::ColorIndex( *(txt+1) );
-			}
-			txt += 2;
-			continue;
-		}
-
-		const int y = current % TOTAL_LINES;
-
-		// if we are about to print a new word, check to see
-		// if we should wrap to the new line
-		if ( c > ' ' && ( x == 0 || text[y*LINE_WIDTH+x-1] <= ' ' ) ) {
-			int l = 0;
-			// count word length
-			for (; l< LINE_WIDTH ; l++) {
-				if ( txt[l] <= ' ') {
-					break;
-				}
-			}
-
-			// word wrap
-			if (l != LINE_WIDTH && (x + l >= LINE_WIDTH) ) {
-				Linefeed();
-			}
-		}
-
-		txt++;
-
-		switch( c ) {
-			case '\n':
-				Linefeed ();
-				break;
-			case '\t':
-				do {
-					text[y*LINE_WIDTH+x] = (color << 8) | ' ';
-					x++;
-					if ( x >= LINE_WIDTH ) {
-						Linefeed();
-						x = 0;
-					}
-				} while ( x & 3 );
-				break;
-			case '\r':
-				x = 0;
-				break;
-			default:	// display character and advance
-				text[y*LINE_WIDTH+x] = (color << 8) | c;
-				x++;
-				if ( x >= LINE_WIDTH ) {
-					Linefeed();
-					x = 0;
-				}
-				break;
-		}
-	}
-
-
-	// mark time for transparent overlay
-	if ( current >= 0 ) {
-		times[current % NUM_CON_TIMES] = com_frameTime;
+	if (displayOffset > 0) {
+		displayOffset = Min(displayOffset + 1, entries.GetNum());
 	}
 }
-
 
 /*
 ==============================================================================
@@ -1158,11 +1042,6 @@ DrawInput
 Draw the editline after a ] prompt
 ================
 */
-
-void idConsoleLocal::DrawInput( float fontScale ) {
-	int y = vislines - (SMALLCHAR_HEIGHT * 2 * fontScale);
-	DrawInput( y, fontScale );
-}
 
 void idConsoleLocal::DrawInput(float y, float fontScale) {
 	int autoCompleteLength;
@@ -1195,51 +1074,136 @@ Draws the last few lines of output transparently over the game top
 ================
 */
 void idConsoleLocal::DrawNotify() {
-	int		x, v;
-	short	*text_p;
-	int		i;
-	int		time;
-	int		currentColor;
-
-	if ( con_noPrint.GetBool() ) {
+	if (con_noPrint.GetBool()) {
 		return;
 	}
 
-	currentColor = idStr::ColorIndex( C_COLOR_WHITE );
-	renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
+	const int maxLines = con_notifyLines.GetInteger();
+	if (maxLines <= 0) {
+		return;
+	}
 
-	const float fontScale = con_fontScale.GetFloat();
+	static idList<fhConsoleLine> lineBuffer;
+	lineBuffer.SetNum(maxLines, true);
+	lineBuffer.Clear();
 
-	v = 0;
-	for ( i = current-NUM_CON_TIMES+1; i <= current; i++ ) {
-		if ( i < 0 ) {
-			continue;
-		}
-		time = times[i % NUM_CON_TIMES];
-		if ( time == 0 ) {
-			continue;
-		}
-		time = com_frameTime - time;
-		if ( time > con_notifyTime.GetFloat() * 1000 ) {
-			continue;
-		}
-		text_p = text + (i % TOTAL_LINES)*LINE_WIDTH;
+	const auto now = Sys_Milliseconds() - startTime;
+	const auto minTime = now - 1000 * con_notifyTime.GetFloat();
 
-		for ( x = 0; x < LINE_WIDTH; x++ ) {
-			if ( ( text_p[x] & 0xff ) == ' ' ) {
-				continue;
-			}
-			if ( idStr::ColorIndex(text_p[x]>>8) != currentColor ) {
-				currentColor = idStr::ColorIndex(text_p[x]>>8);
-				renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
-			}
-			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH*fontScale, v, text_p[x] & 0xff, localConsole.charSetShader, fontScale );
+	for (int i=entries.GetNum(); i>0 && lineBuffer.Num() < maxLines; --i) {
+		const auto& entry = entries[i-1];
+		if (entry.time < minTime) {
+			break;
 		}
 
-		v += SMALLCHAR_HEIGHT * fontScale;
+		idStaticList<fhConsoleLine, 8> entryBuffer;
+
+		FormatConsoleEntry(entryBuffer, entry);
+
+		for (int j = entryBuffer.Num(); j > 0 && lineBuffer.Num() < maxLines; --j) {
+			lineBuffer.Append(entryBuffer[j - 1]);
+		}
+	}
+
+	if (lineBuffer.Num() == 0) {
+		return;
+	}
+
+	float y = metrics.lineHeight * (lineBuffer.Num() - 1);
+
+	char currentColor = idStr::ColorIndex(C_COLOR_CYAN);
+	renderSystem->SetColor(idStr::ColorForIndex(C_COLOR_CYAN));
+
+	for (int j = 0; j < lineBuffer.Num(); ++j) {
+		const fhConsoleLine& line = lineBuffer[j];
+		DrawConsoleLine(y, line, &currentColor);
+		y -= metrics.lineHeight;
 	}
 
 	renderSystem->SetColor( colorCyan );
+}
+
+void idConsoleLocal::DrawConsoleLine(float y, const fhConsoleLine& line, char* currentColor, bool right) {
+
+	char localCurrentColor = currentColor ? *currentColor : -1;
+
+	auto drawLetter = [&](fhColoredChar letter, float x) {
+		if (localCurrentColor == -1 || localCurrentColor != letter.color) {
+			localCurrentColor = letter.color;
+			renderSystem->SetColor(idStr::ColorForIndex(localCurrentColor));
+		}
+
+		if (letter.c == ' ') {
+			return;
+		}
+
+		renderSystem->DrawScaledChar(x, idMath::FtoiFast(y), letter.c, localConsole.charSetShader, metrics.fontScale);
+	};
+
+	if (!right) {
+		for (int x = 0; x < line.Num(); ++x) {
+			drawLetter(line[x], (x + 1)*metrics.letterWidth);
+		}
+	}
+	else {
+		for (int x = line.Num(); x > 0; --x) {
+			drawLetter(line[x - 1], SCREEN_WIDTH - ((line.Num() - x) + 1)*metrics.letterWidth);
+		}
+	}
+
+	if (currentColor) {
+		*currentColor = localCurrentColor;
+	}
+};
+
+template<int BufferSize>
+void idConsoleLocal::FormatConsoleEntry(idStaticList<fhConsoleLine, BufferSize>& lineBuffer, const consoleEntry_t& entry) {
+	fhConsoleLine currentLine;
+
+	const char cyanColorIndex = static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN));
+
+	const auto onNewLine = [&]() {
+		if (lineBuffer.Num() == lineBuffer.Max()) {
+			return;
+		}
+		lineBuffer.Append(currentLine);
+		currentLine.Clear();
+
+		for (int x = 0; x < 7 + 1; ++x) { //FIXME 7==timestampLen
+			currentLine.Append(fhColoredChar{ ' ', cyanColorIndex });
+		}
+	};
+
+	const auto onChar = [&](fhColoredChar c) {
+		currentLine.Append(c);
+
+		if ( currentLine.Num() == metrics.maxLetterPerLine || currentLine.Num() == currentLine.Max() ) {
+			onNewLine();
+		}
+	};
+	processEntryBuffer(entry, onNewLine, onChar);
+}
+
+void idConsoleLocal::PrintConsoleEntry(const consoleEntry_t& entry, float& y) {
+
+	idStaticList<fhConsoleLine, 8> lineBuffer;
+
+	FormatConsoleEntry(lineBuffer, entry);
+
+	char currentColor = idStr::ColorIndex(C_COLOR_CYAN);
+	renderSystem->SetColor(idStr::ColorForIndex(C_COLOR_CYAN));
+
+	for (int j = lineBuffer.Num(); j > 0; --j) {
+		const fhConsoleLine& line = lineBuffer[j - 1];
+
+		DrawConsoleLine(y, line, &currentColor);
+
+		y -= metrics.lineHeight;
+
+		if (y <= 0) {
+			return;
+		}
+	}
 }
 
 /*
@@ -1250,16 +1214,14 @@ Draws the console with the solid background
 ================
 */
 
-void idConsoleLocal::DrawSolidConsole2( float frac ) {
-	const float fontScale = idMath::ClampFloat(0.2f, 2.0f, con_fontScale.GetFloat());
+void idConsoleLocal::DrawSolidConsole( float frac ) {
+
 	const float consoleHeight = SCREEN_HEIGHT * idMath::ClampFloat(0.1f, 1.0f, frac);
-	const float letterHeight = SMALLCHAR_HEIGHT * fontScale;
-	const float letterWidth = SMALLCHAR_WIDTH * fontScale;
-	const float lineHeight = letterHeight * 1.35f;
-	const int maxLines = consoleHeight / lineHeight;
-	const int maxLineLength = (SCREEN_WIDTH / letterWidth);
+
 	const float bottomLineHeight = 1.4;
-	const float inputLine = consoleHeight - bottomLineHeight - lineHeight;
+	const float inputLine = consoleHeight - bottomLineHeight - metrics.lineHeight;
+
+	const char cyanColorIndex = static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN));
 
 	// draw the background and version number
 	{
@@ -1268,254 +1230,41 @@ void idConsoleLocal::DrawSolidConsole2( float frac ) {
 		renderSystem->DrawStretchPic( 0, consoleHeight - bottomLineHeight, SCREEN_WIDTH, bottomLineHeight, 0, 0, 0, 0, whiteShader );
 
 		idStr version = va( "%s - %i", ENGINE_VERSION, BUILD_NUMBER );
-		const int i = version.Length();
-
-		for ( x = 0; x < i; x++ ) {
-			renderSystem->DrawScaledChar( SCREEN_WIDTH - (i - x) * letterWidth,
-				inputLine, version[x], localConsole.charSetShader, fontScale );
-		}
+		fhConsoleLine line;
+		line.AppendText(cyanColorIndex, version.c_str());
+		DrawConsoleLine(inputLine, line, nullptr, true);
 	}
 
-	float y = inputLine - lineHeight;
+	float y = inputLine - metrics.lineHeight;
 
 	// draw from the bottom up
-	if ( display != current ) {
-		// draw arrows to show the buffer is backscrolled
-		renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
-		for ( x = 0; x < maxLineLength; x += 4 ) {
-			renderSystem->DrawScaledChar( (x + 1)*letterWidth, idMath::FtoiFast( y ), '^', localConsole.charSetShader, fontScale );
+	if ( displayOffset > 0 ) {
+		fhConsoleLine line;
+		for (int x = 0; x < metrics.maxLetterPerLine; ++x) {
+			line.Append(fhColoredChar{ (x % 4) ? ' ' : '^', cyanColorIndex });
 		}
-		y -= lineHeight;
+		DrawConsoleLine(y, line);
+		y -= metrics.lineHeight;
 	}
 
-	struct fhColoredChar {
-		char c;
-		char color;
-	};
 
-	using fhConsoleLine = idStaticList<fhColoredChar, 256>;
-	idStaticList<fhConsoleLine, 8> lineBuffer;
+	if (entries.GetNum() > 0) {
 
-	auto printEntry = [&]( const consoleEntry_t& entry ){
-		const int len = ::strlen( entry.buffer );
+		int index = (entries.GetNum() - 1) - displayOffset;
 
-		char timestamp[16] = { 0 };
-		::sprintf( timestamp, "%7d ", entry.time );
-		const int timeStampLen = ::strlen( timestamp );
-
-
-		fhConsoleLine currentLine;
-		char currentColor = idStr::ColorIndex( C_COLOR_CYAN );
-		lineBuffer.Clear();
-
-		for ( int x = 0; x < timeStampLen; ++x ) {
-			currentLine.Append( fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex( C_COLOR_CYAN )) } );
-		}
-
-		for ( int x = 0; x < len; ) {
-			const char* text = &entry.buffer[x];
-
-			if ( idStr::IsColor( text ) ) {
-				if ( *(text + 1) == C_COLOR_DEFAULT ) {
-					currentColor = idStr::ColorIndex( C_COLOR_CYAN );
-				}
-				else {
-					currentColor = idStr::ColorIndex( *(text + 1) );
-				}
-
-				x += 2;
-				continue;
-			}
-
-			x += 1;
-
-			if ( *text == '\n' ) {
-				lineBuffer.Append( currentLine );
-				currentLine.Clear();
-
-				for ( int x = 0; x < timeStampLen; ++x ) {
-					currentLine.Append( fhColoredChar{ ' ', static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) } );
-				}
-				continue;
-			}
-
-			if ( *text == '\r' ) {
-				continue;
-			}
-
-			if ( *text == '\t' ) {
-				continue;
-			}
-
-			currentLine.Append( fhColoredChar{ *text, currentColor } );
-
-			if ( currentLine.Num() == maxLineLength || currentLine.Num() == currentLine.Max()) {
-				lineBuffer.Append( currentLine );
-				currentLine.Clear();
-
-				for ( int x = 0; x < timeStampLen; ++x ) {
-					currentLine.Append( fhColoredChar{ ' ', static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) } );
-				}
-			}
-		}
-
-		currentColor = C_COLOR_CYAN;
-		renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
-
-		for ( int j = lineBuffer.Num(); j > 0; --j ) {
-			const fhConsoleLine& line = lineBuffer[j - 1];
-
-			for ( int x = 0; x < line.Num(); ++x ) {
-				const auto letter = line[x];
-
-				if ( currentColor != letter.color ) {
-					currentColor = letter.color;
-					renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
-				}
-
-				if ( letter.c == ' ' ) {
-					continue;
-				}
-
-				renderSystem->DrawScaledChar( (x + 1)*letterWidth, idMath::FtoiFast( y ), letter.c, localConsole.charSetShader, fontScale );
-			}
-
-			y -= lineHeight;
-
-			if ( y <= 0 ) {
-				return false;
-			}
-		}
-
-		return true;
-	};
-
-	int start = ((numEntries + display) % MAX_ENTRIES) - 1;
-
-	if ( start >= 0 && start < MAX_ENTRIES ) {
-		const int total = Min( numEntries, MAX_ENTRIES );
-		for ( int i = 0; i < total; ++i ) {
-			if ( !printEntry( entries[start] ) ) {
+		for (; index >= 0; index--) {
+			PrintConsoleEntry(entries[index], y);
+			if (y<0) {
 				break;
 			}
-			--start;
-			if ( start < 0 ) {
-				start = MAX_ENTRIES - 1;
-			}
 		}
 	}
 
 	// draw the input prompt, user text, and cursor if desired
-	DrawInput( inputLine, fontScale );
+	DrawInput( inputLine, metrics.fontScale );
 
 	renderSystem->SetColor( colorCyan );
 }
-
-void idConsoleLocal::DrawSolidConsole( float frac ) {
-	DrawSolidConsole2( frac );
-	return;
-
-	int				x;
-	int				rows;
-	short			*text_p;
-	int				row;
-	int				currentColor;
-
-	int lines = idMath::FtoiFast( SCREEN_HEIGHT * frac );
-	if ( lines <= 0 ) {
-		return;
-	}
-
-	if ( lines > SCREEN_HEIGHT ) {
-		lines = SCREEN_HEIGHT;
-	}
-
-	// draw the background
-	float y = frac * SCREEN_HEIGHT - 2;
-	if ( y < 1.0f ) {
-		y = 0.0f;
-	} else {
-		renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, y, 0, 1.0f - displayFrac, 1, 1, consoleShader );
-	}
-
-	renderSystem->SetColor( colorCyan );
-	renderSystem->DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 0, 0, whiteShader );
-	renderSystem->SetColor( colorWhite );
-
-	// draw the version number
-
-	renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
-
-	idStr version = va("%s - %i", ENGINE_VERSION, BUILD_NUMBER);
-	int i = version.Length();
-
-	float fontScale = con_fontScale.GetFloat();
-	if(fontScale < 0.2f)
-		fontScale = 0.2f;
-	if(fontScale > 2.0f)
-		fontScale = 2.0f;
-
-	for ( x = 0; x < i; x++ ) {
-		renderSystem->DrawScaledChar( SCREEN_WIDTH - ( i - x ) * SMALLCHAR_WIDTH * fontScale,
-			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)*fontScale), version[x], localConsole.charSetShader, fontScale );
-	}
-
-	// draw the text
-	vislines = lines;
-	rows = static_cast<int>((lines-SMALLCHAR_WIDTH)/SMALLCHAR_WIDTH);		// rows of text to draw
-
-	y = lines - (SMALLCHAR_HEIGHT*3) * fontScale;
-
-	// draw from the bottom up
-	if ( display != current ) {
-		// draw arrows to show the buffer is backscrolled
-		renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
-		for ( x = 0; x < LINE_WIDTH/fontScale; x += 4 ) {
-			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH * fontScale, idMath::FtoiFast( y ), '^', localConsole.charSetShader, fontScale );
-		}
-		y -= SMALLCHAR_HEIGHT * fontScale;
-		rows--;
-	}
-
-	row = display;
-
-	if ( x == 0 ) {
-		row--;
-	}
-
-	currentColor = idStr::ColorIndex( C_COLOR_WHITE );
-	renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
-
-	for ( i = 0; i < rows; i++, y -= (SMALLCHAR_HEIGHT * fontScale), row-- ) {
-		if ( row < 0 ) {
-			break;
-		}
-		if ( current - row >= TOTAL_LINES ) {
-			// past scrollback wrap point
-			continue;
-		}
-
-		text_p = text + (row % TOTAL_LINES) * LINE_WIDTH;
-
-		for ( x = 0; x < LINE_WIDTH; x++ ) {
-			if ( ( text_p[x] & 0xff ) == ' ' ) {
-				continue;
-			}
-
-			if ( idStr::ColorIndex(text_p[x]>>8) != currentColor ) {
-				currentColor = idStr::ColorIndex(text_p[x]>>8);
-				renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
-			}
-			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH * fontScale, idMath::FtoiFast( y ), text_p[x] & 0xff, localConsole.charSetShader, fontScale );
-		}
-	}
-
-	// draw the input prompt, user text, and cursor if desired
-	DrawInput(fontScale);
-
-	renderSystem->SetColor( colorCyan );
-}
-
 
 /*
 ==============
@@ -1524,7 +1273,7 @@ Draw
 ForceFullScreen is used by the editor
 ==============
 */
-void	idConsoleLocal::Draw( bool forceFullScreen ) {
+void idConsoleLocal::Draw( bool forceFullScreen ) {
 	float y = 0.0f;
 
 	if ( !charSetShader ) {

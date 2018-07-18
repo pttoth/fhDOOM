@@ -292,7 +292,7 @@ public:
 	idFile* operator->();
 	const idFile* operator->() const;
 
-	operator bool() const;
+	explicit operator bool() const;
 
 	void Close();
 private:

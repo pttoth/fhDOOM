@@ -2856,9 +2856,6 @@ void idCommonLocal::Init( int argc, const char **argv, const char *cmdline ) {
 		Printf( "\nType 'help' for dedicated server info.\n\n" );
 #endif
 
-		// remove any prints from the notify lines
-		console->ClearNotifyLines();
-
 		ClearCommandLine();
 
 		com_fullyInitialized = true;
