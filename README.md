@@ -3,7 +3,7 @@
   * [About](#about)
   * [Changes](#changes)
   * [Screenshots](#screenshots)
-  * [Installation](#installation)
+  * [Installation](#installation) (please read!)
   * [FAQ](#faq)
   * [cvars](#cvars)
   * [Notes](#notes)
@@ -123,15 +123,21 @@ All Screenshots were taken with HD textures installed (Wulfen, Monoxead, xio).
 ## Installation
 
  * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.2-1414.zip
- * Extract zip to a location of your choice (e.g. c:\games)
- * Copy 5 files from the original DOOM3 (CD or Steam) to base directory of fhDOOM (e.g. c:\games\fhDOOM\base):
-    * pak000.pk4
-    * pak001.pk4
-    * pak002.pk4
-    * pak003.pk4
-    * pak004.pk4
- * Start game by clicking on fhDOOM.exe
- * Don't forget to change the game's resolution (fhDOOM does not yet select your native resolution automatically).
+ * The recommended way to install fhDOOM is to unpack fhDOOM into its own directory and copy only those files from the original Doom3 that are needed:
+   * Extract zip to a location of your choice (e.g. c:\games)
+   * Copy 5 files from the original DOOM3 (CD or Steam) to base directory of fhDOOM (e.g. c:\games\fhDOOM\base):
+      * pak000.pk4
+      * pak001.pk4
+      * pak002.pk4
+      * pak003.pk4
+      * pak004.pk4
+   * Start game by clicking on fhDOOM.exe
+   * Don't forget to change the game's resolution (fhDOOM does not yet select your native resolution automatically).
+ * Alternatively you can unpack the downloaded zip directly into an existing  Doom3 installation.
+   * As mentioned before, fhDOOM contains the last official patch (1.31), so some files (pak00[5-8].pk4 and Default.cfg) will be overwritten if this patch is already installed (e.g. you installed patch 1.31 manually or installed the game via Steam). Skipping these files should be fine as well.
+   * fhDOOM is usually not tested in combination with other mods, so if you have other stuff installed all bets are off. 
+   * If you run into any issues, please try the clean and recommended installation as described above.
+   * Future releases will very likely include a variant without the additional files from patch 1.31 to make this a bit easier.
 
 ## FAQ
 
@@ -244,11 +250,33 @@ fhDOOM added and changed a couple of cvars. This list of cvars might be interest
 ## Building fhDOOM
 
 Dependencies:
-  * Visual Studio 2013 or Visual Studio 2015. Community versions are just fine, but VS2013 needs MBCS-Addon.
-  * cmake 3.2
+  * Visual Studio 2013 or Visual Studio 2015 or Visual Studio 2017. Community versions are just fine, but VS2013 needs MBCS-Addon.
+  * cmake 3.2 (make sure cmake.exe is in your PATH)
   * Windows 8.1 SDK
   * optional: Qt 5.4 (32bit)
   * optional: Maya 2011 SDK (32bit)
 
-
-
+Setup:
+  * Clone repository
+  * Just as with the regular installation, copy these files from the original DOOM3 game into the base directory of your local repository (git will ignore them):
+    * pak000.pk4
+    * pak001.pk4
+    * pak002.pk4
+    * pak003.pk4
+    * pak004.pk4
+  * Run `cmake_msvc201x.cmd` to generate 
+    * if you want to build with Qt tools enabled, there are two ways to tell cmake where Qt is installed: 
+      * run `cmake_msvc201x.cmd -DQTDIR=<QTDIR>`
+      * or set an env var in windows: `QT_MSVC201x_X86=<QTDIR>`
+      * `<QTDIR>` must point to your Qt installation so that `<QTDIR>/bin` contains all the Qt binaries (dll and exe files).
+      * Please keep in mind that fhDOOM needs a 32bit build of Qt
+  * Compile fhDOOM from Visual Studio
+    * Debug and Run fhDOOM directly from Visual Studio
+    * fhDOOM will pick up the base directory in your repository automatically
+  * The zip file from a fhDOOM release contains a pk4 file `pak100fhdoom.pk4`. This file contains all the new shaders and required asset files.
+    You may have noticed that this file cannot be found in the git repository. For easier editing all asset files are loosely placed in the base 
+    directory of the repository. You can directly edit these files or add new ones and fhDOOM will use them. These files are automatically packed up into  `pak100fhdoom.pk4` when you generate a distributable zip file (e.g. for release), see below for details.
+  * Generating distributable zip files: There are three special build targets that generate distributable zip files:
+    * `dist`: generates a zip file that contains fhDOOM and all required files from the official 1.31 patch (this is what is usually released)
+    * `dist_nopatch`: same as `dist` but without the files from the 1.31 patch
+    * `sdk`: generates a SDK to build only a game dll for fhDOOM (this is currently not used, not sure if its still working)
