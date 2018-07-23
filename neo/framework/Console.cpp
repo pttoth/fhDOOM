@@ -50,18 +50,40 @@ namespace {
 		int time;
 	};
 
-	template<typename OnNewLine, typename OnChar>
-	void processEntryBuffer(const consoleEntry_t& entry, OnNewLine&& onNewLine, OnChar&& onChar) {
-		const int len = ::strlen(entry.buffer);
+	enum class fhTimestampMode {
+		Off = 0,
+		Milliseconds = 1,
+		Iso8601 = 2,
+		COUNT
+	};
 
-		char timestamp[16] = { 0 };
-		::sprintf(timestamp, "%7d ", entry.time);
-		const int timeStampLen = ::strlen(timestamp);
+	template<typename OnNewLine, typename OnChar>
+	void processEntryBuffer(const consoleEntry_t& entry, fhTimestampMode timestampMode, OnNewLine&& onNewLine, OnChar&& onChar) {
+		const int len = ::strlen(entry.buffer);
 
 		char currentColor = idStr::ColorIndex(C_COLOR_CYAN);
 
-		for (int x = 0; x < timeStampLen; ++x) {
-			onChar(fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN)) });
+		if (timestampMode == fhTimestampMode::Iso8601) {
+			const int seconds = (entry.time / 1000) % 60;
+			const int minutes = ((entry.time / (1000 * 60)) % 60);
+			const int hours = ((entry.time / (1000 * 60 * 60)) % 24);
+			const int milliseconds = entry.time % 1000;
+
+			char timestamp[32] = { 0 };
+			::sprintf(timestamp, "%02d:%02d:%02d.%03d ", hours, minutes, seconds, milliseconds);
+			const int timeStampLen = ::strlen(timestamp);
+
+			for (int x = 0; x < timeStampLen; ++x) {
+				onChar(fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex(C_COLOR_GRAY)) });
+			}
+		} else if (timestampMode == fhTimestampMode::Milliseconds) {
+			char timestamp[32] = { 0 };
+			::sprintf(timestamp, "%7d ", entry.time);
+			const int timeStampLen = ::strlen(timestamp);
+
+			for (int x = 0; x < timeStampLen; ++x) {
+				onChar(fhColoredChar{ timestamp[x], static_cast<char>(idStr::ColorIndex(C_COLOR_GRAY)) });
+			}
 		}
 
 		for (int x = 0; x < len; ) {
@@ -201,6 +223,8 @@ private:
 	void				Scroll();
 	void				SetDisplayFraction( float frac );
 	void				UpdateDisplayFraction( void );
+	fhTimestampMode     GetTimeStampMode() const;
+	int                 GetTimeStampPrintLen() const;
 
 	//============================
 
@@ -240,6 +264,7 @@ private:
 	static idCVar		con_noPrint;
 	static idCVar		con_fontScale;
 	static idCVar		con_size;
+	static idCVar		con_timestamps;
 
 	const idMaterial *	whiteShader;
 	const idMaterial *	consoleShader;
@@ -259,6 +284,7 @@ idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CV
 #endif
 idCVar idConsoleLocal::con_fontScale( "con_fontScale", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "scale of console font" );
 idCVar idConsoleLocal::con_size("con_size", "0.3", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "screen size of console");
+idCVar idConsoleLocal::con_timestamps("con_timestamps", "2", CVAR_SYSTEM | CVAR_INTEGER | CVAR_NOCHEAT | CVAR_ARCHIVE, "timestamps in console: 0=Off, 1=Milliseconds, 2=ISO8601");
 
 
 /*
@@ -648,6 +674,29 @@ void idConsoleLocal::Clear() {
 	entries.Clear();
 }
 
+fhTimestampMode idConsoleLocal::GetTimeStampMode() const {
+	int i = con_timestamps.GetInteger();
+	if (i >= 0 && i < static_cast<int>(fhTimestampMode::COUNT)) {
+		return static_cast<fhTimestampMode>(i);
+	}
+
+	return fhTimestampMode::Off;
+}
+
+int idConsoleLocal::GetTimeStampPrintLen() const {
+	switch (GetTimeStampMode()) {
+	case fhTimestampMode::Off:
+		return 0;
+	case fhTimestampMode::Milliseconds:
+		return 8;
+	case fhTimestampMode::Iso8601:
+		return 13;
+	}
+
+	assert(false);
+	return 0;
+}
+
 /*
 ================
 idConsoleLocal::Dump
@@ -662,6 +711,9 @@ void idConsoleLocal::Dump( const char *fileName ) {
 		return;
 	}
 
+	const auto timestampLen = GetTimeStampPrintLen();
+	const auto timestampMode = GetTimeStampMode();
+
 	for (int i = 0; i < entries.GetNum(); ++i) {
 		const auto& entry = entries[i];
 
@@ -670,17 +722,17 @@ void idConsoleLocal::Dump( const char *fileName ) {
 			newLine = true;
 		};
 
-		const auto onChar = [&f, &newLine](fhColoredChar c) {
+		const auto onChar = [&f, &newLine, timestampLen](fhColoredChar c) {
 			if (newLine) {
 				f->Write("\n", 1);
-				for (int x = 0; x < 7 + 1; ++x) { //FIXME 7==timestampLen
+				for (int x = 0; x < timestampLen; ++x) {
 					f->Write(" ", 1);
 				}
 				newLine = false;
 			}
 			f->Write(&c.c, 1);
 		};
-		processEntryBuffer(entry, onNewLine, onChar);
+		processEntryBuffer(entry, timestampMode, onNewLine, onChar);
 		f->Write("\n", 1);
 	}
 }
@@ -1161,6 +1213,9 @@ void idConsoleLocal::FormatConsoleEntry(idStaticList<fhConsoleLine, BufferSize>&
 	fhConsoleLine currentLine;
 
 	const char cyanColorIndex = static_cast<char>(idStr::ColorIndex(C_COLOR_CYAN));
+	const auto timestampLen = GetTimeStampPrintLen();
+	const auto timestampMode = GetTimeStampMode();
+
 
 	const auto onNewLine = [&]() {
 		if (lineBuffer.Num() == lineBuffer.Max()) {
@@ -1169,7 +1224,7 @@ void idConsoleLocal::FormatConsoleEntry(idStaticList<fhConsoleLine, BufferSize>&
 		lineBuffer.Append(currentLine);
 		currentLine.Clear();
 
-		for (int x = 0; x < 7 + 1; ++x) { //FIXME 7==timestampLen
+		for (int x = 0; x < timestampLen; ++x) {
 			currentLine.Append(fhColoredChar{ ' ', cyanColorIndex });
 		}
 	};
@@ -1181,7 +1236,7 @@ void idConsoleLocal::FormatConsoleEntry(idStaticList<fhConsoleLine, BufferSize>&
 			onNewLine();
 		}
 	};
-	processEntryBuffer(entry, onNewLine, onChar);
+	processEntryBuffer(entry, timestampMode, onNewLine, onChar);
 }
 
 void idConsoleLocal::PrintConsoleEntry(const consoleEntry_t& entry, float& y) {
