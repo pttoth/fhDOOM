@@ -1102,34 +1102,52 @@ ENDIF()
 
 
 IF(WIN32)
+
+  SET(DIST_NOPATCH_DIR ${CMAKE_BINARY_DIR}/dist/fhDOOM-nopatch)
+
+  add_custom_target(dist_nopatch
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "fhDOOM-nopatch-$<CONFIG>.zip" --format=zip "fhDOOM-nopatch"
+    DEPENDS maya2md5
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
+  )
+
+  add_custom_command(TARGET dist_nopatch
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/dist"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${DIST_NOPATCH_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory  $<TARGET_FILE_DIR:fhDOOM> "${DIST_NOPATCH_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_NOPATCH_DIR}/base"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_NOPATCH_DIR}/d3xp"
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${DIST_NOPATCH_DIR}/base/pak100fhdoom.pk4" --format=zip "glsl" "guis" "maps/game"
+
+    COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_NOPATCH_DIR}/fhGame-x86.dll" "${DIST_NOPATCH_DIR}/base/fhGame-x86.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_NOPATCH_DIR}/fhGame-roe-x86.dll" "${DIST_NOPATCH_DIR}/d3xp/fhGame-x86.dll"
+
+    COMMAND ${CMAKE_COMMAND} -E remove  "${DIST_NOPATCH_DIR}/fhGame-roe-x86.dll"
+    COMMAND ${CMAKE_COMMAND} -E remove  "${DIST_NOPATCH_DIR}/fhGame-x86.dll"
+
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base"
+  )
+
+
+
   SET(DIST_DIR ${CMAKE_BINARY_DIR}/dist/fhDOOM)
 
   add_custom_target(dist
     COMMAND ${CMAKE_COMMAND} -E tar "cfv" "fhDOOM-$<CONFIG>.zip" --format=zip "fhDOOM"
-    DEPENDS maya2md5
+    DEPENDS dist_nopatch
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
   )
 
   add_custom_command(TARGET dist
     PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/dist"
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${DIST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory  $<TARGET_FILE_DIR:fhDOOM> "${DIST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/base"
-    COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/d3xp"
-    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${DIST_DIR}/base/pak100fhdoom.pk4" --format=zip "glsl" "guis" "maps/game"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory  "${DIST_NOPATCH_DIR}" "${DIST_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak005.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak006.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak007.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak008.pk4" "${DIST_DIR}/base/"
-    COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/default.cfg" "${DIST_DIR}/base/"
-
-    COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_DIR}/fhGame-x86.dll" "${DIST_DIR}/base/fhGame-x86.dll"
-    COMMAND ${CMAKE_COMMAND} -E copy  "${DIST_DIR}/fhGame-roe-x86.dll" "${DIST_DIR}/d3xp/fhGame-x86.dll"
-
-    COMMAND ${CMAKE_COMMAND} -E remove  "${DIST_DIR}/fhGame-roe-x86.dll"
-    COMMAND ${CMAKE_COMMAND} -E remove  "${DIST_DIR}/fhGame-x86.dll"
-
+    COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/default.cfg" "${DIST_DIR}/base/"    
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base"
   )
 
