@@ -993,7 +993,7 @@ void idSoundWorldLocal::PlaceListener( const idVec3& origin, const idMat3& axis,
 
 			const float gain = (fadeOutDistance - distance) / fadeOutDistance;
 
-			common->Printf( "portal distance: %f, effect gain: %f\n", distance, gain );
+			//common->Printf( "portal distance: %f, effect gain: %f\n", distance, gain );
 
 			if ( adjacentArea < locations.Num() && locations[adjacentArea].effect && gain > 0.001 ) {
 				effect_slots[nextFreeSlot].effect = locations[adjacentArea].effect;
