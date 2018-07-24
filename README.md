@@ -249,6 +249,8 @@ fhDOOM added and changed a couple of cvars. This list of cvars might be interest
 
 ## Building fhDOOM
 
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/existence/fhDOOM)](https://ci.appveyor.com/project/eXistence/fhdoom)
+
 Dependencies:
   * Visual Studio 2013 or Visual Studio 2015 or Visual Studio 2017. Community versions are just fine, but VS2013 needs MBCS-Addon.
   * cmake 3.2 (make sure cmake.exe is in your PATH)
