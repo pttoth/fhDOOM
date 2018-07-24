@@ -553,8 +553,6 @@ SET(SOURCES
 
   tools/edit_public.h
   tools/edit_stub.cpp
-  tools/radiant/GLDrawable.h
-  tools/radiant/GLDrawable.cpp
 
   sys/sys_local.cpp
   sys/sys_local.h
@@ -949,10 +947,10 @@ IF(WIN32)
       tools/radiant/ZWnd.h
       tools/radiant/rendertools.h
       tools/radiant/rendertools.cpp
-
+      tools/radiant/GLDrawable.h
+      tools/radiant/GLDrawable.cpp
       tools/script/DialogScriptEditor.cpp
       tools/script/DialogScriptEditor.h
-
       tools/sound/DialogSound.cpp
       tools/sound/DialogSound.h
       tools/sound/DialogSoundGroup.cpp

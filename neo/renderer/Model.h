@@ -58,7 +58,6 @@ typedef short glIndex_t;
 
 #endif
 
-
 typedef struct {
 	// NOTE: making this a glIndex is dubious, as there can be 2x the faces as verts
 	glIndex_t					p1, p2;					// planes defining the edge
@@ -148,6 +147,8 @@ typedef struct modelSurface_s {
 	srfTriangles_t *			geometry;
 } modelSurface_t;
 
+void Tris_ToOBJ(const idTriList& tris, const idMatList& mats, idFile* objFile, idFile* mtlFile);
+
 typedef enum {
 	DM_STATIC,		// never creates a dynamic model
 	DM_CACHED,		// once created, stays constant until the entity is updated (animating characters)
@@ -164,7 +165,6 @@ public:
 	idStr						name;
 	const idMD5Joint *			parent;
 };
-
 
 // the init methods may be called again on an already created model when
 // a reloadModels is issued

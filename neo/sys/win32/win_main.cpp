@@ -949,7 +949,7 @@ returns true if there is a copy of D3 running already
 bool Sys_AlreadyRunning( void ) {
 #ifndef DEBUG
 	if ( !win32.win_allowMultipleInstances.GetBool() ) {
-		HANDLE hMutexOneInstance = ::CreateMutex( NULL, FALSE, "DOOM3" );
+		HANDLE hMutexOneInstance = ::CreateMutexA( NULL, FALSE, "DOOM3" );
 		if ( ::GetLastError() == ERROR_ALREADY_EXISTS || ::GetLastError() == ERROR_ACCESS_DENIED ) {
 			return true;
 		}
@@ -1571,9 +1571,9 @@ Sys_GetDisplays
 static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
 	idList<display_t>* displays = reinterpret_cast<idList<display_t>*>(dwData);
 
-	MONITORINFOEX iMonitor;
-	iMonitor.cbSize = sizeof(MONITORINFOEX);
-	GetMonitorInfo(hMonitor, &iMonitor);
+	MONITORINFOEXA iMonitor;
+	iMonitor.cbSize = sizeof(MONITORINFOEXA);
+	GetMonitorInfoA(hMonitor, &iMonitor);
 
 	if (iMonitor.dwFlags == DISPLAY_DEVICE_MIRRORING_DRIVER)
 	{

@@ -33,9 +33,6 @@ If you have questions concerning this license or the applicable additional terms
 
 //=================================================================================
 
-
-void Tris_ToOBJ(const idTriList& tris, const idMatList& mats, idFile* objFile, idFile* mtlFile);
-
 #if 0
 
 should we try and snap values very close to 0.5, 0.25, 0.125, etc?

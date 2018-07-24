@@ -45,6 +45,71 @@ idCVar idRenderModelStatic::r_slopVertex( "r_slopVertex", "0.01", CVAR_RENDERER,
 idCVar idRenderModelStatic::r_slopTexCoord( "r_slopTexCoord", "0.001", CVAR_RENDERER, "merge texture coordinates this far apart" );
 idCVar idRenderModelStatic::r_slopNormal( "r_slopNormal", "0.02", CVAR_RENDERER, "merge normals that dot less than this" );
 
+
+void Tris_ToOBJ(const idTriList& tris, const idMatList& mats, idFile* objFile, idFile* mtlFile) {
+	idList<idStr*> matNames;
+	int i, j, k;
+	int indexBase = 1;
+	idStr lastMaterial("");
+	int matCount = 0;
+
+	if (mtlFile) {
+		objFile->Printf("mtllib %s\n", mtlFile->GetName());
+	}
+
+	for (i = 0; i < tris.Num(); i++) {
+		srfTriangles_t *tri = tris[i];
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf("v %f %f %f\n", tri->verts[j].xyz.x, tri->verts[j].xyz.z, -tri->verts[j].xyz.y);
+		}
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf("vt %f %f\n", tri->verts[j].st.x, 1.0f - tri->verts[j].st.y);
+		}
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf("vn %f %f %f\n", tri->verts[j].normal.x, tri->verts[j].normal.y, tri->verts[j].normal.z);
+		}
+
+		if (mats.Num() > i && stricmp(mats[i]->GetName(), lastMaterial)) {
+			lastMaterial = mats[i]->GetName();
+
+			bool found = false;
+			for (k = 0; k < matNames.Num(); k++) {
+				if (idStr::Icmp(matNames[k]->c_str(), lastMaterial.c_str()) == 0) {
+					found = true;
+					// f->Printf( "usemtl m%i\n", k );
+					objFile->Printf("usemtl %s\n", lastMaterial.c_str());
+					break;
+				}
+			}
+
+			if (!found) {
+				// f->Printf( "usemtl m%i\n", matCount++ );
+				objFile->Printf("usemtl %s\n", lastMaterial.c_str());
+				matNames.Append(new idStr(lastMaterial));
+			}
+		}
+
+		for (int j = 0; j < tri->numIndexes; j += 3) {
+			int i1, i2, i3;
+			i1 = tri->indexes[j + 2] + indexBase;
+			i2 = tri->indexes[j + 1] + indexBase;
+			i3 = tri->indexes[j] + indexBase;
+			objFile->Printf("f %i/%i/%i %i/%i/%i %i/%i/%i\n", i1, i1, i1, i2, i2, i2, i3, i3, i3);
+		}
+
+		indexBase += tri->numVerts;
+
+	}
+
+	if (mtlFile) {
+		for (k = 0; k < matNames.Num(); k++) {
+			// This presumes the diffuse tga name matches the material name
+			mtlFile->Printf("newmtl %s\n\tNs 0\n\td 1\n\tillum 2\n\tKd 0 0 0 \n\tKs 0.22 0.22 0.22 \n\tKa 0 0 0 \n\tmap_Kd %s/base/%s.tga\n\n\n", matNames[k]->c_str(), "z:/d3xp", matNames[k]->c_str());
+		}
+	}
+}
+
+
 /*
 ================
 idRenderModelStatic::idRenderModelStatic
