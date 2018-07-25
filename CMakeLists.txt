@@ -8,6 +8,7 @@ OPTION(ID_UNICODE "Use unicode version of WIN32 API" OFF)
 include(setup.cmake)
 
 include_directories(neo/renderer)
+include_directories(neo/glew)
 add_subdirectory (neo/idlib)
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_subdirectory (neo/curl)

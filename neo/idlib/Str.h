@@ -266,7 +266,7 @@ public:
 	static bool			CharIsNewLine( char c );
 	static bool			CharIsTab( char c );
 	static bool			CharIsWhitespace( char c );
-	static int			ColorIndex( int c );
+	static char			ColorIndex( int c );
 	static idVec4 &		ColorForIndex( int i );
 
 	friend int			sprintf( idStr &dest, const char *fmt, ... );
@@ -1033,8 +1033,8 @@ ID_INLINE bool idStr::CharIsWhitespace( char c ) {
 }
 
 
-ID_INLINE int idStr::ColorIndex( int c ) {
-	return ( c & 15 );
+ID_INLINE char idStr::ColorIndex( int c ) {
+	return char( c & 15 );
 }
 
 ID_INLINE int idStr::DynamicMemoryUsed() const {
