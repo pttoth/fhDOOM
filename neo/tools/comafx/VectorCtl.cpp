@@ -28,7 +28,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 
-
 #include "VectorCtl.h"
 #include <math.h>
 
@@ -160,7 +159,7 @@ COLORREF CVectorCtl::CalcLight (double dx, double dy, double dz)
     if (NL < 0.0)   // Diffuse coefficient
         NL = 0.0;
 
-    RV = max (0.0, -rz);
+    RV = std::max(0.0, -rz);
     RV = double(pow (RV, m_dSpecularExponent));
 
     int  r = int (  double(GetRValue(m_clrDiffuse)) * NL +  // Diffuse
@@ -175,9 +174,9 @@ COLORREF CVectorCtl::CalcLight (double dx, double dy, double dz)
                     double(GetBValue(m_clrLight)) * RV +    // Specular
                     double(GetBValue(m_clrAmbient)));       // Ambient
 
-    r = min (255, r);   // Cutoff highlight
-    g = min (255, g);
-    b = min (255, b);
+    r = std::min(255, r);   // Cutoff highlight
+    g = std::min(255, g);
+    b = std::min(255, b);
     return RGB(BYTE(r),BYTE(g),BYTE(b));
 }
 
@@ -191,7 +190,7 @@ void CVectorCtl::InitBitmap (LPDRAWITEMSTRUCT lpDrawItemStruct, CDC *pDC)
     m_bBmpCreated = TRUE;
     m_dcMem.CreateCompatibleDC (pDC);
     m_pOldBitmap = m_dcMem.SelectObject (&m_bmpBuffer);
-    SetRadius (max (min (m_iWidth, m_iHeight) - 2, 0) / 2);
+    SetRadius (std::max(std::min(m_iWidth, m_iHeight) - 2, 0) / 2);
     SetCenter (m_iWidth / 2, m_iHeight / 2);
     CreateBackground ();
 }

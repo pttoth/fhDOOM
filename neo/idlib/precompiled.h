@@ -83,7 +83,15 @@ If you have questions concerning this license or the applicable additional terms
 
 #include <malloc.h>							// no malloc.h on mac or unix
 #include <windows.h>						// for qgl.h
+
 #undef FindText								// stupid namespace poluting Microsoft monkeys
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 
 #endif /* _WIN32 */
 
@@ -106,6 +114,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <cmath>
 #include <stddef.h>
 #include <stdint.h>
+#include <algorithm>
 
 //-----------------------------------------------------
 

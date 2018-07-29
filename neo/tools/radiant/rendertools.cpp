@@ -93,7 +93,7 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
     {
-      int verticesToCommit = min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
+      int verticesToCommit = std::min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
 
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
@@ -256,7 +256,7 @@ void fhPointBuffer::entry_t::Commit() {
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
     {
-      int verticesToCommit = min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
+      int verticesToCommit = std::min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
 
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
