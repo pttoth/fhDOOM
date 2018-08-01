@@ -27,6 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #include "../idlib/precompiled.h"
+#include "../idlib/StrRef.h"
 #pragma hdrstop
 
 #ifndef ID_ALLOW_QT

@@ -15,6 +15,7 @@ SET(SOURCES
   bv/Sphere.h
   CmdArgs.cpp
   CmdArgs.h
+  containers/ArrayRef.h
   containers/BinSearch.h
   containers/BTree.h
   containers/HashIndex.cpp

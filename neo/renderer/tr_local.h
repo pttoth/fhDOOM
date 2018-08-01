@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __TR_LOCAL_H__
 #define __TR_LOCAL_H__
 
+#include "../idlib/containers/ArrayRef.h"
 #include "Image.h"
 #include "MegaTexture.h"
 #include "RenderProgram.h"
@@ -364,7 +365,7 @@ typedef struct viewLight_s {
 	fhRenderMatrix          viewMatrices[6];
 	fhRenderMatrix          projectionMatrices[6];
 	fhRenderMatrix          viewProjectionMatrices[6];
-	shadowCoord_t           shadowCoords[6];
+	shadowCoord_t           shadowCoords[6];	
 	float                   nearClip[6];
 	float                   farClip[6];
 	float                   width[6];
@@ -738,7 +739,6 @@ typedef struct {
 
 	viewLight_t *		vLight;
 	int					depthFunc;			// GLS_DEPTHFUNC_EQUAL, or GLS_DEPTHFUNC_LESS for translucent
-	float				lightTextureMatrix[16];	// only if lightStage->texture.hasMatrix
 	float				lightColor[4];		// evaluation of current light's color stage
 
 	float				lightScale;			// Every light color calaculation will be multiplied by this,
@@ -1583,6 +1583,34 @@ void *R_StaticAlloc( int bytes );		// just malloc with error checking
 void *R_ClearedStaticAlloc( int bytes );	// with memset
 void R_StaticFree( void *data );
 
+template<typename T>
+T* R_FrameAllocT( int num ) {
+	static_assert(std::is_trivially_destructible<T>::value, "no destructor is called for frame allocated objects, so destructor must be trivial");
+	assert( num > 0 );
+
+	void* p = R_FrameAlloc( num * sizeof( T ) );
+	auto t = static_cast<T*>(p);
+	for ( int i = 0; i < num; ++i ) {
+		new (t + i) T();
+	}
+
+	return t;
+}
+
+template<typename T>
+fhArrayRef<T> R_FrameAllocArray( int num ) {
+	static_assert(std::is_trivially_destructible<T>::value, "no destructor is called for frame allocated objects, so destructor must be trivial");
+	assert( num > 0 );
+
+	void* p = R_FrameAlloc( num * sizeof( T ) );
+	auto t = static_cast<T*>(p);
+	for ( int i = 0; i < num; ++i ) {
+		new (t + i) T();
+	}
+
+	return fhArrayRef<T>( t, num );
+}
+
 
 /*
 =============================================================
@@ -1693,7 +1721,7 @@ idScreenRect R_CalcIntersectionScissor( const idRenderLightLocal * lightDef,
 /*
 =============================================================
 
-TR_SHAODWMAPPING
+TR_SHADOWMAPPING
 
 =============================================================
 */

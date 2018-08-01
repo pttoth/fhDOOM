@@ -38,7 +38,7 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-template<class type,int size>
+template<class type, int size>
 class idStaticList {
 public:
 
