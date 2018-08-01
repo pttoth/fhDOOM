@@ -30,25 +30,12 @@ If you have questions concerning this license or the applicable additional terms
 #include <type_traits>
 
 
-class fhBaseRenderList {
-public:
-	static void Init();
-	static void Shutdown();
-	static void EndFrame();
-protected:
-	template<typename T>
-	T* AllocateArray(uint32 num) {
-		static_assert(std::is_trivial<T>::value, "T must be trivial");
-		return static_cast<T*>(AllocateBytes(sizeof(T) * num));
-	}
-
-private:
-	void* AllocateBytes(uint32 bytes);
-};
-
+#pragma once
+#include "../idlib/containers/ArrayRef.h"
+#include <type_traits>
 
 template<typename T>
-class fhRenderList : public fhBaseRenderList {
+class fhRenderList {
 public:
 	fhRenderList()
 		: array(nullptr)
@@ -56,10 +43,26 @@ public:
 		, size(0) {
 	}
 
+	fhRenderList(const fhRenderList&) = delete;
+	fhRenderList(fhRenderList&& rl)
+		: array(nullptr)
+		, capacity(0)
+		, size(0) {
+		(*this) = std::move(rl);
+	}
+
+	const fhRenderList& operator=(const fhRenderList&) = delete;
+	const fhRenderList& operator=(fhRenderList&& rl) {
+		std::swap(array, rl.array);
+		std::swap(capacity, rl.capacity);
+		std::swap(size, rl.size);
+		return *this;
+	}
+
 	void Append(const T& t) {
-		if(size == capacity) {
-			capacity += 1024;
-			T* t = AllocateArray<T>(capacity);
+		if (size == capacity) {
+			capacity += 32;
+			T* t = R_FrameAllocT<T>(capacity);
 
 			if (size > 0) {
 				memcpy(t, array, sizeof(T) * size);
@@ -90,8 +93,17 @@ public:
 		return array[i];
 	}
 
+	using iterator = T * ;
+	using const_iterator = const T*;
+	iterator begin() { return array; }
+	const_iterator begin() const { return array; }
+	const_iterator cbegin() const { return array; }
+	iterator end() { return array + size; }
+	const_iterator end() const { return array + size; }
+	const_iterator cend() const { return array + size; }
+
 private:
-	T*  array;
+	T * array;
 	int capacity;
 	int size;
 };
@@ -148,11 +160,7 @@ public:
 	void Submit();
 };
 
-class StageRenderList : public fhRenderList<drawStage_t> {
-public:
-	void AddDrawSurfaces( drawSurf_t **surf, int numDrawSurfs );
-	void Submit();
-};
+using StageRenderList = fhRenderList<drawStage_t>;
 
 class InteractionList : public fhRenderList<drawInteraction_t> {
 public:

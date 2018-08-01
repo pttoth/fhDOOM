@@ -210,7 +210,7 @@ void R_ToggleSmpFrame( void ) {
 
 //=====================================================
 
-#define	MEMORY_BLOCK_SIZE	0x100000
+#define	MEMORY_BLOCK_SIZE	0x400000
 
 /*
 =====================

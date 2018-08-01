@@ -1460,7 +1460,6 @@ void CXYWnd::OnPaint() {
 
 		wglSwapBuffers(dc.m_hDC);
 		vertexCache.EndFrame();
-		fhBaseRenderList::EndFrame();
 		TRACE("XY Paint\n");
 	}
 }

@@ -649,9 +649,6 @@ void R_InitOpenGL( void ) {
 	GL_CheckErrors(true);
 	common->Printf("OpenGL: vertex cache initialized\n");
 
-	// allocate memory for render lists
-	fhBaseRenderList::Init();
-
 	cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
 
 	fhRenderProgram::Init();
@@ -1782,7 +1779,6 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 		globalImages->PurgeAllImages();
 		fhSampler::PurgeAll();
 		fhRenderProgram::PurgeAll();
-		fhBaseRenderList::Shutdown();
 		// free the context and close the window
 		GLimp_Shutdown();
 		glConfig.isInitialized = false;
@@ -2014,7 +2010,6 @@ void idRenderSystemLocal::Shutdown( void ) {
 		fhRenderProgram::PurgeAll();
 		fhFramebuffer::PurgeAll();
 		fhSampler::PurgeAll();
-		fhBaseRenderList::Shutdown();
 		globalImages->PurgeAllImages();
 	}
 

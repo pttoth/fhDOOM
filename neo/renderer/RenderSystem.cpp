@@ -688,9 +688,6 @@ frameInfo_t idRenderSystemLocal::LocalEndFrame() {
 	// we can now release the vertexes used this frame
 	vertexCache.EndFrame();
 
-	// release all memory allocated for render lists
-	fhBaseRenderList::EndFrame();
-
 	if (session->writeDemo) {
 		session->writeDemo->WriteInt(DS_RENDER);
 		session->writeDemo->WriteInt(DC_END_FRAME);
