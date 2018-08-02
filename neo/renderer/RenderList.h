@@ -164,8 +164,8 @@ using StageRenderList = fhRenderList<drawStage_t>;
 
 class InteractionList : public fhRenderList<drawInteraction_t> {
 public:
-	void AddDrawSurfacesOnLight(const drawSurf_t *surf);
-	void Submit();
+	void AddDrawSurfacesOnLight(const viewLight_t& vLight, const drawSurf_t *surf);
+	void Submit(const viewLight_t& vLight);
 };
 
 class ShadowRenderList : public fhRenderList<drawShadow_t> {

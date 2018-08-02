@@ -365,7 +365,7 @@ typedef struct viewLight_s {
 	fhRenderMatrix          viewMatrices[6];
 	fhRenderMatrix          projectionMatrices[6];
 	fhRenderMatrix          viewProjectionMatrices[6];
-	shadowCoord_t           shadowCoords[6];	
+	shadowCoord_t           shadowCoords[6];
 	float                   nearClip[6];
 	float                   farClip[6];
 	float                   width[6];
@@ -737,9 +737,7 @@ typedef struct {
 	idScreenRect		currentScissor;
 	// for scissor clipping, local inside renderView viewport
 
-	viewLight_t *		vLight;
 	int					depthFunc;			// GLS_DEPTHFUNC_EQUAL, or GLS_DEPTHFUNC_LESS for translucent
-	float				lightColor[4];		// evaluation of current light's color stage
 
 	float				lightScale;			// Every light color calaculation will be multiplied by this,
 											// which will guarantee that the result is < tr.backEndRendererMaxLight
@@ -1353,10 +1351,8 @@ void RB_LeaveDepthHack();
 void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color = idVec4(1,1,1,1) );
 void RB_RenderTriangleSurface( const srfTriangles_t *tri );
 void RB_T_RenderTriangleSurface( const drawSurf_t *surf );
-void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs,
-					  void (*triFunc_)( const drawSurf_t *) );
-void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
-										void (*triFunc_)( const drawSurf_t *) );
+void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs, void (*triFunc_)( const drawSurf_t *) );
+void RB_RenderDrawSurfChainWithFunction( const viewLight_t& vLight, const drawSurf_t *drawSurfs, void (*triFunc_)(const viewLight_t&, const drawSurf_t&) );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, float matrix[16] );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
 
@@ -1396,8 +1392,8 @@ void	RB_GLSL_DrawInteractions( void );
 const	fhRenderProgram*  R_FindGlslProgram( const char* vertexShaderName, const char* fragmentShaderName );
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
 void	RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
-void	RB_GLSL_FogPass( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
-void	RB_GLSL_BlendLight( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
+void	RB_GLSL_FogPass(const viewLight_t& vlight);
+void	RB_GLSL_BlendLight(const viewLight_t& vlight);
 
 /*
 ============================================================

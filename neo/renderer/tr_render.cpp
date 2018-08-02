@@ -273,8 +273,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 RB_RenderDrawSurfChainWithFunction
 ======================
 */
-void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
-										void (*triFunc_)( const drawSurf_t *) ) {
+void RB_RenderDrawSurfChainWithFunction(const viewLight_t& vLight, const drawSurf_t *drawSurfs, void(*triFunc_)(const viewLight_t&, const drawSurf_t&)) {
 	backEnd.currentSpace = NULL;
 
 	for ( const drawSurf_t* drawSurf = drawSurfs ; drawSurf ; drawSurf = drawSurf->nextOnLight ) {
@@ -311,7 +310,7 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 		}
 
 		// render it
-		triFunc_( drawSurf );
+		triFunc_( vLight, *drawSurf );
 
 		backEnd.currentSpace = drawSurf->space;
 	}

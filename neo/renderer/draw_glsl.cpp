@@ -47,15 +47,15 @@ RB_GLSL_BlendLight
 
 =====================
 */
-static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
-	const srfTriangles_t*  tri = surf->geo;
+static void RB_GLSL_BlendLight(const viewLight_t& vLight, const drawSurf_t& surf) {
+	const srfTriangles_t*  tri = surf.geo;
 
-  if(backEnd.currentSpace != surf->space)
+  if(backEnd.currentSpace != surf.space)
   {
 	idPlane	lightProject[4];
 
 	for (int i = 0; i < 4; i++) {
-		R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
+		R_GlobalPlaneToLocal(surf.space->modelMatrix, vLight.lightProject[i], lightProject[i]);
 	}
 
 	fhRenderProgram::SetBumpMatrix(lightProject[0].ToVec4(), lightProject[1].ToVec4());
@@ -85,13 +85,13 @@ Dual texture together the falloff and projection texture with a blend
 mode to the framebuffer, instead of interacting with the surface texture
 =====================
 */
-void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
+void RB_GLSL_BlendLight(const viewLight_t& vLight) {
   const idMaterial	*lightShader;
   const shaderStage_t	*stage;
   int					i;
   const float	*regs;
 
-  if (!drawSurfs) {
+  if (!vLight.globalInteractions) {
     return;
   }
   if (r_skipBlendLights.GetBool()) {
@@ -101,11 +101,11 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
 
   GL_UseProgram(blendLightProgram);
 
-  lightShader = backEnd.vLight->lightShader;
-  regs = backEnd.vLight->shaderRegisters;
+  lightShader = vLight.lightShader;
+  regs = vLight.shaderRegisters;
 
   // texture 1 will get the falloff texture
-  backEnd.vLight->falloffImage->Bind(1);
+  vLight.falloffImage->Bind(1);
 
   for (i = 0; i < lightShader->GetNumStages(); i++) {
     stage = lightShader->GetStage(i);
@@ -120,14 +120,15 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     stage->texture.image->Bind(0);
 
     // get the modulate values from the light, including alpha, unlike normal lights
-    backEnd.lightColor[0] = regs[stage->color.registers[0]];
-    backEnd.lightColor[1] = regs[stage->color.registers[1]];
-    backEnd.lightColor[2] = regs[stage->color.registers[2]];
-    backEnd.lightColor[3] = regs[stage->color.registers[3]];
-	fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));
+	idVec4 lightColor;
+    lightColor[0] = regs[stage->color.registers[0]];
+    lightColor[1] = regs[stage->color.registers[1]];
+    lightColor[2] = regs[stage->color.registers[2]];
+    lightColor[3] = regs[stage->color.registers[3]];
+	fhRenderProgram::SetDiffuseColor(lightColor);
 
-    RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
-    RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
+    RB_RenderDrawSurfChainWithFunction(vLight, vLight.globalInteractions, RB_GLSL_BlendLight);
+    RB_RenderDrawSurfChainWithFunction(vLight, vLight.localInteractions, RB_GLSL_BlendLight);
   }
 }
 
@@ -219,13 +220,13 @@ RB_T_BasicFog
 
 =====================
 */
-static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
+static void RB_GLSL_BasicFog(const viewLight_t&, const drawSurf_t& surf) {
 
-	if(backEnd.currentSpace != surf->space)
+	if(backEnd.currentSpace != surf.space)
 	{
 		idPlane	local;
 
-		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
+		R_GlobalPlaneToLocal(surf.space->modelMatrix, fogPlanes[0], local);
 		local[3] += 0.5;
 		const idVec4 bumpMatrixS = local.ToVec4();
 
@@ -235,17 +236,17 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 		fhRenderProgram::SetBumpMatrix(bumpMatrixS, bumpMatrixT);
 
 		// GL_S is constant per viewer
-		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
+		R_GlobalPlaneToLocal(surf.space->modelMatrix, fogPlanes[2], local);
 		local[3] += FOG_ENTER;
 		const idVec4 diffuseMatrixT = local.ToVec4();
 
-		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
+		R_GlobalPlaneToLocal(surf.space->modelMatrix, fogPlanes[3], local);
 		const idVec4 diffuseMatrixS = local.ToVec4();
 
 		fhRenderProgram::SetDiffuseMatrix(diffuseMatrixS, diffuseMatrixT);
 	}
 
-	RB_GLSL_RenderTriangleSurface(surf->geo);
+	RB_GLSL_RenderTriangleSurface(surf.geo);
 }
 
 /*
@@ -253,7 +254,7 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 RB_GLSL_FogPass
 ==================
 */
-void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
+void RB_GLSL_FogPass(const viewLight_t& vLight) {
   assert(fogLightProgram);
 
   RB_LogComment("---------- RB_GLSL_FogPass ----------\n");
@@ -261,7 +262,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   GL_UseProgram(fogLightProgram);
 
   // create a surface for the light frustom triangles, which are oriented drawn side out
-  const srfTriangles_t* frustumTris = backEnd.vLight->frustumTris;
+  const srfTriangles_t* frustumTris = vLight.frustumTris;
 
   // if we ran out of vertex cache memory, skip it
   if (!frustumTris->ambientCache) {
@@ -275,28 +276,29 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   ds.scissorRect = backEnd.viewDef->scissor;
 
   // find the current color and density of the fog
-  const idMaterial *lightShader = backEnd.vLight->lightShader;
-  const float	     *regs        = backEnd.vLight->shaderRegisters;
+  const idMaterial *lightShader = vLight.lightShader;
+  const float	     *regs        = vLight.shaderRegisters;
   // assume fog shaders have only a single stage
   const shaderStage_t	*stage = lightShader->GetStage(0);
 
-  backEnd.lightColor[0] = regs[stage->color.registers[0]];
-  backEnd.lightColor[1] = regs[stage->color.registers[1]];
-  backEnd.lightColor[2] = regs[stage->color.registers[2]];
-  backEnd.lightColor[3] = regs[stage->color.registers[3]];
+  idVec4 lightColor;
+  lightColor[0] = regs[stage->color.registers[0]];
+  lightColor[1] = regs[stage->color.registers[1]];
+  lightColor[2] = regs[stage->color.registers[2]];
+  lightColor[3] = regs[stage->color.registers[3]];
 
-  fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));
+  fhRenderProgram::SetDiffuseColor(lightColor);
 
   // calculate the falloff planes
   float	a;
 
   // if they left the default value on, set a fog distance of 500
-  if (backEnd.lightColor[3] <= 1.0) {
+  if (lightColor[3] <= 1.0) {
     a = -0.5f / DEFAULT_FOG_DISTANCE;
   }
   else {
     // otherwise, distance = alpha color
-    a = -0.5f / backEnd.lightColor[3];
+    a = -0.5f / lightColor[3];
   }
 
   // texture 0 is the falloff image
@@ -316,10 +318,10 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   globalImages->fogEnterImage->Bind(1);
 
   // T will get a texgen for the fade plane, which is always the "top" plane on unrotated lights
-  fogPlanes[2][0] = 0.001f * backEnd.vLight->fogPlane[0];
-  fogPlanes[2][1] = 0.001f * backEnd.vLight->fogPlane[1];
-  fogPlanes[2][2] = 0.001f * backEnd.vLight->fogPlane[2];
-  fogPlanes[2][3] = 0.001f * backEnd.vLight->fogPlane[3];
+  fogPlanes[2][0] = 0.001f * vLight.fogPlane[0];
+  fogPlanes[2][1] = 0.001f * vLight.fogPlane[1];
+  fogPlanes[2][2] = 0.001f * vLight.fogPlane[2];
+  fogPlanes[2][3] = 0.001f * vLight.fogPlane[3];
 
   // S is based on the view origin
   float s = backEnd.viewDef->renderView.vieworg * fogPlanes[2].Normal() + fogPlanes[2][3];
@@ -332,14 +334,14 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   // draw it
   backEnd.glState.forceGlState = true;
   GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL);
-  RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BasicFog);
-  RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(vLight, vLight.globalInteractions, RB_GLSL_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(vLight, vLight.localInteractions, RB_GLSL_BasicFog);
 
   // the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
   // of depthfunc_equal
   GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
   GL_Cull(CT_BACK_SIDED);
-  RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(vLight, &ds, RB_GLSL_BasicFog);
   GL_Cull(CT_FRONT_SIDED);
 }
 
@@ -363,23 +365,23 @@ the shadow volumes face INSIDE
 =====================
 */
 
-static void RB_GLSL_Shadow(const drawSurf_t *surf) {
+static void RB_GLSL_Shadow(const viewLight_t& vLight, const drawSurf_t& surf) {
   const srfTriangles_t	*tri;
 
   // set the light position if we are using a vertex program to project the rear surfaces
-  if (surf->space != backEnd.currentSpace) {
+  if (surf.space != backEnd.currentSpace) {
     idVec4 localLight;
 
-    R_GlobalPointToLocal(surf->space->modelMatrix, backEnd.vLight->globalLightOrigin, localLight.ToVec3());
+    R_GlobalPointToLocal(surf.space->modelMatrix, vLight.globalLightOrigin, localLight.ToVec3());
     localLight.w = 0.0f;
 
     assert(shadowProgram);
     fhRenderProgram::SetLocalLightOrigin(localLight);
     fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
-    fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);
+    fhRenderProgram::SetModelViewMatrix(surf.space->modelViewMatrix);
   }
 
-  tri = surf->geo;
+  tri = surf.geo;
 
   if (!tri->shadowCache) {
     return;
@@ -401,15 +403,15 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   else if (r_useExternalShadows.GetInteger() == 2) { // force to no caps for testing
     numIndexes = tri->numShadowIndexesNoCaps;
   }
-  else if (!(surf->dsFlags & DSF_VIEW_INSIDE_SHADOW)) {
+  else if (!(surf.dsFlags & DSF_VIEW_INSIDE_SHADOW)) {
     // if we aren't inside the shadow projection, no caps are ever needed needed
     numIndexes = tri->numShadowIndexesNoCaps;
     external = true;
   }
-  else if (!backEnd.vLight->viewInsideLight && !(surf->geo->shadowCapPlaneBits & SHADOW_CAP_INFINITE)) {
+  else if (!vLight.viewInsideLight && !(surf.geo->shadowCapPlaneBits & SHADOW_CAP_INFINITE)) {
     // if we are inside the shadow projection, but outside the light, and drawing
     // a non-infinite shadow, we can skip some caps
-    if (backEnd.vLight->viewSeesShadowPlaneBits & surf->geo->shadowCapPlaneBits) {
+    if (vLight.viewSeesShadowPlaneBits & surf.geo->shadowCapPlaneBits) {
       // we can see through a rear cap, so we need to draw it, but we can skip the
       // caps on the actual surface
       numIndexes = tri->numShadowIndexesNoFrontCaps;
@@ -427,7 +429,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
 
   // set depth bounds
   if (glConfig.depthBoundsTestAvailable && r_useDepthBoundsTest.GetBool()) {
-    glDepthBoundsEXT(surf->scissorRect.zmin, surf->scissorRect.zmax);
+    glDepthBoundsEXT(surf.scissorRect.zmin, surf.scissorRect.zmax);
   }
 /*
   // debug visualization
@@ -508,10 +510,10 @@ been set to 128 on any surfaces that might receive shadows
 
 
 
-void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
+static void RB_GLSL_StencilShadowPass(const viewLight_t& vLight, const drawSurf_t *drawSurfs) {
   assert(shadowProgram);
 
-  if (backEnd.vLight->lightDef->ShadowMode() != shadowMode_t::StencilShadow) {
+  if (vLight.lightDef->ShadowMode() != shadowMode_t::StencilShadow) {
     return;
   }
 
@@ -550,7 +552,7 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
-  RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_Shadow);
+  RB_RenderDrawSurfChainWithFunction(vLight, drawSurfs, RB_GLSL_Shadow);
 
   GL_Cull(CT_FRONT_SIDED);
 
@@ -654,11 +656,11 @@ void RB_GLSL_DrawInteractions( void ) {
 				idList<viewLight_t*>& lights = shadowCastingViewLights[lod];
 
 				while (lights.Num() > 0) {
-					backEnd.vLight = lights.Last();
+					auto light = lights.Last();
 
-					if (RB_RenderShadowMaps(backEnd.vLight)) {
+					if (RB_RenderShadowMaps(light)) {
 						//shadow map was rendered successfully, so add the light to the next batch
-						batch.Append( backEnd.vLight );
+						batch.Append(light);
 						lights.RemoveLast();
 					}
 					else {
@@ -691,8 +693,7 @@ void RB_GLSL_DrawInteractions( void ) {
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
 		for(int i=0; i<batch.Num(); ++i) {
-			viewLight_t* vLight = batch[i];
-			backEnd.vLight = vLight;
+			const viewLight_t* vLight = batch[i];
 
 			backEnd.stats.groups[backEndGroup::Interaction].passes += 1;
 			fhTimeElapsed timeElapsed( &backEnd.stats.groups[backEndGroup::Interaction].time );
@@ -718,15 +719,15 @@ void RB_GLSL_DrawInteractions( void ) {
 				glStencilFunc( GL_ALWAYS, 128, 255 );
 			}
 
-			RB_GLSL_StencilShadowPass( vLight->globalShadows );
+			RB_GLSL_StencilShadowPass( *vLight, vLight->globalShadows );
 			interactionList.Clear();
-			interactionList.AddDrawSurfacesOnLight( vLight->localInteractions );
-			interactionList.Submit();
+			interactionList.AddDrawSurfacesOnLight( *vLight, vLight->localInteractions );
+			interactionList.Submit(*vLight);
 
-			RB_GLSL_StencilShadowPass( vLight->localShadows );
+			RB_GLSL_StencilShadowPass(*vLight, vLight->localShadows );
 			interactionList.Clear();
-			interactionList.AddDrawSurfacesOnLight( vLight->globalInteractions );
-			interactionList.Submit();
+			interactionList.AddDrawSurfacesOnLight( *vLight, vLight->globalInteractions );
+			interactionList.Submit(*vLight);
 
 			// translucent surfaces never get stencil shadowed
 			if (r_skipTranslucent.GetBool()) {
@@ -738,8 +739,8 @@ void RB_GLSL_DrawInteractions( void ) {
 			backEnd.depthFunc = GLS_DEPTHFUNC_LESS;
 
 			interactionList.Clear();
-			interactionList.AddDrawSurfacesOnLight( vLight->translucentInteractions );
-			interactionList.Submit();
+			interactionList.AddDrawSurfacesOnLight( *vLight, vLight->translucentInteractions );
+			interactionList.Submit(*vLight);
 
 			backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
 		}

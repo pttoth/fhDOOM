@@ -89,7 +89,7 @@ RB_GLSL_CreateDrawInteractions
 
 =============
 */
-static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& interactionList ) {
+static void RB_GLSL_CreateDrawInteractions(const viewLight_t& vLight, const drawSurf_t *surf, InteractionList& interactionList ) {
 
 	if (r_skipInteractions.GetBool()) {
 		return;
@@ -98,9 +98,8 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 	for (; surf; surf = surf->nextOnLight) {
 		const idMaterial	*surfaceShader = surf->material;
 		const float			*surfaceRegs = surf->shaderRegisters;
-		const viewLight_t	*vLight = backEnd.vLight;
-		const idMaterial	*lightShader = vLight->lightShader;
-		const float			*lightRegs = vLight->shaderRegisters;
+		const idMaterial	*lightShader = vLight.lightShader;
+		const float			*lightRegs = vLight.shaderRegisters;
 		drawInteraction_t	inter;
 		inter.hasBumpMatrix = inter.hasDiffuseMatrix = inter.hasSpecularMatrix = false;
 
@@ -109,9 +108,9 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 		}
 
 		inter.surf = surf;
-		inter.lightFalloffImage = vLight->falloffImage;
+		inter.lightFalloffImage = vLight.falloffImage;
 
-		R_GlobalPointToLocal( surf->space->modelMatrix, vLight->globalLightOrigin, inter.localLightOrigin.ToVec3() );
+		R_GlobalPointToLocal( surf->space->modelMatrix, vLight.globalLightOrigin, inter.localLightOrigin.ToVec3() );
 		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, inter.localViewOrigin.ToVec3() );
 		inter.localLightOrigin[3] = 0;
 		inter.localViewOrigin[3] = 1;
@@ -119,7 +118,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 		// the base projections may be modified by texture matrix on light stages
 		idPlane lightProject[4];
 		for (int i = 0; i < 4; i++) {
-			R_GlobalPlaneToLocal( surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i] );
+			R_GlobalPlaneToLocal( surf->space->modelMatrix, vLight.lightProject[i], lightProject[i] );
 		}
 
 		for (int lightStageNum = 0; lightStageNum < lightShader->GetNumStages(); lightStageNum++) {
@@ -223,7 +222,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 	}
 }
 
-static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
+static void RB_GLSL_SubmitDrawInteractions(const viewLight_t& vLight, const InteractionList& interactionList) {
 	if (interactionList.IsEmpty())
 		return;
 
@@ -234,21 +233,21 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 
 	fhRenderProgram::SetShading( r_shading.GetInteger() );
 	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
-	fhRenderProgram::SetAmbientLight( backEnd.vLight->lightDef->lightShader->IsAmbientLight() ? 1 : 0 );
+	fhRenderProgram::SetAmbientLight( vLight.lightDef->lightShader->IsAmbientLight() ? 1 : 0 );
 
-	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
-		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+	if (vLight.lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
+		const idVec4 globalLightOrigin = idVec4( vLight.globalLightOrigin, 1 );
 		fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
 
-		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
-		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0] ) );
+		const float shadowBrightness = vLight.lightDef->ShadowBrightness();
+		const float shadowSoftness = vLight.lightDef->ShadowSoftness();
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, vLight.nearClip[0], vLight.farClip[0] ) );
 
-		if(backEnd.vLight->lightDef->parms.parallel) {
+		if(vLight.lightDef->parms.parallel) {
 			//parallel light
 			fhRenderProgram::SetShadowMappingMode( 3 );
-			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
-			fhRenderProgram::SetShadowCoords( backEnd.vLight->shadowCoords, 6 );
+			fhRenderProgram::SetPointLightProjectionMatrices( vLight.viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords( vLight.shadowCoords, 6 );
 			fhRenderProgram::SetCascadeDistances(
 				r_smCascadeDistance0.GetFloat(),
 				r_smCascadeDistance1.GetFloat(),
@@ -257,24 +256,24 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 				r_smCascadeDistance4.GetFloat());
 
 			idVec4 shadowmapSizes[6] = {
-				idVec4(backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0], backEnd.vLight->width[0], backEnd.vLight->height[0]),
-				idVec4(backEnd.vLight->nearClip[1], backEnd.vLight->farClip[1], backEnd.vLight->width[1], backEnd.vLight->height[1]),
-				idVec4(backEnd.vLight->nearClip[2], backEnd.vLight->farClip[2], backEnd.vLight->width[2], backEnd.vLight->height[2]),
-				idVec4(backEnd.vLight->nearClip[3], backEnd.vLight->farClip[3], backEnd.vLight->width[3], backEnd.vLight->height[3]),
-				idVec4(backEnd.vLight->nearClip[4], backEnd.vLight->farClip[4], backEnd.vLight->width[4], backEnd.vLight->height[4]),
-				idVec4(backEnd.vLight->nearClip[5], backEnd.vLight->farClip[5], backEnd.vLight->width[5], backEnd.vLight->height[5])
+				idVec4(vLight.nearClip[0], vLight.farClip[0], vLight.width[0], vLight.height[0]),
+				idVec4(vLight.nearClip[1], vLight.farClip[1], vLight.width[1], vLight.height[1]),
+				idVec4(vLight.nearClip[2], vLight.farClip[2], vLight.width[2], vLight.height[2]),
+				idVec4(vLight.nearClip[3], vLight.farClip[3], vLight.width[3], vLight.height[3]),
+				idVec4(vLight.nearClip[4], vLight.farClip[4], vLight.width[4], vLight.height[4]),
+				idVec4(vLight.nearClip[5], vLight.farClip[5], vLight.width[5], vLight.height[5])
 			};
 
 			fhRenderProgram::SetShadowMapSize(shadowmapSizes, 6);
 		}
-		else if (backEnd.vLight->lightDef->parms.pointLight) {
+		else if (vLight.lightDef->parms.pointLight) {
 			//point light
 			fhRenderProgram::SetShadowMappingMode( 1 );
-			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
-			fhRenderProgram::SetShadowCoords(backEnd.vLight->shadowCoords, 6);
+			fhRenderProgram::SetPointLightProjectionMatrices( vLight.viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords(vLight.shadowCoords, 6);
 
 			{
-				const idMat3 axis = backEnd.vLight->lightDef->parms.axis;
+				const idMat3 axis = vLight.lightDef->parms.axis;
 
 				float viewerMatrix[16];
 
@@ -304,8 +303,8 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 		else {
 			//projected light
 			fhRenderProgram::SetShadowMappingMode( 2 );
-			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
-			fhRenderProgram::SetShadowCoords(backEnd.vLight->shadowCoords, 1);
+			fhRenderProgram::SetSpotLightProjectionMatrix( vLight.viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords(vLight.shadowCoords, 1);
 		}
 	}
 	else {
@@ -486,10 +485,10 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 	}
 }
 
-void InteractionList::AddDrawSurfacesOnLight( const drawSurf_t *surf ) {
-	RB_GLSL_CreateDrawInteractions(surf, *this);
+void InteractionList::AddDrawSurfacesOnLight(const viewLight_t& vLight, const drawSurf_t *surf ) {
+	RB_GLSL_CreateDrawInteractions(vLight, surf, *this);
 }
 
-void InteractionList::Submit() {
-	RB_GLSL_SubmitDrawInteractions(*this);
+void InteractionList::Submit(const viewLight_t& vLight) {
+	RB_GLSL_SubmitDrawInteractions(vLight, *this);
 }

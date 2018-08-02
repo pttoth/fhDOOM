@@ -94,8 +94,6 @@ RB_STD_FogAllLights
 ==================
 */
 void RB_STD_FogAllLights(void) {
-	viewLight_t	*vLight;
-
 	if (r_skipFogLights.GetBool() || r_showOverDraw.GetInteger() != 0
 		|| backEnd.viewDef->isXraySubview /* dont fog in xray mode*/
 		) {
@@ -106,18 +104,16 @@ void RB_STD_FogAllLights(void) {
 
 	glDisable(GL_STENCIL_TEST);
 
-	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
-		backEnd.vLight = vLight;
-
+	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
 		if (!vLight->lightShader->IsFogLight() && !vLight->lightShader->IsBlendLight()) {
 			continue;
 		}
 
 		if (vLight->lightShader->IsFogLight()) {
-			RB_GLSL_FogPass(vLight->globalInteractions, vLight->localInteractions);
+			RB_GLSL_FogPass(*vLight);
 		}
 		else if (vLight->lightShader->IsBlendLight()) {
-			RB_GLSL_BlendLight(vLight->globalInteractions, vLight->localInteractions);
+			RB_GLSL_BlendLight(*vLight);
 		}
 		glDisable(GL_STENCIL_TEST);
 	}
