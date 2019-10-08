@@ -46,6 +46,8 @@ If you have questions concerning this license or the applicable additional terms
 #undef strnicmp
 #define strnicmp		idStr::Icmpn
 
+#define QER_TRANS     0x00000001
+
 
 //extern void ClearBounds (idVec3 mins, idVec3 maxs);
 //extern void AddPointToBounds (const idVec3 v, idVec3 mins, idVec3 maxs);

@@ -119,9 +119,6 @@ public:
 	texdef_t	texdef;
 };
 
-#define QER_TRANS     0x00000001
-#define QER_NOCARVE   0x00000002
-
 //++timo texdef and brushprimit_texdef are static
 // TODO : do dynamic ?
 struct face_t
@@ -154,40 +151,6 @@ struct curveVertex_t {
 struct sideVertex_t {
 	curveVertex_t	v[2];
 };
-
-
-#define	MIN_PATCH_WIDTH		3
-#define	MIN_PATCH_HEIGHT 	3
-
-#define	MAX_PATCH_WIDTH		64
-#define	MAX_PATCH_HEIGHT	64
-
-// patch type info
-// type in lower 16 bits, flags in upper
-// endcaps directly follow this patch in the list
-
-// types
-#define PATCH_GENERIC     0x00000000    // generic flat patch
-#define PATCH_CYLINDER    0x00000001    // cylinder
-#define PATCH_BEVEL       0x00000002    // bevel
-#define PATCH_ENDCAP      0x00000004    // endcap
-#define PATCH_HEMISPHERE  0x00000008    // hemisphere
-#define PATCH_CONE        0x00000010    // cone
-#define PATCH_TRIANGLE    0x00000020    // simple tri, assumes 3x3 patch
-
-// behaviour styles
-#define PATCH_CAP         0x00001000    // flat patch applied as a cap
-#define PATCH_SEAM        0x00002000    // flat patch applied as a seam
-#define PATCH_THICK       0x00004000    // patch applied as a thick portion
-
-// styles
-#define PATCH_BEZIER      0x00000000    // default bezier
-#define PATCH_BSPLINE     0x10000000    // bspline
-
-#define PATCH_TYPEMASK     0x00000fff    //
-#define PATCH_BTYPEMASK    0x0000f000    //
-#define PATCH_STYLEMASK    0xffff0000    //
-
 
 struct brush_t;
 

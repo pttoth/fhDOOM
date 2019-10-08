@@ -36,7 +36,6 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 
 // this define to use HTREEITEM and MFC stuff in the headers
-#define QERTYPES_USE_MFC
 #include "qertypes.h"
 #include "cmdlib.h"
 #include "parse.h"
@@ -50,7 +49,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "qedefs.h"
 
 // stuff from old qfiles.h
-#define	MAX_MAP_ENTITIES	2048
+const int MAX_MAP_ENTITIES = 2048;
 const int MAX_MOVE_POINTS = 4096;
 const int MAX_MOVE_PLANES = 2048;
 
@@ -175,10 +174,6 @@ typedef struct
 	idVec3  d_vAreaTL;
 	idVec3  d_vAreaBR;
 
-
-	// even in .INI mode we use the registry for all void* prefs
-	char		use_ini_registry[64];
-
 	// the editor has its own soundWorld and renderWorld, completely distinct from the game
 	idRenderWorld	*rw;
 	idSoundWorld	*sw;
@@ -222,15 +217,6 @@ void SelectVertexByRay (idVec3 org, idVec3 dir);
 
 void ConnectEntities (void);
 
-void FillTextureMenu (CStringArray* pArray = NULL);
-
-BOOL CALLBACK Win_Dialog (
-    HWND hwndDlg,	// handle to dialog box
-    UINT uMsg,	// message
-    WPARAM wParam,	// first message parameter
-    LPARAM lParam 	// second message parameter
-);
-
 //
 // win_main.c
 //
@@ -244,7 +230,6 @@ extern bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
 // win_dlg.c
 
-void DoGamma(void);
 void DoFind(void);
 void DoSides(bool bCone = false, bool bSphere = false, bool bTorus = false);
 void DoAbout(void);
@@ -335,7 +320,6 @@ extern bool g_bClipMode;
 extern bool g_bScaleMode;
 extern int g_nScaleHow;
 extern bool g_bPathMode;
-extern void RunScript(char* pBuffer);
 
 extern void FindReplaceTextures(const char* pFind, const char* pReplace, bool bSelected, bool bForce);
 extern bool region_active;
@@ -354,7 +338,6 @@ extern SKeyInfo g_Keys[];
 extern int g_nKeyCount;
 extern void HandlePopup(CWnd* pWindow, unsigned int uId);
 extern z_t z;
-extern void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv);
 extern void Clamp(float& f, int nClamp);
 extern bool WriteFileString( FILE *fp, char *string, ... );
 extern void MemFile_fprintf(CMemFile* pMemFile, const char* pText, ...);

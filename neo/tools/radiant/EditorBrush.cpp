@@ -41,13 +41,11 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam );
 void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
 
 // globals
-int		g_nBrushId = 0;
+static int		g_nBrushId = 0;
 bool	g_bShowLightVolumes = false;
 bool	g_bShowLightTextures = false;
 
-void GLCircle(float x, float y, float z, float r);
-
-const int POINTS_PER_KNOT = 50;
+static const int POINTS_PER_KNOT = 50;
 
 /*
 ================
@@ -65,54 +63,55 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 		const modelSurface_t *surf = model->Surface( i );
 		const idMaterial *material = surf->shader;
 
-    if ( R_CreateAmbientCache(surf->geometry, true) ) {
-      assert(surf->geometry->ambientCache);
+		if ( R_CreateAmbientCache(surf->geometry, true) ) {
+			assert(surf->geometry->ambientCache);
 
-      int offset = vertexCache.Bind(surf->geometry->ambientCache);
+			int offset = vertexCache.Bind(surf->geometry->ambientCache);
 
-      if (cameraView && (nDrawMode == cd_texture) && material) {
-        GL_UseProgram(defaultProgram);
-        material->GetEditorImage()->Bind(1);
+			if (cameraView && (nDrawMode == cd_texture) && material) {
+				GL_UseProgram(defaultProgram);
+				material->GetEditorImage()->Bind(1);
 
-		fhRenderProgram::SetColorAdd(idVec4(color * 0.25, 1));
-		fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
-      } else {
-        GL_UseProgram(vertexColorProgram);
-		fhRenderProgram::SetColorAdd( idVec4( color, 1 ) );
-		fhRenderProgram::SetColorModulate( idVec4( 0, 0, 0, 0 ) );
-      }
+				fhRenderProgram::SetColorAdd(idVec4(color * 0.25, 1));
+				fhRenderProgram::SetColorModulate(idVec4(1, 1, 1, 1));
+			} else {
+				GL_UseProgram(vertexColorProgram);
+				fhRenderProgram::SetColorAdd( idVec4( color, 1 ) );
+				fhRenderProgram::SetColorModulate( idVec4( 0, 0, 0, 0 ) );
+			}
 
-      fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-      fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-      fhRenderProgram::SetDiffuseColor(idVec4::one);
-	  fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
+			fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+			fhRenderProgram::SetDiffuseColor(idVec4::one);
+			fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-	  GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
-      glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
+			GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
+			glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
 
-      GL_UseProgram(nullptr);
+			GL_UseProgram(nullptr);
 
-    } else {
-      fhImmediateMode im;
+		} else {
+			fhImmediateMode im;
 
-      if (cameraView && nDrawMode == cd_texture) {
-        im.SetTexture(material->GetEditorImage());
-      }
+			if (cameraView && nDrawMode == cd_texture) {
+				im.SetTexture(material->GetEditorImage());
+			}
 
-      im.Begin(GL_TRIANGLES);
-      im.Color3fv(color.ToFloatPtr());
+			im.Begin(GL_TRIANGLES);
+			im.Color3fv(color.ToFloatPtr());
 
-      const srfTriangles_t	*tri = surf->geometry;
-      for (int j = 0; j < tri->numIndexes; j += 3) {
-        for (int k = 0; k < 3; k++) {
-          const int		index = tri->indexes[j + k];
-          im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
-          im.Vertex3fv(tri->verts[index].xyz.ToFloatPtr());
-        }
-      }
+			const srfTriangles_t *tri = surf->geometry;
 
-      im.End();
-    }
+			for (int j = 0; j < tri->numIndexes; j += 3) {
+				for (int k = 0; k < 3; k++) {
+					const int		index = tri->indexes[j + k];
+					im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
+					im.Vertex3fv(tri->verts[index].xyz.ToFloatPtr());
+				}
+			}
+
+			im.End();
+		}
 	}
 
   GL_ModelViewMatrix.Pop();
@@ -123,7 +122,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 SnapVectorToGrid
 ================
 */
-void SnapVectorToGrid(idVec3 &v) {
+static void SnapVectorToGrid(idVec3 &v) {
 	v.x = floor(v.x / g_qeglobals.d_gridsize + 0.5f) * g_qeglobals.d_gridsize;
 	v.y = floor(v.y / g_qeglobals.d_gridsize + 0.5f) * g_qeglobals.d_gridsize;
 	v.z = floor(v.z / g_qeglobals.d_gridsize + 0.5f) * g_qeglobals.d_gridsize;
@@ -166,7 +165,7 @@ brush_t *Brush_Alloc( void ) {
 	b->ownerId = 0;
 	b->numberId = 0;
 	b->modelHandle = NULL;
-  b->animSnapshotModel = NULL;
+	b->animSnapshotModel = NULL;
 	b->forceVisibile = false;
 	b->forceWireFrame = false;
 
@@ -178,7 +177,7 @@ brush_t *Brush_Alloc( void ) {
 TextureAxisFromPlane
 ================
 */
-idVec3	baseaxis[18] = {
+static const idVec3	baseaxis[18] = {
 	idVec3(0, 0, 1),
 	idVec3(1, 0, 0),
 	idVec3(0, -1, 0),
@@ -209,7 +208,7 @@ idVec3	baseaxis[18] = {
 	idVec3(0, 0, -1)	// north wall
 };
 
-void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv) {
+static void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv) {
 	int		bestaxis;
 	float	dot, best;
 	int		i;
@@ -1604,10 +1603,6 @@ Brush_Write
 ================
 */
 void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
-	face_t	*fa;
-	char	*pname;
-	int		i;
-
 	if (b->pPatch) {
 		Patch_Write(b->pPatch, f);
 		return;
@@ -1628,7 +1623,7 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 		WriteFileString(f, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
 	}
 
-	for (fa = b->brush_faces; fa; fa = fa->next) {
+	for (auto fa = b->brush_faces; fa; fa = fa->next) {
 		// save planepts
 		if (newFormat) {
 			idPlane plane;
@@ -1646,7 +1641,7 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 			}
 
 			WriteFileString(f, " ( ");
-			for (i = 0; i < 4; i++) {
+			for (int i = 0; i < 4; i++) {
 				if (plane[i] == (int)plane[i]) {
 					WriteFileString(f, "%i ", (int)plane[i]);
 				}
@@ -1658,7 +1653,7 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 			WriteFileString(f, ") ");
 		}
 		else {
-			for (i = 0; i < 3; i++) {
+			for (int i = 0; i < 3; i++) {
 				WriteFileString(f, "( ");
 				for (int j = 0; j < 3; j++) {
 					if (fa->planepts[i][j] == static_cast<int>(fa->planepts[i][j])) {
@@ -1675,7 +1670,7 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 
 		// save texture coordinates
 		WriteFileString(f, "( ( ");
-		for (i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
 				WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
 			}
@@ -1685,7 +1680,7 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 		}
 
 		WriteFileString(f, ") ( ");
-		for (i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
 				WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
 			}
@@ -1706,37 +1701,12 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 
 /*
 ================
-QERApp_MapPrintf_MEMFILE
-
-  callback for surface properties plugin must fit a PFN_QERAPP_MAPPRINTF ( see isurfaceplugin.h )
-  carefully initialize !
-================
-*/
-CMemFile	*g_pMemFile;
-
-void WINAPI QERApp_MapPrintf_MEMFILE(char *text, ...) {
-	va_list argptr;
-	char	buf[32768];
-
-	va_start(argptr, text);
-	vsprintf(buf, text, argptr);
-	va_end(argptr);
-
-	MemFile_fprintf(g_pMemFile, buf);
-}
-
-/*
-================
 Brush_Write
 
   save all brushes as Brush primitive format to a CMemFile*
 ================
 */
 void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newFormat) {
-	face_t	*fa;
-	char	*pname;
-	int		i;
-
 	if (b->pPatch) {
 		Patch_Write(b->pPatch, pMemFile);
 		return;
@@ -1758,7 +1728,7 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 		MemFile_fprintf(pMemFile, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
 	}
 
-	for (fa = b->brush_faces; fa; fa = fa->next) {
+	for (auto fa = b->brush_faces; fa; fa = fa->next) {
 		if (newFormat) {
 			// save planepts
 			idPlane plane;
@@ -1776,7 +1746,7 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 			}
 
 			MemFile_fprintf(pMemFile, " ( ");
-			for (i = 0; i < 4; i++) {
+			for (int i = 0; i < 4; i++) {
 				if (plane[i] == (int)plane[i]) {
 					MemFile_fprintf(pMemFile, "%i ", (int)plane[i]);
 				}
@@ -1788,7 +1758,7 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 			MemFile_fprintf(pMemFile, ") ");
 		}
 		else {
-			for (i = 0; i < 3; i++) {
+			for (int i = 0; i < 3; i++) {
 				MemFile_fprintf(pMemFile, "( ");
 				for (int j = 0; j < 3; j++) {
 					if (fa->planepts[i][j] == static_cast<int>(fa->planepts[i][j])) {
@@ -1805,7 +1775,7 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 
 		// save texture coordinates
 		MemFile_fprintf(pMemFile, "( ( ");
-		for (i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
 				MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
 			}
@@ -1815,7 +1785,7 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 		}
 
 		MemFile_fprintf(pMemFile, ") ( ");
-		for (i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
 				MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
 			}
@@ -2755,7 +2725,7 @@ int AddPlanept(idVec3 *f) {
 AddMovePlane
 ================
 */
-void AddMovePlane( idPlane *p ) {
+static void AddMovePlane( idPlane *p ) {
 
 	for (int i = 0; i < g_qeglobals.d_num_move_planes; i++) {
 		if (g_qeglobals.d_move_planes[i] == p) {

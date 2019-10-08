@@ -128,7 +128,6 @@ void Select_AllTargets();
 void Select_Scale(float x, float y, float z);
 void Select_RotateTexture(float amt, bool absolute = false);
 void Select_ScaleTexture(float x, float y, bool update = true, bool absolute = true);
-void Select_DefaultTextureScale(bool horz, bool vert, bool update = true);
 void Select_ShiftTexture(float x, float y, bool autoAdjust = false);
 void Select_GetTrueMid (idVec3 &mid);
 void Select_Scale(float x, float y, float z);

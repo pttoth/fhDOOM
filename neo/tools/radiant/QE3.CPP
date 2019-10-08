@@ -30,9 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "qe3.h"
-#include <direct.h>
 #include <sys/stat.h>
-#include "WaitDlg.h"
 
 QEGlobals_t g_qeglobals;
 

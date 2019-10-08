@@ -34,12 +34,41 @@ If you have questions concerning this license or the applicable additional terms
 #include "CapDialog.h"
 #include "../../renderer/ImmediateMode.h"
 
+namespace {
+	const int MIN_PATCH_WIDTH = 3;
+	const int MIN_PATCH_HEIGHT = 3;
+
+	const int MAX_PATCH_WIDTH = 64;
+	const int MAX_PATCH_HEIGHT = 64;
+
+	// patch type info
+	// type in lower 16 bits, flags in upper
+	// endcaps directly follow this patch in the list
+
+	// types
+	const int PATCH_GENERIC = 0x00000000;    // generic flat patch
+	const int PATCH_CYLINDER = 0x00000001;    // cylinder
+	const int PATCH_BEVEL = 0x00000002;    // bevel
+	const int PATCH_ENDCAP = 0x00000004;    // endcap
+	const int PATCH_HEMISPHERE = 0x00000008;    // hemisphere
+	const int PATCH_CONE = 0x00000010;    // cone
+	const int PATCH_TRIANGLE = 0x00000020;    // simple tri, assumes 3x3 patch
+
+	// behaviour styles
+	const int PATCH_CAP = 0x00001000;    // flat patch applied as a cap
+	const int PATCH_SEAM = 0x00002000;    // flat patch applied as a seam
+	const int PATCH_THICK = 0x00004000;    // patch applied as a thick portion
+
+	const int PATCH_TYPEMASK = 0x00000fff;    //
+	const int PATCH_STYLEMASK = 0xffff0000;    //
+}
+
+
 // externs
 extern void MemFile_fprintf( CMemFile *pMemFile,const char *pText,... );
 extern face_t *Face_Alloc( void );
 void _Write3DMatrix( FILE *f,int y,int x,int z,float *m );
 void _Write3DMatrix( CMemFile *f,int y,int x,int z,float *m );
-extern void SamplePatch( float ctrl[3][3][5],int baseCol,int baseRow,int width,int horzSub,int vertSub,idDrawVert *outVerts,idDrawVert *drawVerts );
 patchMesh_t *Patch_GenerateGeneric( int width,int height,int orientation,const idVec3 &mins,const idVec3 &maxs );
 
 static void UpdatePatchGeometry( patchMesh_t* pm ) {
@@ -2087,7 +2116,7 @@ static int PointValueInMoveList( idVec3 v ) {
 RemovePointFromMoveList
 ==================
 */
-void RemovePointFromMoveList( idVec3 v ) {
+static void RemovePointFromMoveList( idVec3 v ) {
 	int	n;
 	while ( (n = PointValueInMoveList(v)) >= 0 ) {
 		for ( int i = n; i < g_qeglobals.d_num_move_points - 1; i++ ) {
@@ -2102,7 +2131,7 @@ void RemovePointFromMoveList( idVec3 v ) {
 ColumnSelected
 ==================
 */
-bool ColumnSelected( patchMesh_t *p,int nCol ) {
+static bool ColumnSelected( patchMesh_t *p,int nCol ) {
 	for ( int i = 0; i < p->height; i++ ) {
 		if ( PointInMoveList(&p->ctrl(nCol, i).xyz) == -1 ) {
 			return false;
@@ -2206,7 +2235,7 @@ void SelectRow( patchMesh_t *p,int nRow,bool bMulti ) {
 SelectColumn
 ==================
 */
-void SelectColumn( patchMesh_t *p,int nCol,bool bMulti ) {
+static void SelectColumn( patchMesh_t *p,int nCol,bool bMulti ) {
 	if ( !bMulti ) {
 		g_qeglobals.d_num_move_points = 0;
 	}
@@ -3167,7 +3196,7 @@ void Patch_AdjustSelected( bool bInsert,bool bColumn,bool bFlag ) {
 	}
 }
 
-void Parse1DMatrix( int x,float *p ) {
+static void Parse1DMatrix( int x,float *p ) {
 	GetToken(true); // (
 	for ( int i = 0; i < x; i++ ) {
 		GetToken(false);
@@ -3176,7 +3205,7 @@ void Parse1DMatrix( int x,float *p ) {
 	GetToken(true); // )
 }
 
-void Parse2DMatrix( int y,int x,float *p ) {
+static void Parse2DMatrix( int y,int x,float *p ) {
 	GetToken(true); // (
 	for ( int i = 0; i < y; i++ ) {
 		Parse1DMatrix(x, p + i * x);
@@ -3184,7 +3213,7 @@ void Parse2DMatrix( int y,int x,float *p ) {
 	GetToken(true); // )
 }
 
-void Parse3DMatrix( int z,int y,int x,float *p ) {
+static void Parse3DMatrix( int z,int y,int x,float *p ) {
 	GetToken(true); // (
 	for ( int i = 0; i < z; i++ ) {
 		Parse2DMatrix(y, x, p + i * (x * MAX_PATCH_HEIGHT));
@@ -3447,7 +3476,7 @@ void Patch_ShiftTexture( patchMesh_t *p,float fx,float fy,bool autoAdjust ) {
 	Patch_MakeDirty(p);
 }
 
-void patchInvert( patchMesh_t *p ) {
+static void patchInvert( patchMesh_t *p ) {
 	idDrawVert	vertTemp;
 	Patch_MakeDirty(p);
 	for ( int i = 0 ; i < p->width ; i++ ) {
@@ -3895,7 +3924,7 @@ void Patch_InsDelHandleTAB() {
 }
 
 
-void _Write1DMatrix( FILE *f,int x,float *m ) {
+static void _Write1DMatrix( FILE *f,int x,float *m ) {
 	int	i;
 
 	fprintf(f, "( ");
@@ -3909,7 +3938,7 @@ void _Write1DMatrix( FILE *f,int x,float *m ) {
 	fprintf(f, ")");
 }
 
-void _Write2DMatrix( FILE *f,int y,int x,float *m ) {
+static void _Write2DMatrix( FILE *f,int y,int x,float *m ) {
 	int	i;
 
 	fprintf(f, "( ");
@@ -3921,7 +3950,7 @@ void _Write2DMatrix( FILE *f,int y,int x,float *m ) {
 }
 
 
-void _Write3DMatrix( FILE *f,int z,int y,int x,float *m ) {
+static void _Write3DMatrix( FILE *f,int z,int y,int x,float *m ) {
 	int	i;
 
 	fprintf(f, "(\n");
@@ -3931,7 +3960,7 @@ void _Write3DMatrix( FILE *f,int z,int y,int x,float *m ) {
 	fprintf(f, ")\n");
 }
 
-void _Write1DMatrix( CMemFile *f,int x,float *m ) {
+static void _Write1DMatrix( CMemFile *f,int x,float *m ) {
 	int	i;
 
 	MemFile_fprintf(f, "( ");
@@ -3945,7 +3974,7 @@ void _Write1DMatrix( CMemFile *f,int x,float *m ) {
 	MemFile_fprintf(f, ")");
 }
 
-void _Write2DMatrix( CMemFile *f,int y,int x,float *m ) {
+static void _Write2DMatrix( CMemFile *f,int y,int x,float *m ) {
 	int	i;
 
 	MemFile_fprintf(f, "( ");
@@ -3957,7 +3986,7 @@ void _Write2DMatrix( CMemFile *f,int y,int x,float *m ) {
 }
 
 
-void _Write3DMatrix( CMemFile *f,int z,int y,int x,float *m ) {
+static void _Write3DMatrix( CMemFile *f,int z,int y,int x,float *m ) {
 	int	i;
 
 	MemFile_fprintf(f, "(\n");
@@ -3999,7 +4028,7 @@ void Patch_SubdivideSelected( bool subdivide,int horz,int vert ) {
 
 
 
-bool within( idVec3 vTest,idVec3 vTL,idVec3 vBR ) {
+static bool within( idVec3 vTest,idVec3 vTL,idVec3 vBR ) {
 	int	nDim1	= (g_pParentWnd->ActiveXY()->GetViewType() == YZ) ? 1 : 0;
 	int	nDim2	= (g_pParentWnd->ActiveXY()->GetViewType() == XY) ? 1 : 2;
 	if ( (vTest[nDim1] > vTL[nDim1] && vTest[nDim1] < vBR[nDim1]) || (vTest[nDim1] < vTL[nDim1] && vTest[nDim1] > vBR[nDim1]) ) {

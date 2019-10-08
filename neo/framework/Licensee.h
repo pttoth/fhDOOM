@@ -46,7 +46,6 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 
 // filenames
-#define	CD_EXE							"doom.exe"
 #define CONFIG_FILE						"DoomConfig.cfg"
 
 // base folder where the source code lives
@@ -87,7 +86,6 @@ If you have questions concerning this license or the applicable additional terms
 #define RENDERDEMO_VERSION				2
 
 // editor info
-#define EDITOR_DEFAULT_PROJECT			"doom.qe4"
 #define EDITOR_REGISTRY_KEY				"DOOMRadiant"
 #define EDITOR_WINDOWTEXT				"DOOMEdit"
 
