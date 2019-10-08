@@ -132,8 +132,6 @@ typedef struct
 
 	int      d_num_entities;
 
-	entity_t *d_project_entity;
-
 	idVec3	d_new_brush_bottom, d_new_brush_top;
 
 	HINSTANCE d_hInstance;
@@ -182,8 +180,7 @@ typedef struct
 	idVec3  d_vAreaTL;
 	idVec3  d_vAreaBR;
 
-	// tells if we are using .INI files for prefs instead of registry
-	bool	use_ini;
+
 	// even in .INI mode we use the registry for all void* prefs
 	char		use_ini_registry[64];
 
@@ -265,7 +262,6 @@ void	QE_CheckAutoSave( void );
 void	QE_CountBrushesAndUpdateStatusBar( void );
 void	WINAPI QE_CheckOpenGLForErrors(void);
 void	QE_Init (void);
-bool	QE_LoadProject (char *projectfile);
 bool	QE_SingleBrush (bool bQuiet = false, bool entityOK = false);
 
 
@@ -363,7 +359,6 @@ extern SKeyInfo g_Keys[];
 extern int g_nKeyCount;
 extern void HandlePopup(CWnd* pWindow, unsigned int uId);
 extern z_t z;
-extern CString g_strProject;
 extern void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv);
 extern void Clamp(float& f, int nClamp);
 extern bool WriteFileString( FILE *fp, char *string, ... );

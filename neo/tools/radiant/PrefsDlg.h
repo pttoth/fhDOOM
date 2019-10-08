@@ -59,7 +59,6 @@ public:
 	BOOL				m_bTextureLock;
 	BOOL				m_bLoadLast;
 	BOOL				m_bRunBefore;
-	CString				m_strLastProject;
 	CString				m_strLastMap;
 	BOOL				m_bVertex;
 	BOOL				m_bAutoSave;

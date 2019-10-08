@@ -115,49 +115,6 @@ void QE_CheckAutoSave(void) {
 	inAutoSave = false;
 }
 
-/*
- =======================================================================================================================
-    QE_LoadProject
- =======================================================================================================================
- */
-bool QE_LoadProject(char *projectfile) {
-	char		*data;
-	ID_TIME_T		time;
-
-	common->Printf("QE_LoadProject (%s)\n", projectfile);
-
-	if ( fileSystem->ReadFile( projectfile, reinterpret_cast < void ** > (&data), &time) <= 0 ) {
-		return false;
-	}
-
-	g_strProject = projectfile;
-	g_PrefsDlg.m_strLastProject = projectfile;
-	g_PrefsDlg.SavePrefs();
-
-	CString strData = data;
-
-	fileSystem->FreeFile( data );
-
-	StartTokenParsing(strData.GetBuffer(0));
-	g_qeglobals.d_project_entity = Entity_Parse(true);
-	if (!g_qeglobals.d_project_entity) {
-		Error("Couldn't parse %s", projectfile);
-	}
-
-	// set here some default project settings you need
-	if (strlen(g_qeglobals.d_project_entity->ValueForKey("brush_primit")) == 0) {
-		g_qeglobals.d_project_entity->SetKeyValue("brush_primit", "0");
-	}
-
-	g_qeglobals.m_bBrushPrimitMode = g_qeglobals.d_project_entity->IntForKey("brush_primit");
-
-	Eclass_InitForSourceDirectory(g_qeglobals.d_project_entity->ValueForKey("entitypath"));
-	g_Inspectors->FillClassList();	// list in entity window
-
-	Map_New();
-
-	return true;
-}
 
 /*
  =======================================================================================================================
@@ -258,9 +215,14 @@ bool QE_SingleBrush(bool bQuiet, bool entityOK) {
  =======================================================================================================================
  */
 void QE_Init(void) {
-	/* initialize variables */
+	g_qeglobals.m_bBrushPrimitMode = TRUE;
 	g_qeglobals.d_gridsize = 8;
 	g_qeglobals.d_showgrid = true;
+
+	Eclass_InitForSourceDirectory();
+	g_Inspectors->FillClassList();	// list in entity window
+
+	Map_New();
 
 	/*
 	 * other stuff £

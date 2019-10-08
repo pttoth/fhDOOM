@@ -190,7 +190,6 @@ public:
 	afx_msg void OnFilePointfile();
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveas();
-	afx_msg void OnFileSaveCopy();
 	afx_msg void OnViewShowModels();
 	afx_msg void OnView100();
 	afx_msg void OnViewCenter();

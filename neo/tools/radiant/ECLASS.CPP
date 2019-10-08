@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -106,7 +106,7 @@ bool LoadModel(const char *pLocation, eclass_t *e, idVec3 &vMin, idVec3 &vMax, c
 	return false;
 }
 
-eclass_t *EClass_Alloc( void ) {	
+eclass_t *EClass_Alloc( void ) {
 	eclass_t *e = new eclass_t;
 	e->fixedsize = false;
 	e->mins.Zero();
@@ -161,7 +161,7 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 	//if (str.Length()) {
 	//	e->entityModel = renderModelManager->FindModel(str);
 	//}
-	
+
 	str = "";
 
 	// concatenate all editor usage comments
@@ -204,7 +204,7 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 	e->comments = Mem_CopyString( str.c_str() );
 */
 
-	
+
 	// concatenate all variable comments
 	kv = d->MatchPrefix( "editor_copy" );
 	while (kv) {
@@ -258,7 +258,7 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 		e->nShowFlags |= ECLASS_PARTICLE;
 	} else if ( idStr::Icmp(e->name, "func_liquid") == 0 ) {
 		e->nShowFlags |= ECLASS_LIQUID;
-	} 
+	}
 
 	return e;
 }
@@ -266,7 +266,7 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 void EClass_InsertSortedList(eclass_t *&pList, eclass_t *e)
 {
 	eclass_t	*s;
-	
+
 	if (!pList)
 	{
 		pList = e;
@@ -305,7 +305,7 @@ void Eclass_InsertAlphabetized (eclass_t *e)
   EClass_InsertSortedList(eclass, e);
 #else
 	eclass_t	*s;
-	
+
 	if (!eclass)
 	{
 		eclass = e;
@@ -335,7 +335,7 @@ void Eclass_InsertAlphabetized (eclass_t *e)
 }
 
 
-void Eclass_InitForSourceDirectory (const char *path)
+void Eclass_InitForSourceDirectory()
 {
 	int c = declManager->GetNumDecls(DECL_ENTITYDEF);
 	for (int i = 0; i < c; i++) {

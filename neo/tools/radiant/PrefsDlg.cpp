@@ -43,7 +43,6 @@ static char THIS_FILE[] = __FILE__;
 #define RLOCK_KEY				"radiant_RotateLock"
 #define LOADLAST_KEY			"radiant_LoadLast"
 #define LOADLASTMAP_KEY			"radiant_LoadLastMap"
-#define LASTPROJ_KEY			"radiant_LastProject"
 #define LASTMAP_KEY				"radiant_LastMap"
 #define RUN_KEY					"radiant_RunBefore"
 #define BSP_KEY					"radiant_InternalBSP"
@@ -296,7 +295,6 @@ void CPrefsDlg::LoadPrefs() {
 
 	m_bTextureLock = GetCvarInt( TLOCK_KEY, TLOCK_DEF );
 	m_bRotateLock = GetCvarInt( RLOCK_KEY, TLOCK_DEF );
-	m_strLastProject = GetCvarString( LASTPROJ_KEY, "" );
 	m_strLastMap = GetCvarString( LASTMAP_KEY, "" );
 	m_bLoadLast = GetCvarInt( LOADLAST_KEY, LOADLAST_DEF );
 	m_bRunBefore = GetCvarInt( RUN_KEY, RUN_DEF );
@@ -353,7 +351,6 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarInt( TLOCK_KEY, m_bTextureLock );
 	SetCvarInt( RLOCK_KEY, m_bRotateLock );
 	SetCvarInt( LOADLAST_KEY, m_bLoadLast );
-	SetCvarString( LASTPROJ_KEY, m_strLastProject );
 	SetCvarString( LASTMAP_KEY, m_strLastMap );
 	SetCvarInt( RUN_KEY, m_bRunBefore );
 	SetCvarInt( VERTEX_KEY, m_bVertex );

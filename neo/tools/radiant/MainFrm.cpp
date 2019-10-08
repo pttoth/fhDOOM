@@ -74,15 +74,6 @@ CPrefsDlg		g_Preferences;						// global prefs instance
 CPrefsDlg		&g_PrefsDlg = g_Preferences;		// reference used throughout
 bool			g_bScreenUpdates = true;			// whether window painting is active, used in a few places
 
-//
-// to disable updates for speed reasons both of the above should be made members
-// of CMainFrame
-// bool g_bSnapToGrid = true; // early use, no longer in use, clamping pref will
-// be used
-//
-CString			g_strProject;						// holds the active project filename
-
-#define D3XP_ID_FILE_SAVE_COPY ( WM_USER + 28476 )
 #define D3XP_ID_SHOW_MODELS ( WM_USER + 28477 )
 
 //
@@ -140,7 +131,6 @@ SCommandInfo	g_Commands[] = {
 	{ "Camera_CenterView",       VK_END, 0, ID_VIEW_CENTER },
 
 	{ "Grid_ZoomOut",            VK_INSERT, 0, ID_VIEW_ZOOMOUT },
-	{ "FileSaveCopy",            'C', RAD_CONTROL|RAD_ALT|RAD_SHIFT, D3XP_ID_FILE_SAVE_COPY },
 	{ "ShowHideModels",          'M', RAD_CONTROL, D3XP_ID_SHOW_MODELS },
 	{ "NextView",                VK_HOME, 0, ID_VIEW_NEXTVIEW },
 	{ "Grid_ZoomIn",             VK_DELETE, 0, ID_VIEW_ZOOMIN },
@@ -361,7 +351,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_FILE_POINTFILE, OnFilePointfile)
 	ON_COMMAND(ID_FILE_SAVE, OnFileSave)
 	ON_COMMAND(ID_FILE_SAVEAS, OnFileSaveas)
-	ON_COMMAND(D3XP_ID_FILE_SAVE_COPY, OnFileSaveCopy)
 	ON_COMMAND(D3XP_ID_SHOW_MODELS, OnViewShowModels )
 	ON_COMMAND(ID_VIEW_100, OnView100)
 	ON_COMMAND(ID_VIEW_CENTER, OnViewCenter)
@@ -892,10 +881,8 @@ void CMainFrame::SetButtonMenuStates() {
 		CheckTextureScale(id);
 	}
 
-	if (g_qeglobals.d_project_entity) {
-		LoadMruInReg(g_qeglobals.d_lpMruMenu, "Software\\" EDITOR_REGISTRY_KEY "\\MRU" );
-		PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, ::GetSubMenu(::GetMenu(GetSafeHwnd()), 0), ID_FILE_EXIT);
-	}
+	LoadMruInReg(g_qeglobals.d_lpMruMenu, "Software\\" EDITOR_REGISTRY_KEY "\\MRU" );
+	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, ::GetSubMenu(::GetMenu(GetSafeHwnd()), 0), ID_FILE_EXIT);
 }
 
 /*
@@ -1247,28 +1234,6 @@ void CMainFrame::Dump(CDumpContext &dc) const {
 // =======================================================================================================================
 //
 void CMainFrame::CreateQEChildren() {
-	//
-	// the project file can be specified on the command line, or implicitly found in
-	// the basedir directory
-	//
-	bool bProjectLoaded = false;
-	if (g_PrefsDlg.m_bLoadLast && g_PrefsDlg.m_strLastProject.GetLength() > 0) {
-		bProjectLoaded = QE_LoadProject(g_PrefsDlg.m_strLastProject.GetBuffer(0));
-	}
-	if (!bProjectLoaded) {
-		bProjectLoaded = QE_LoadProject( EDITOR_DEFAULT_PROJECT );
-	}
-
-	if (!bProjectLoaded) {
-		CFileDialog dlgFile( true, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, EDITOR_WINDOWTEXT " Project files (*.qe4, *.prj)|*.qe4|*.prj||",	this );
-		if (dlgFile.DoModal() == IDOK) {
-			bProjectLoaded = QE_LoadProject(dlgFile.GetPathName().GetBuffer(0));
-		}
-	}
-
-	if (!bProjectLoaded) {
-		Error("Unable to load project file. It was unavailable in the scripts path and the default could not be found");
-	}
 
 	QE_Init();
 
@@ -1488,16 +1453,6 @@ void CMainFrame::OnDestroy() {
 
 	while (entities.next != &entities) {
 		delete entities.next;
-	}
-
-
-	g_qeglobals.d_project_entity->epairs.Clear();
-
-	entity_t	*pEntity = g_qeglobals.d_project_entity->next;
-	while (pEntity != NULL && pEntity != g_qeglobals.d_project_entity) {
-		entity_t	*pNextEntity = pEntity->next;
-		delete pEntity;
-		pEntity = pNextEntity;
 	}
 
 	if (world_entity) {
@@ -1856,52 +1811,6 @@ static void AddSlash(CString &strPath) {
 	}
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CMainFrame::OnFileSaveCopy() {
-	char aFile[260] = "\0";
-	char aFilter[260] = "Map\0*.map\0\0";
-	char aTitle[260] = "Save a Copy\0";
-	OPENFILENAME afn;
-
-	memset( &afn, 0, sizeof(OPENFILENAME) );
-
-	CString strPath = g_qeglobals.d_project_entity->ValueForKey("basepath");
-	AddSlash(strPath);
-	strPath += "maps";
-	if (g_PrefsDlg.m_strMaps.GetLength() > 0) {
-		strPath += va("\\%s", g_PrefsDlg.m_strMaps);
-	}
-
-	/* Place the terminating null character in the szFile. */
-	aFile[0] = '\0';
-
-	/* Set the members of the OPENFILENAME structure. */
-	afn.lStructSize = sizeof(OPENFILENAME);
-	afn.hwndOwner = g_pParentWnd->GetSafeHwnd();
-	afn.lpstrFilter = aFilter;
-	afn.nFilterIndex = 1;
-	afn.lpstrFile = aFile;
-	afn.nMaxFile = sizeof(aFile);
-	afn.lpstrFileTitle = NULL;
-	afn.nMaxFileTitle = 0;
-	afn.lpstrInitialDir = strPath;
-	afn.lpstrTitle = aTitle;
-	afn.Flags = OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-
-	/* Display the Open dialog box. */
-	if (!GetSaveFileName(&afn)) {
-		return; // canceled
-	}
-
-	DefaultExtension(afn.lpstrFile, ".map");
-	Map_SaveFile(afn.lpstrFile, false);	// ignore region
-
-	// Set the title back to the current working map
-	Sys_SetTitle(currentmap);
-}
 
 /*
 ==================================================================================================
