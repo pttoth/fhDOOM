@@ -3269,12 +3269,10 @@ brush_t * Patch_Parse( bool bOld ) {
 
 	GetToken(true);
 
-	if ( g_qeglobals.m_bBrushPrimitMode ) {
-		// we are in brush primit mode, but maybe it's a classic patch that needs converting, test "}"
-		if ( strcmp(token, "}") && strcmp(token, "(") ) {
-			ParseEpair(pm->epairs);
-			GetToken(true);
-		}
+	// we are in brush primit mode, but maybe it's a classic patch that needs converting, test "}"
+	if ( strcmp(token, "}") && strcmp(token, "(") ) {
+		ParseEpair(pm->epairs);
+		GetToken(true);
 	}
 
 	if ( strcmp(token, "}") ) {
@@ -3319,12 +3317,10 @@ void Patch_Write( patchMesh_t *p,CMemFile *file ) {
 
 	_Write3DMatrix(file, p->width, p->height, 5, reinterpret_cast< float*>(&ctrl));
 
-	if ( g_qeglobals.m_bBrushPrimitMode ) {
-		if ( p->epairs ) {
-			int	count	= p->epairs->GetNumKeyVals();
-			for ( int i = 0; i < count; i++ ) {
-				MemFile_fprintf(file, "\"%s\" \"%s\"\n", p->epairs->GetKeyVal(i)->GetKey().c_str(), p->epairs->GetKeyVal(i)->GetValue().c_str());
-			}
+	if ( p->epairs ) {
+		int	count	= p->epairs->GetNumKeyVals();
+		for ( int i = 0; i < count; i++ ) {
+			MemFile_fprintf(file, "\"%s\" \"%s\"\n", p->epairs->GetKeyVal(i)->GetKey().c_str(), p->epairs->GetKeyVal(i)->GetValue().c_str());
 		}
 	}
 
@@ -3357,14 +3353,14 @@ void Patch_Write( patchMesh_t *p,FILE *file ) {
 
 	_Write3DMatrix(file, p->width, p->height, 5, reinterpret_cast< float*>(&ctrl));
 
-	if ( g_qeglobals.m_bBrushPrimitMode ) {
-		if ( p->epairs ) {
-			int	count	= p->epairs->GetNumKeyVals();
-			for ( int i = 0; i < count; i++ ) {
-				fprintf(file, "\"%s\" \"%s\"\n", p->epairs->GetKeyVal(i)->GetKey().c_str(), p->epairs->GetKeyVal(i)->GetValue().c_str());
-			}
+
+	if ( p->epairs ) {
+		int	count	= p->epairs->GetNumKeyVals();
+		for ( int i = 0; i < count; i++ ) {
+			fprintf(file, "\"%s\" \"%s\"\n", p->epairs->GetKeyVal(i)->GetKey().c_str(), p->epairs->GetKeyVal(i)->GetValue().c_str());
 		}
 	}
+
 
 	fprintf(file, "  }\n }\n");
 }
@@ -4416,12 +4412,10 @@ sets an epair for the given patch
 ==============
 */
 void Patch_SetEpair( patchMesh_t *p,const char *pKey,const char *pValue ) {
-	if ( g_qeglobals.m_bBrushPrimitMode ) {
-		if ( p->epairs == NULL ) {
-			p->epairs = new idDict;
-		}
-		p->epairs->Set(pKey, pValue);
+	if ( p->epairs == NULL ) {
+		p->epairs = new idDict;
 	}
+	p->epairs->Set(pKey, pValue);
 }
 
 /*
@@ -4430,10 +4424,8 @@ Patch_GetKeyValue
 =================
 */
 const char * Patch_GetKeyValue( patchMesh_t *p,const char *pKey ) {
-	if ( g_qeglobals.m_bBrushPrimitMode ) {
-		if ( p->epairs ) {
-			return p->epairs->GetString(pKey);
-		}
+	if ( p->epairs ) {
+		return p->epairs->GetString(pKey);
 	}
 	return "";
 }

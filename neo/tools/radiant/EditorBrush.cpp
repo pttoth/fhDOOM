@@ -389,44 +389,7 @@ Face_MoveTexture
 ================
 */
 void Face_MoveTexture(face_t *f, idVec3 delta) {
-	idVec3	vX, vY;
-
-	/*
-	 * #ifdef _DEBUG if (g_PrefsDlg.m_bBrushPrimitMode) common->Printf("Warning :
-	 * Face_MoveTexture not done in brush primitive mode\n"); #endif
-	 */
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		Face_MoveTexture_BrushPrimit(f, delta);
-	}
-	else {
-		TextureAxisFromPlane( f->plane, vX, vY );
-
-		idVec3	vDP, vShift;
-		vDP[0] = DotProduct(delta, vX);
-		vDP[1] = DotProduct(delta, vY);
-
-		double	fAngle = DEG2RAD( f->texdef.rotate );
-		double	c = cos(fAngle);
-		double	s = sin(fAngle);
-
-		vShift[0] = vDP[0] * c - vDP[1] * s;
-		vShift[1] = vDP[0] * s + vDP[1] * c;
-
-		if (!f->texdef.scale[0]) {
-			f->texdef.scale[0] = 1;
-		}
-
-		if (!f->texdef.scale[1]) {
-			f->texdef.scale[1] = 1;
-		}
-
-		f->texdef.shift[0] -= vShift[0] / f->texdef.scale[0];
-		f->texdef.shift[1] -= vShift[1] / f->texdef.scale[1];
-
-		// clamp the shifts
-		Clamp(f->texdef.shift[0], f->d_texture->GetEditorImage()->uploadWidth);
-		Clamp(f->texdef.shift[1], f->d_texture->GetEditorImage()->uploadHeight);
-	}
+	Face_MoveTexture_BrushPrimit(f, delta);
 }
 
 /*
@@ -469,16 +432,6 @@ void Face_TextureVectors(face_t *f, float STfromXYZ[2][4]) {
 	const idMaterial	*q;
 	texdef_t	*td;
 
-#ifdef _DEBUG
-
-	//
-	// ++timo when playing with patches, this sometimes get called and the Warning is
-	// displayed find some way out ..
-	//
-	if (g_qeglobals.m_bBrushPrimitMode && !g_qeglobals.bNeedConvert) {
-		common->Printf("Warning : illegal call of Face_TextureVectors in brush primitive mode\n");
-	}
-#endif
 	td = &f->texdef;
 	q = f->d_texture;
 
@@ -601,7 +554,7 @@ EmitTextureCoordinates
 void EmitTextureCoordinates(idVec5 &xyzst, const idMaterial *q, face_t *f, bool force) {
 	float	STfromXYZ[2][4];
 
-	if (g_qeglobals.m_bBrushPrimitMode && !force) {
+	if (!force) {
 		EmitBrushPrimitTextureCoordinates(f, f->face_winding);
 	}
 	else {
@@ -795,11 +748,6 @@ Brush_Build
 void Brush_Build(brush_t *b, bool bSnap, bool bMarkMap, bool bConvert, bool updateLights) {
 	bool bLocalConvert = false;
 
-#ifdef _DEBUG
-	if (!g_qeglobals.m_bBrushPrimitMode && bConvert) {
-		common->Printf("Warning : conversion from brush primitive to old brush format not implemented\n");
-	}
-#endif
 	//
 	// if bConvert is set and g_qeglobals.bNeedConvert is not, that just means we need
 	// convert for this brush only
@@ -1462,14 +1410,8 @@ brush_t *Brush_Parse(idVec3 origin) {
 			g_qeglobals.bPrimitBrushes = true;
 
 			// check the map is not mixing the two kinds of brushes
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				if (g_qeglobals.bOldBrushes) {
-					common->Printf("Warning : old brushes and brush primitive in the same file are not allowed ( Brush_Parse )\n");
-				}
-			}
-			else {
-				// ++Timo write new brush primitive -> old conversion code for Q3->Q2 conversions ?
-				common->Printf("Warning : conversion code from brush primitive not done ( Brush_Parse )\n");
+			if (g_qeglobals.bOldBrushes) {
+				common->Printf("Warning : old brushes and brush primitive in the same file are not allowed ( Brush_Parse )\n");
 			}
 
 			bool	newFormat = false;
@@ -1516,15 +1458,15 @@ brush_t *Brush_Parse(idVec3 origin) {
 		else {
 			// Timo parsing old brush format
 			g_qeglobals.bOldBrushes = true;
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				// check the map is not mixing the two kinds of brushes
-				if (g_qeglobals.bPrimitBrushes) {
-					common->Printf("Warning : old brushes and brush primitive in the same file are not allowed ( Brush_Parse )\n");
-				}
 
-				// set the "need" conversion flag
-				g_qeglobals.bNeedConvert = true;
+			// check the map is not mixing the two kinds of brushes
+			if (g_qeglobals.bPrimitBrushes) {
+				common->Printf("Warning : old brushes and brush primitive in the same file are not allowed ( Brush_Parse )\n");
 			}
+
+			// set the "need" conversion flag
+			g_qeglobals.bNeedConvert = true;
+
 
 			f = Face_Alloc();
 
@@ -1632,16 +1574,11 @@ Brush_SetEpair
 ================
 */
 void Brush_SetEpair(brush_t *b, const char *pKey, const char *pValue) {
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		if (b->pPatch) {
-			Patch_SetEpair(b->pPatch, pKey, pValue);
-		}
-		else {
-			b->epairs.Set(pKey, pValue);
-		}
+	if (b->pPatch) {
+		Patch_SetEpair(b->pPatch, pKey, pValue);
 	}
 	else {
-		Sys_Status("Can only set key/values in Brush primitive mode\n");
+		b->epairs.Set(pKey, pValue);
 	}
 }
 
@@ -1651,19 +1588,12 @@ Brush_GetKeyValue
 ================
 */
 const char *Brush_GetKeyValue(brush_t *b, const char *pKey) {
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		if (b->pPatch) {
-			return Patch_GetKeyValue(b->pPatch, pKey);
-		}
-		else {
-			return b->epairs.GetString(pKey);
-		}
+	if (b->pPatch) {
+		return Patch_GetKeyValue(b->pPatch, pKey);
 	}
 	else {
-		Sys_Status("Can only set brush/patch key/values in Brush primitive mode\n");
+		return b->epairs.GetString(pKey);
 	}
-
-	return "";
 }
 
 /*
@@ -1683,99 +1613,51 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 		return;
 	}
 
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		// save brush primitive format
-		if (newFormat) {
-			WriteFileString(f, "{\nbrushDef3\n{\n");
-		}
-		else {
-			WriteFileString(f, "{\nbrushDef\n{\n");
-		}
 
-		// brush epairs
-		int count = b->epairs.GetNumKeyVals();
-		for (int j = 0; j < count; j++) {
-			WriteFileString(f, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
-		}
-
-		for (fa = b->brush_faces; fa; fa = fa->next) {
-			// save planepts
-			if (newFormat) {
-				idPlane plane;
-
-				if (fa->dirty) {
-					fa->planepts[0] -= origin;
-					fa->planepts[1] -= origin;
-					fa->planepts[2] -= origin;
-					plane.FromPoints( fa->planepts[0], fa->planepts[1], fa->planepts[2], false );
-					fa->planepts[0] += origin;
-					fa->planepts[1] += origin;
-					fa->planepts[2] += origin;
-				} else {
-					plane = fa->originalPlane;
-				}
-
-				WriteFileString(f, " ( ");
-				for (i = 0; i < 4; i++) {
-					if (plane[i] == (int)plane[i]) {
-						WriteFileString(f, "%i ", (int)plane[i]);
-					}
-					else {
-						WriteFileString(f, "%f ", plane[i]);
-					}
-				}
-
-				WriteFileString(f, ") ");
-			}
-			else {
-				for (i = 0; i < 3; i++) {
-					WriteFileString(f, "( ");
-					for (int j = 0; j < 3; j++) {
-						if (fa->planepts[i][j] == static_cast<int>(fa->planepts[i][j])) {
-							WriteFileString(f, "%i ", static_cast<int>(fa->planepts[i][j]));
-						}
-						else {
-							WriteFileString(f, "%f ", fa->planepts[i][j]);
-						}
-					}
-
-					WriteFileString(f, ") ");
-				}
-			}
-
-			// save texture coordinates
-			WriteFileString(f, "( ( ");
-			for (i = 0; i < 3; i++) {
-				if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
-					WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
-				}
-				else {
-					WriteFileString(f, "%f ", fa->brushprimit_texdef.coords[0][i]);
-				}
-			}
-
-			WriteFileString(f, ") ( ");
-			for (i = 0; i < 3; i++) {
-				if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
-					WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
-				}
-				else {
-					WriteFileString(f, "%f ", fa->brushprimit_texdef.coords[1][i]);
-				}
-			}
-
-			WriteFileString(f, ") ) ");
-
-			char	*pName = strlen(fa->texdef.name) > 0 ? fa->texdef.name : "notexture";
-			WriteFileString(f, "\"%s\" ", pName);
-			WriteFileString(f, "%i %i %i\n", 0, 0, 0);
-		}
-
-		WriteFileString(f, "}\n}\n");
+	// save brush primitive format
+	if (newFormat) {
+		WriteFileString(f, "{\nbrushDef3\n{\n");
 	}
 	else {
-		WriteFileString(f, "{\n");
-		for (fa = b->brush_faces; fa; fa = fa->next) {
+		WriteFileString(f, "{\nbrushDef\n{\n");
+	}
+
+	// brush epairs
+	int count = b->epairs.GetNumKeyVals();
+	for (int j = 0; j < count; j++) {
+		WriteFileString(f, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
+	}
+
+	for (fa = b->brush_faces; fa; fa = fa->next) {
+		// save planepts
+		if (newFormat) {
+			idPlane plane;
+
+			if (fa->dirty) {
+				fa->planepts[0] -= origin;
+				fa->planepts[1] -= origin;
+				fa->planepts[2] -= origin;
+				plane.FromPoints( fa->planepts[0], fa->planepts[1], fa->planepts[2], false );
+				fa->planepts[0] += origin;
+				fa->planepts[1] += origin;
+				fa->planepts[2] += origin;
+			} else {
+				plane = fa->originalPlane;
+			}
+
+			WriteFileString(f, " ( ");
+			for (i = 0; i < 4; i++) {
+				if (plane[i] == (int)plane[i]) {
+					WriteFileString(f, "%i ", (int)plane[i]);
+				}
+				else {
+					WriteFileString(f, "%f ", plane[i]);
+				}
+			}
+
+			WriteFileString(f, ") ");
+		}
+		else {
 			for (i = 0; i < 3; i++) {
 				WriteFileString(f, "( ");
 				for (int j = 0; j < 3; j++) {
@@ -1789,43 +1671,37 @@ void Brush_Write(brush_t *b, FILE *f, const idVec3 &origin, bool newFormat) {
 
 				WriteFileString(f, ") ");
 			}
-
-			pname = fa->texdef.name;
-			if (pname[0] == 0) {
-				pname = "unnamed";
-			}
-
-			WriteFileString
-			(
-				f,
-				"%s %i %i %i ",
-				pname,
-				(int)fa->texdef.shift[0],
-				(int)fa->texdef.shift[1],
-				(int)fa->texdef.rotate
-			);
-
-			if (fa->texdef.scale[0] == (int)fa->texdef.scale[0]) {
-				WriteFileString(f, "%i ", (int)fa->texdef.scale[0]);
-			}
-			else {
-				WriteFileString(f, "%f ", (float)fa->texdef.scale[0]);
-			}
-
-			if (fa->texdef.scale[1] == (int)fa->texdef.scale[1]) {
-				WriteFileString(f, "%i", (int)fa->texdef.scale[1]);
-			}
-			else {
-				WriteFileString(f, "%f", (float)fa->texdef.scale[1]);
-			}
-
-			WriteFileString(f, " %i %i %i",0, 0, 0);
-
-			WriteFileString(f, "\n");
 		}
 
-		WriteFileString(f, "}\n");
+		// save texture coordinates
+		WriteFileString(f, "( ( ");
+		for (i = 0; i < 3; i++) {
+			if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
+				WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
+			}
+			else {
+				WriteFileString(f, "%f ", fa->brushprimit_texdef.coords[0][i]);
+			}
+		}
+
+		WriteFileString(f, ") ( ");
+		for (i = 0; i < 3; i++) {
+			if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
+				WriteFileString(f, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
+			}
+			else {
+				WriteFileString(f, "%f ", fa->brushprimit_texdef.coords[1][i]);
+			}
+		}
+
+		WriteFileString(f, ") ) ");
+
+		char	*pName = strlen(fa->texdef.name) > 0 ? fa->texdef.name : "notexture";
+		WriteFileString(f, "\"%s\" ", pName);
+		WriteFileString(f, "%i %i %i\n", 0, 0, 0);
 	}
+
+	WriteFileString(f, "}\n}\n");
 }
 
 /*
@@ -1866,102 +1742,52 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 		return;
 	}
 
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		// brush primitive format
-		if (newFormat) {
-			MemFile_fprintf(pMemFile, "{\nBrushDef2\n{\n");
-		}
-		else {
-			MemFile_fprintf(pMemFile, "{\nBrushDef\n{\n");
-		}
 
-		// brush epairs
-		// brush epairs
-		int count = b->epairs.GetNumKeyVals();
-		for (int j = 0; j < count; j++) {
-			MemFile_fprintf(pMemFile, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
-		}
-
-		for (fa = b->brush_faces; fa; fa = fa->next) {
-			if (newFormat) {
-				// save planepts
-				idPlane plane;
-
-				if (fa->dirty) {
-					fa->planepts[0] -= origin;
-					fa->planepts[1] -= origin;
-					fa->planepts[2] -= origin;
-					plane.FromPoints( fa->planepts[0], fa->planepts[1], fa->planepts[2], false );
-					fa->planepts[0] += origin;
-					fa->planepts[1] += origin;
-					fa->planepts[2] += origin;
-				} else {
-					plane = fa->originalPlane;
-				}
-
-				MemFile_fprintf(pMemFile, " ( ");
-				for (i = 0; i < 4; i++) {
-					if (plane[i] == (int)plane[i]) {
-						MemFile_fprintf(pMemFile, "%i ", (int)plane[i]);
-					}
-					else {
-						MemFile_fprintf(pMemFile, "%f ", plane[i]);
-					}
-				}
-
-				MemFile_fprintf(pMemFile, ") ");
-			}
-			else {
-				for (i = 0; i < 3; i++) {
-					MemFile_fprintf(pMemFile, "( ");
-					for (int j = 0; j < 3; j++) {
-						if (fa->planepts[i][j] == static_cast<int>(fa->planepts[i][j])) {
-							MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->planepts[i][j]));
-						}
-						else {
-							MemFile_fprintf(pMemFile, "%f ", fa->planepts[i][j]);
-						}
-					}
-
-					MemFile_fprintf(pMemFile, ") ");
-				}
-			}
-
-			// save texture coordinates
-			MemFile_fprintf(pMemFile, "( ( ");
-			for (i = 0; i < 3; i++) {
-				if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
-					MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
-				}
-				else {
-					MemFile_fprintf(pMemFile, "%f ", fa->brushprimit_texdef.coords[0][i]);
-				}
-			}
-
-			MemFile_fprintf(pMemFile, ") ( ");
-			for (i = 0; i < 3; i++) {
-				if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
-					MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
-				}
-				else {
-					MemFile_fprintf(pMemFile, "%f ", fa->brushprimit_texdef.coords[1][i]);
-				}
-			}
-
-			MemFile_fprintf(pMemFile, ") ) ");
-
-			// save texture attribs
-			char	*pName = strlen(fa->texdef.name) > 0 ? fa->texdef.name : "unnamed";
-			MemFile_fprintf(pMemFile, "\"%s\" ", pName);
-			MemFile_fprintf(pMemFile, "%i %i %i\n", 0, 0, 0);
-		}
-
-		MemFile_fprintf(pMemFile, "}\n}\n");
+	// brush primitive format
+	if (newFormat) {
+		MemFile_fprintf(pMemFile, "{\nBrushDef2\n{\n");
 	}
 	else {
-		// old brushes format also handle surface properties plugin
-		MemFile_fprintf(pMemFile, "{\n");
-		for (fa = b->brush_faces; fa; fa = fa->next) {
+		MemFile_fprintf(pMemFile, "{\nBrushDef\n{\n");
+	}
+
+	// brush epairs
+	// brush epairs
+	int count = b->epairs.GetNumKeyVals();
+	for (int j = 0; j < count; j++) {
+		MemFile_fprintf(pMemFile, "\"%s\" \"%s\"\n", b->epairs.GetKeyVal(j)->GetKey().c_str(), b->epairs.GetKeyVal(j)->GetValue().c_str());
+	}
+
+	for (fa = b->brush_faces; fa; fa = fa->next) {
+		if (newFormat) {
+			// save planepts
+			idPlane plane;
+
+			if (fa->dirty) {
+				fa->planepts[0] -= origin;
+				fa->planepts[1] -= origin;
+				fa->planepts[2] -= origin;
+				plane.FromPoints( fa->planepts[0], fa->planepts[1], fa->planepts[2], false );
+				fa->planepts[0] += origin;
+				fa->planepts[1] += origin;
+				fa->planepts[2] += origin;
+			} else {
+				plane = fa->originalPlane;
+			}
+
+			MemFile_fprintf(pMemFile, " ( ");
+			for (i = 0; i < 4; i++) {
+				if (plane[i] == (int)plane[i]) {
+					MemFile_fprintf(pMemFile, "%i ", (int)plane[i]);
+				}
+				else {
+					MemFile_fprintf(pMemFile, "%f ", plane[i]);
+				}
+			}
+
+			MemFile_fprintf(pMemFile, ") ");
+		}
+		else {
 			for (i = 0; i < 3; i++) {
 				MemFile_fprintf(pMemFile, "( ");
 				for (int j = 0; j < 3; j++) {
@@ -1975,43 +1801,38 @@ void Brush_Write(brush_t *b, CMemFile *pMemFile, const idVec3 &origin, bool newF
 
 				MemFile_fprintf(pMemFile, ") ");
 			}
-
-			pname = fa->texdef.name;
-			if (pname[0] == 0) {
-				pname = "unnamed";
-			}
-
-			MemFile_fprintf
-			(
-				pMemFile,
-				"%s %i %i %i ",
-				pname,
-				(int)fa->texdef.shift[0],
-				(int)fa->texdef.shift[1],
-				(int)fa->texdef.rotate
-			);
-
-			if (fa->texdef.scale[0] == (int)fa->texdef.scale[0]) {
-				MemFile_fprintf(pMemFile, "%i ", (int)fa->texdef.scale[0]);
-			}
-			else {
-				MemFile_fprintf(pMemFile, "%f ", (float)fa->texdef.scale[0]);
-			}
-
-			if (fa->texdef.scale[1] == (int)fa->texdef.scale[1]) {
-				MemFile_fprintf(pMemFile, "%i", (int)fa->texdef.scale[1]);
-			}
-			else {
-				MemFile_fprintf(pMemFile, "%f", (float)fa->texdef.scale[1]);
-			}
-
-			MemFile_fprintf(pMemFile, " %i %i %i", 0, 0, 0);
-
-			MemFile_fprintf(pMemFile, "\n");
 		}
 
-		MemFile_fprintf(pMemFile, "}\n");
+		// save texture coordinates
+		MemFile_fprintf(pMemFile, "( ( ");
+		for (i = 0; i < 3; i++) {
+			if (fa->brushprimit_texdef.coords[0][i] == static_cast<int>(fa->brushprimit_texdef.coords[0][i])) {
+				MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[0][i]));
+			}
+			else {
+				MemFile_fprintf(pMemFile, "%f ", fa->brushprimit_texdef.coords[0][i]);
+			}
+		}
+
+		MemFile_fprintf(pMemFile, ") ( ");
+		for (i = 0; i < 3; i++) {
+			if (fa->brushprimit_texdef.coords[1][i] == static_cast<int>(fa->brushprimit_texdef.coords[1][i])) {
+				MemFile_fprintf(pMemFile, "%i ", static_cast<int>(fa->brushprimit_texdef.coords[1][i]));
+			}
+			else {
+				MemFile_fprintf(pMemFile, "%f ", fa->brushprimit_texdef.coords[1][i]);
+			}
+		}
+
+		MemFile_fprintf(pMemFile, ") ) ");
+
+		// save texture attribs
+		char	*pName = strlen(fa->texdef.name) > 0 ? fa->texdef.name : "unnamed";
+		MemFile_fprintf(pMemFile, "\"%s\" ", pName);
+		MemFile_fprintf(pMemFile, "%i %i %i\n", 0, 0, 0);
 	}
+
+	MemFile_fprintf(pMemFile, "}\n}\n");
 }
 
 /*
@@ -2454,7 +2275,6 @@ Brush_FullClone
 brush_t *Brush_FullClone(brush_t *b) {
 	brush_t *n = NULL;
 	face_t	*f, *nf, *f2, *nf2;
-	int		j;
 
 	if (b->pPatch) {
 		patchMesh_t *p = Patch_Duplicate(b->pPatch);
@@ -2507,14 +2327,7 @@ brush_t *Brush_FullClone(brush_t *b) {
 		for (nf = n->brush_faces; nf; nf = nf->next) {
 			Face_SetColor( n, nf, 1.0f );
 			if (nf->face_winding) {
-				if (g_qeglobals.m_bBrushPrimitMode) {
-					EmitBrushPrimitTextureCoordinates(nf, nf->face_winding);
-				}
-				else {
-					for (j = 0; j < nf->face_winding->GetNumPoints(); j++) {
-						EmitTextureCoordinates( (*nf->face_winding)[j], nf->d_texture, nf );
-					}
-				}
+				EmitBrushPrimitTextureCoordinates(nf, nf->face_winding);
 			}
 		}
 	}
@@ -2837,40 +2650,8 @@ SetFaceTexdef
 ================
 */
 void SetFaceTexdef( brush_t *b, face_t *f, texdef_t *texdef, brushprimit_texdef_t *brushprimit_texdef, bool bFitScale ) {
-
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		f->texdef = *texdef;
-		ConvertTexMatWithQTexture(brushprimit_texdef, NULL, &f->brushprimit_texdef, Texture_ForName(f->texdef.name));
-	}
-	else if (bFitScale) {
-		f->texdef = *texdef;
-
-		// fit the scaling of the texture on the actual plane
-		idVec3	p1, p2, p3; // absolute coordinates
-
-		// compute absolute coordinates
-		ComputeAbsolute(f, p1, p2, p3);
-
-		// compute the scale
-		idVec3	vx, vy;
-		VectorSubtract(p2, p1, vx);
-		vx.Normalize();
-		VectorSubtract(p3, p1, vy);
-		vy.Normalize();
-
-		// assign scale
-		VectorScale(vx, texdef->scale[0], vx);
-		VectorScale(vy, texdef->scale[1], vy);
-		VectorAdd(p1, vx, p2);
-		VectorAdd(p1, vy, p3);
-
-		// compute back shift scale rot
-		AbsoluteToLocal(f->plane, f, p1, p2, p3);
-	}
-	else {
-		f->texdef = *texdef;
-	}
-
+	f->texdef = *texdef;
+	ConvertTexMatWithQTexture(brushprimit_texdef, NULL, &f->brushprimit_texdef, Texture_ForName(f->texdef.name));
 }
 
 /*
@@ -3337,32 +3118,26 @@ void Brush_BuildWindings(brush_t *b, bool bSnap, bool keepOnPlaneWinding, bool u
 			}
 
 			// computing ST coordinates for the windings
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				if (g_qeglobals.bNeedConvert) {
-					//
-					// we have parsed old brushes format and need conversion convert old brush texture
-					// representation to new format
-					//
-					FaceToBrushPrimitFace(face);
-	#ifdef _DEBUG
-					// use old texture coordinates code to check against
-					for (i = 0; i < w->GetNumPoints(); i++) {
-						EmitTextureCoordinates((*w)[i], face->d_texture, face);
-					}
-	#endif
-				}
 
+			if (g_qeglobals.bNeedConvert) {
 				//
-				// use new texture representation to compute texture coordinates in debug mode we
-				// will check against old code and warn if there are differences
+				// we have parsed old brushes format and need conversion convert old brush texture
+				// representation to new format
 				//
-				EmitBrushPrimitTextureCoordinates(face, w);
-			}
-			else {
+				FaceToBrushPrimitFace(face);
+#ifdef _DEBUG
+				// use old texture coordinates code to check against
 				for (i = 0; i < w->GetNumPoints(); i++) {
 					EmitTextureCoordinates((*w)[i], face->d_texture, face);
 				}
+#endif
 			}
+
+			//
+			// use new texture representation to compute texture coordinates in debug mode we
+			// will check against old code and warn if there are differences
+			//
+			EmitBrushPrimitTextureCoordinates(face, w);
 		}
 
 	}
@@ -4992,47 +4767,9 @@ Face_FitTexture
 ================
 */
 void Face_FitTexture(face_t *face, float nHeight, float nWidth) {
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		idVec3	mins, maxs;
-		mins[0] = maxs[0] = 0;
-		Face_FitTexture_BrushPrimit(face, mins, maxs, nHeight, nWidth);
-	}
-	else {
-		/*
-		 * winding_t *w; idBounds bounds; int i; float width, height, temp; float rot_width,
-		 * rot_height; float cosv,sinv,ang; float min_t, min_s, max_t, max_s; float s,t;
-		 * idVec3 vecs[2]; idVec3 coords[4]; texdef_t *td; if (nHeight < 1) { nHeight = 1;
-		 * } if (nWidth < 1) { nWidth = 1; } bounds.Clear(); td = &face->texdef; w =
-		 * face->face_winding; if (!w) { return; } for (i=0 ; i<w->numpoints ; i++) {
-		 * bounds.AddPoint( w->p[i] ); } // // get the current angle // ang = td->rotate /
-		 * 180 * Q_PI; sinv = sin(ang); cosv = cos(ang); // get natural texture axis
-		 * TextureAxisFromPlane(&face->plane, vecs[0], vecs[1]); min_s = DotProduct(
-		 * bounds.b[0], vecs[0] ); min_t = DotProduct( bounds.b[0], vecs[1] ); max_s =
-		 * DotProduct( bounds.b[1], vecs[0] ); max_t = DotProduct( bounds.b[1], vecs[1] );
-		 * width = max_s - min_s; height = max_t - min_t; coords[0][0] = min_s;
-		 * coords[0][1] = min_t; coords[1][0] = max_s; coords[1][1] = min_t; coords[2][0]
-		 * = min_s; coords[2][1] = max_t; coords[3][0] = max_s; coords[3][1] = max_t;
-		 * min_s = min_t = 999999; max_s = max_t = -999999; for (i=0; i<4; i++) { s = cosv
-		 * * coords[i][0] - sinv * coords[i][1]; t = sinv * coords[i][0] + cosv *
-		 * coords[i][1]; if (i&1) { if (s > max_s) { max_s = s; } } else { if (s < min_s)
-		 * { min_s = s; } if (i<2) { if (t < min_t) { min_t = t; } } else { if (t > max_t)
-		 * { max_t = t; } } } } rot_width = (max_s - min_s); rot_height = (max_t - min_t);
-		 * td->scale[0] =
-		 * -(rot_width/((float)(face->d_texture->GetEditorImage()->uploadWidth*nWidth)));
-		 * td->scale[1] =
-		 * -(rot_height/((float)(face->d_texture->GetEditorImage()->uploadHeight*nHeight)));
-		 * td->shift[0] = min_s/td->scale[0]; temp = (int)(td->shift[0] /
-		 * (face->d_texture->GetEditorImage()->uploadWidth*nWidth)); temp =
-		 * (temp+1)*face->d_texture->GetEditorImage()->uploadWidth*nWidth; td->shift[0] =
-		 * (int)(temp -
-		 * td->shift[0])%(face->d_texture->GetEditorImage()->uploadWidth*nWidth);
-		 * td->shift[1] = min_t/td->scale[1]; temp = (int)(td->shift[1] /
-		 * (face->d_texture->GetEditorImage()->uploadHeight*nHeight)); temp =
-		 * (temp+1)*(face->d_texture->GetEditorImage()->uploadHeight*nHeight);
-		 * td->shift[1] = (int)(temp -
-		 * td->shift[1])%(face->d_texture->GetEditorImage()->uploadHeight*nHeight);
-		 */
-	}
+	idVec3	mins, maxs;
+	mins[0] = maxs[0] = 0;
+	Face_FitTexture_BrushPrimit(face, mins, maxs, nHeight, nWidth);
 }
 
 /*

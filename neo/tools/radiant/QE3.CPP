@@ -215,7 +215,6 @@ bool QE_SingleBrush(bool bQuiet, bool entityOK) {
  =======================================================================================================================
  */
 void QE_Init(void) {
-	g_qeglobals.m_bBrushPrimitMode = TRUE;
 	g_qeglobals.d_gridsize = 8;
 	g_qeglobals.d_showgrid = true;
 

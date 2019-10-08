@@ -111,10 +111,6 @@ void Select_FitTexture(float height = 1.0, float width = 1.0);
 void Select_InitializeRotation();
 void Select_FinalizeRotation();
 
-// absolute texture coordinates
-// TTimo NOTE: this is stuff for old brushes format and rotation texture lock .. sort of in-between with bush primitives
-void ComputeAbsolute(face_t* f, idVec3& p1, idVec3& p2, idVec3& p3);
-void AbsoluteToLocal( const idPlane &normal2, face_t* f, idVec3& p1, idVec3& p2, idVec3& p3);
 void Select_Hide(bool invert = false);
 void Select_ShowAllHidden();
 void Select_WireFrame( bool wireFrame );

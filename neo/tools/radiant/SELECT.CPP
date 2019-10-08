@@ -879,46 +879,10 @@ void Select_ApplyMatrix(bool bSnap, bool rotateOrigins) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void RotateFaceTexture(face_t *f, int nAxis, float fDeg) {
-	idVec3	p1, p2, p3, rota;
-	p1[0] = p1[1] = p1[2] = 0;
-	VectorCopy(p1, p2);
-	VectorCopy(p1, p3);
-	VectorCopy(p1, rota);
-	ComputeAbsolute(f, p1, p2, p3);
-
-	rota[nAxis] = fDeg;
-	VectorRotate3Origin(p1, rota, select_origin, p1);
-	VectorRotate3Origin(p2, rota, select_origin, p2);
-	VectorRotate3Origin(p3, rota, select_origin, p3);
-
-	idPlane		normal2;
-	idVec3		vNormal;
-	vNormal[0] = f->plane[0];
-	vNormal[1] = f->plane[1];
-	vNormal[2] = f->plane[2];
-	VectorRotate3(vNormal, rota, vNormal);
-	normal2[0] = vNormal[0];
-	normal2[1] = vNormal[1];
-	normal2[2] = vNormal[2];
-	AbsoluteToLocal(normal2, f, p1, p2, p3);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void RotateTextures(int nAxis, float fDeg, idVec3 vOrigin) {
 	for (brush_t * b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		for (face_t * f = b->brush_faces; f; f = f->next) {
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				RotateFaceTexture_BrushPrimit(f, nAxis, fDeg, vOrigin);
-			}
-			else {
-				RotateFaceTexture(f, nAxis, fDeg);
-			}
-
-			// ++timo removed that call .. works fine .. ??????? Brush_Build(b, false);
+			RotateFaceTexture_BrushPrimit(f, nAxis, fDeg, vOrigin);
 		}
 
 		Brush_Build(b, false);
@@ -1020,150 +984,6 @@ void Back(idVec3 &dir, idVec3 &p) {
 	}
 }
 
-//
-// =======================================================================================================================
-//    using scale[0] and scale[1]
-// =======================================================================================================================
-//
-void ComputeScale(idVec3 &rex, idVec3 &rey, idVec3 &p, face_t *f) {
-	float	px = DotProduct(rex, p);
-	float	py = DotProduct(rey, p);
-	px *= f->texdef.scale[0];
-	py *= f->texdef.scale[1];
-
-	idVec3	aux;
-	VectorCopy(rex, aux);
-	VectorScale(aux, px, aux);
-	VectorCopy(aux, p);
-	VectorCopy(rey, aux);
-	VectorScale(aux, py, aux);
-	VectorAdd(p, aux, p);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void ComputeAbsolute(face_t *f, idVec3 &p1, idVec3 &p2, idVec3 &p3) {
-	idVec3	ex, ey, ez; // local axis base
-
-#ifdef _DEBUG
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		common->Printf("Warning : illegal call of ComputeAbsolute in brush primitive mode\n");
-	}
-#endif
-	// compute first local axis base
-	TextureAxisFromPlane( f->plane, ex, ey );
-	ez = ex.Cross( ey );
-
-	idVec3	aux;
-	VectorCopy(ex, aux);
-	VectorScale(aux, -f->texdef.shift[0], aux);
-	VectorCopy(aux, p1);
-	VectorCopy(ey, aux);
-	VectorScale(aux, -f->texdef.shift[1], aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(p1, p2);
-	VectorAdd(p2, ex, p2);
-	VectorCopy(p1, p3);
-	VectorAdd(p3, ey, p3);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
-	VectorRotate3(p1, aux, p1);
-	VectorRotate3(p2, aux, p2);
-	VectorRotate3(p3, aux, p3);
-
-	// computing rotated local axis base
-	idVec3	rex, rey;
-	VectorCopy(ex, rex);
-	VectorRotate3(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate3(rey, aux, rey);
-
-	ComputeScale(rex, rey, p1, f);
-	ComputeScale(rex, rey, p2, f);
-	ComputeScale(rex, rey, p3, f);
-
-	// project on normal plane along ez assumes plane normal is normalized
-	ProjectOnPlane(f->plane.Normal(), -f->plane[3], ez, p1);
-	ProjectOnPlane(f->plane.Normal(), -f->plane[3], ez, p2);
-	ProjectOnPlane(f->plane.Normal(), -f->plane[3], ez, p3);
-};
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void AbsoluteToLocal( const idPlane &normal2, face_t *f, idVec3 &p1, idVec3 &p2, idVec3 &p3) {
-	idVec3	ex, ey, ez;
-
-#ifdef _DEBUG
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		common->Printf("Warning : illegal call of AbsoluteToLocal in brush primitive mode\n");
-	}
-#endif
-	// computing new local axis base
-	TextureAxisFromPlane( normal2, ex, ey );
-	ez = ex.Cross( ey );
-
-	// projecting back on (ex,ey)
-	Back(ez, p1);
-	Back(ez, p2);
-	Back(ez, p3);
-
-	idVec3	aux;
-
-	// rotation
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
-
-	float	x = DotProduct(aux, ex);
-	float	y = DotProduct(aux, ey);
-	f->texdef.rotate = RAD2DEG( atan2(y, x) );
-
-	idVec3	rex, rey;
-
-	// computing rotated local axis base
-	VectorCopy(ez, aux);
-	VectorScale(aux, f->texdef.rotate, aux);
-	VectorCopy(ex, rex);
-	VectorRotate3(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate3(rey, aux, rey);
-
-	// scale
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[0] = DotProduct(aux, rex);
-	VectorCopy(p3, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[1] = DotProduct(aux, rey);
-
-	// shift only using p1
-	x = DotProduct(rex, p1);
-	y = DotProduct(rey, p1);
-	x /= f->texdef.scale[0];
-	y /= f->texdef.scale[1];
-
-	VectorCopy(rex, p1);
-	VectorScale(p1, x, p1);
-	VectorCopy(rey, aux);
-	VectorScale(aux, y, aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
-	VectorRotate3(p1, aux, p1);
-	f->texdef.shift[0] = -DotProduct(p1, ex);
-	f->texdef.shift[1] = -DotProduct(p1, ey);
-
-	// stored rot is good considering local axis base change it if necessary
-	f->texdef.rotate = -f->texdef.rotate;
-
-	Clamp(f->texdef.shift[0], f->d_texture->GetEditorImage()->uploadWidth);
-	Clamp(f->texdef.shift[1], f->d_texture->GetEditorImage()->uploadHeight);
-	Clamp(f->texdef.rotate, 360);
-}
-
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -1187,22 +1007,7 @@ void Select_FlipAxis(int axis) {
 
 	// texture locking
 	if (g_PrefsDlg.m_bRotateLock) {
-		//
-		// axis flipping inverts space orientation, we have to use a general texture
-		// locking algorithm instead of the RotateFaceTexture
-		//
-		if (g_qeglobals.m_bBrushPrimitMode) {
-			Select_ApplyMatrix_BrushPrimit();
-		}
-		else {
-			//
-			// there's never been flip locking for non BP mode, this would be tricky to write
-			// and there's not much interest for it with the coming of BP format what could be
-			// done is converting regular to BP, locking, then back to regular :)
-			// Sys_FPrintf(SYS_WRN, "WARNING: regular texturing doesn't have texture lock on
-			// flipping operations\n");
-			//
-		}
+		Select_ApplyMatrix_BrushPrimit();
 	}
 
 	// geometric transformation
@@ -1502,14 +1307,8 @@ void Select_ShiftTexture(float x, float y, bool autoAdjust) {
 	Undo_Start("Select shift textures");
 	for (b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		for (f = b->brush_faces; f; f = f->next) {
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				// use face normal to compute a true translation
-				Select_ShiftTexture_BrushPrimit(f, x, y, autoAdjust);
-			}
-			else {
-				f->texdef.shift[0] += x;
-				f->texdef.shift[1] += y;
-			}
+			// use face normal to compute a true translation
+			Select_ShiftTexture_BrushPrimit(f, x, y, autoAdjust);
 		}
 
 		Brush_Build(b);
@@ -1523,17 +1322,12 @@ void Select_ShiftTexture(float x, float y, bool autoAdjust) {
 		for (int i = 0; i < nFaceCount; i++) {
 			face_t	*selFace = g_selectedFaces[i].GetFace();
 			brush_t *selBrush = g_selectedFaces[i].GetBrush();
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				//
-				// use face normal to compute a true translation Select_ShiftTexture_BrushPrimit(
-				// selected_face, x, y ); use camera view to compute texture shift
-				//
-				Select_ShiftTexture_BrushPrimit(selFace, x, y, autoAdjust);
-			}
-			else {
-				selFace->texdef.shift[0] += x;
-				selFace->texdef.shift[1] += y;
-			}
+
+			//
+			// use face normal to compute a true translation Select_ShiftTexture_BrushPrimit(
+			// selected_face, x, y ); use camera view to compute texture shift
+			//
+			Select_ShiftTexture_BrushPrimit(selFace, x, y, autoAdjust);
 
 			Brush_Build(selBrush);
 		}
@@ -1563,7 +1357,7 @@ void Select_ScaleTexture(float x, float y, bool update, bool absolute) {
 	Undo_Start("Select_SetExplicitScale_BrushPrimit");
 	for (b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		for (f = b->brush_faces; f; f = f->next) {
-			if (g_qeglobals.m_bBrushPrimitMode && f->face_winding) {
+			if (f->face_winding) {
 				if (absolute) {
 					Face_SetExplicitScale_BrushPrimit(f, x, y);
 				} else {
@@ -1586,16 +1380,11 @@ void Select_ScaleTexture(float x, float y, bool update, bool absolute) {
 		for (int i = 0; i < nFaceCount; i++) {
 			face_t	*selFace = g_selectedFaces[i].GetFace();
 			brush_t *selBrush = g_selectedFaces[i].GetBrush();
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				if (absolute) {
-					Face_SetExplicitScale_BrushPrimit(selFace, x, y);
-				} else {
-					Face_ScaleTexture_BrushPrimit(selFace, x, y);
-				}
-			}
-			else {
-				selFace->texdef.scale[0] += x;
-				selFace->texdef.scale[1] += y;
+
+			if (absolute) {
+				Face_SetExplicitScale_BrushPrimit(selFace, x, y);
+			} else {
+				Face_ScaleTexture_BrushPrimit(selFace, x, y);
 			}
 
 			Brush_Build(selBrush);
@@ -1627,13 +1416,7 @@ void Select_RotateTexture(float amt, bool absolute) {
 	Undo_Start("Select_RotateTexture_BrushPrimit");
 	for (b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 		for (f = b->brush_faces; f; f = f->next) {
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				Face_RotateTexture_BrushPrimit(f, amt, b->owner->origin);
-			}
-			else {
-				f->texdef.rotate += amt;
-				f->texdef.rotate = static_cast<int>(f->texdef.rotate) % 360;
-			}
+			Face_RotateTexture_BrushPrimit(f, amt, b->owner->origin);
 		}
 
 		Brush_Build(b);
@@ -1647,16 +1430,11 @@ void Select_RotateTexture(float amt, bool absolute) {
 		for (int i = 0; i < nFaceCount; i++) {
 			face_t	*selFace = g_selectedFaces[i].GetFace();
 			brush_t *selBrush = g_selectedFaces[i].GetBrush();
-			if (g_qeglobals.m_bBrushPrimitMode) {
-				idVec3 org;
-				org.Zero();
-				//Face_RotateTexture_BrushPrimit(selFace, amt, selBrush->owner->origin);
-				Face_RotateTexture_BrushPrimit(selFace, amt, org);
-			}
-			else {
-				selFace->texdef.rotate += amt;
-				selFace->texdef.rotate = static_cast<int>(selFace->texdef.rotate) % 360;
-			}
+
+			idVec3 org;
+			org.Zero();
+			//Face_RotateTexture_BrushPrimit(selFace, amt, selBrush->owner->origin);
+			Face_RotateTexture_BrushPrimit(selFace, amt, org);
 
 			Brush_Build(selBrush);
 		}
@@ -1997,15 +1775,10 @@ void Select_SetDefaultTexture(const idMaterial *mat, bool fitScale, bool setText
 	brushprimit_texdef_t	brushprimit_tex;
 	memset(&tex, 0, sizeof(tex));
 	memset(&brushprimit_tex, 0, sizeof(brushprimit_tex));
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		// brushprimit fitted to a 2x2 texture
-		brushprimit_tex.coords[0][0] = 1.0f;
-		brushprimit_tex.coords[1][1] = 1.0f;
-	}
-	else {
-		tex.scale[0] = (g_PrefsDlg.m_bHiColorTextures) ? 0.5 : 1;
-		tex.scale[1] = (g_PrefsDlg.m_bHiColorTextures) ? 0.5 : 1;
-	}
+
+	// brushprimit fitted to a 2x2 texture
+	brushprimit_tex.coords[0][0] = 1.0f;
+	brushprimit_tex.coords[1][1] = 1.0f;
 
 	tex.SetName(mat->GetName());
 	Texture_SetTexture(&tex, &brushprimit_tex, fitScale, setTexture);

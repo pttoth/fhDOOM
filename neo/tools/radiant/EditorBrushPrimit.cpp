@@ -701,11 +701,6 @@ void Face_FitTexture_BrushPrimit(face_t *f, idVec3 mins, idVec3 maxs, float heig
  =======================================================================================================================
  */
 void Face_ScaleTexture_BrushPrimit(face_t *face, float sS, float sT) {
-	if (!g_qeglobals.m_bBrushPrimitMode) {
-		Sys_Status("BP mode required\n");
-		return;
-	}
-
 	brushprimit_texdef_t	*pBP = &face->brushprimit_texdef;
 	BPMatScale(pBP->coords, sS, sT);
 

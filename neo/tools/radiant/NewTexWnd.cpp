@@ -629,9 +629,9 @@ void Texture_SetTexture(texdef_t *texdef, brushprimit_texdef_t	*brushprimit_texd
 	// store the texture coordinates for new brush primitive mode be sure that all the
 	// callers are using the default 2x2 texture
 	//
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		g_qeglobals.d_texturewin.brushprimit_texdef = *brushprimit_texdef;
-	}
+
+	g_qeglobals.d_texturewin.brushprimit_texdef = *brushprimit_texdef;
+
 
 	g_dlgFind.updateTextures(texdef->name);
 
@@ -649,14 +649,9 @@ void Texture_SetTexture(texdef_t *texdef, brushprimit_texdef_t	*brushprimit_texd
 	// store the texture coordinates for new brush primitive mode be sure that all the
 	// callers are using the default 2x2 texture
 	//
-	if (g_qeglobals.m_bBrushPrimitMode) {
-		g_qeglobals.d_texturewin.brushprimit_texdef = *brushprimit_texdef;
-	}
-
+	g_qeglobals.d_texturewin.brushprimit_texdef = *brushprimit_texdef;
 
 	Sys_UpdateWindows(W_TEXTURE);
-
-
 }
 
 const idMaterial *Texture_LoadLight(const char *name) {

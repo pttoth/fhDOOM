@@ -412,14 +412,6 @@ void CSurfaceDlg::OnDestroy() {
 
 void CSurfaceDlg::OnBtnCancel() {
 	g_qeglobals.d_texturewin.texdef = g_old_texdef;
-	if (g_changed_surface) {
-		//++timo if !g_qeglobals.m_bBrushPrimitMode send a NULL brushprimit_texdef
-		if (!g_qeglobals.m_bBrushPrimitMode) {
-			common->Printf("Warning : non brush primitive mode call to CSurfaceDlg::GetTexMods broken\n");
-			common->Printf("          ( Select_SetTexture not called )\n");
-		}
-		//		Select_SetTexture(&g_qeglobals.d_texturewin.texdef);
-	}
 	g_surfwin = NULL;
 	DestroyWindow();
 }

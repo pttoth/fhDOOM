@@ -164,11 +164,6 @@ typedef struct
 
 	bool	show_blocks;
 
-	// Timo
-	// tells if we are internally using brush primitive (texture coordinates and map format)
-	// this is a shortcut for IntForKey( g_qeglobals.d_project_entity, "brush_primit" )
-	// NOTE: must keep the two ones in sync
-	BOOL m_bBrushPrimitMode;
 
 	// used while importing brush data from file or memory buffer
 	// tells if conversion between map format and internal preferences ( m_bBrushPrimitMode ) is needed
