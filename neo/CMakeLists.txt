@@ -478,7 +478,6 @@ SET(SOURCES
   tools/compilers/dmap/dmap.cpp
   tools/compilers/dmap/dmap.h
   tools/compilers/dmap/facebsp.cpp
-  tools/compilers/dmap/gldraw.cpp
   tools/compilers/dmap/leakfile.cpp
   tools/compilers/dmap/map.cpp
   tools/compilers/dmap/optimize.cpp

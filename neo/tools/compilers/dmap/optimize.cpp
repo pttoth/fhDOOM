@@ -29,13 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../../idlib/precompiled.h"
 #pragma hdrstop
 
-//#pragma optimize( "", off )
-
 #include "dmap.h"
-#ifdef WIN32
-#include <windows.h>
-#include <GL/gl.h>
-#endif
 
 /*
 
@@ -229,90 +223,6 @@ static optVertex_t *FindOptVertex( idDrawVert *v, optimizeGroup_t *opt ) {
 
 #endif
 
-/*
-================
-DrawAllEdges
-================
-*/
-static	void DrawAllEdges( void ) {
-	int		i;
-
-	if ( !dmapGlobals.drawflag ) {
-		return;
-	}
-
-	Draw_ClearWindow();
-
-	glBegin( GL_LINES );
-	for ( i = 0 ; i < numOptEdges ; i++ ) {
-		if ( optEdges[i].v1 == NULL ) {
-			continue;
-		}
-		glColor3f( 1, 0, 0 );
-		glVertex3fv( optEdges[i].v1->pv.ToFloatPtr() );
-		glColor3f( 0, 0, 0 );
-		glVertex3fv( optEdges[i].v2->pv.ToFloatPtr() );
-	}
-	glEnd();
-	glFlush();
-
-//	GLimp_SwapBuffers();
-}
-
-/*
-================
-DrawVerts
-================
-*/
-static void DrawVerts( optIsland_t *island ) {
-	optVertex_t	*vert;
-
-	if ( !dmapGlobals.drawflag ) {
-		return;
-	}
-
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_ONE, GL_ONE );
-	glColor3f( 0.3f, 0.3f, 0.3f );
-	glPointSize( 3 );
-	glBegin( GL_POINTS );
-	for ( vert = island->verts ; vert ; vert = vert->islandLink ) {
-		glVertex3fv( vert->pv.ToFloatPtr() );
-	}
-	glEnd();
-	glDisable( GL_BLEND );
-	glFlush();
-}
-
-/*
-================
-DrawEdges
-================
-*/
-static	void DrawEdges( optIsland_t *island ) {
-	optEdge_t	*edge;
-
-	if ( !dmapGlobals.drawflag ) {
-		return;
-	}
-
-	Draw_ClearWindow();
-
-	glBegin( GL_LINES );
-	for ( edge = island->edges ; edge ; edge = edge->islandLink ) {
-		if ( edge->v1 == NULL ) {
-			continue;
-		}
-		glColor3f( 1, 0, 0 );
-		glVertex3fv( edge->v1->pv.ToFloatPtr() );
-		glColor3f( 0, 0, 0 );
-		glVertex3fv( edge->v2->pv.ToFloatPtr() );
-	}
-	glEnd();
-	glFlush();
-
-//	GLimp_SwapBuffers();
-}
 
 //=================================================================
 
@@ -482,14 +392,6 @@ static	bool TryAddNewEdge( optVertex_t *v1, optVertex_t *v2, optIsland_t *island
 		}
 	}
 
-	if ( dmapGlobals.drawflag ) {
-		glBegin( GL_LINES );
-		glColor3f( 0, ( 128 + orandom.RandomInt( 127 ) )/ 255.0, 0 );
-		glVertex3fv( v1->pv.ToFloatPtr() );
-		glVertex3fv( v2->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
-	}
 	// add it
 	e = AllocEdge();
 
@@ -540,8 +442,6 @@ static	void AddInteriorEdges( optIsland_t *island ) {
 	edgeLength_t	*lengths;
 	int				numLengths;
 	int				i;
-
-	DrawVerts( island );
 
 	// count the verts
 	c_verts = 0;
@@ -683,21 +583,6 @@ static	void RemoveIfColinear( optVertex_t *ov, optIsland_t *island ) {
 
 	if ( off > COLINEAR_EPSILON ) {
 		return;
-	}
-
-	if ( dmapGlobals.drawflag ) {
-		glBegin( GL_LINES );
-		glColor3f( 1, 1, 0 );
-		glVertex3fv( v1->pv.ToFloatPtr() );
-		glVertex3fv( v2->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
-		glBegin( GL_LINES );
-		glColor3f( 0, 1, 1 );
-		glVertex3fv( v2->pv.ToFloatPtr() );
-		glVertex3fv( v3->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
 	}
 
 	// replace the two edges with a single edge
@@ -956,24 +841,6 @@ static void CreateOptTri( optVertex_t *first, optEdge_t *e1, optEdge_t *e2, optI
 		common->Error( "CreateOptTri: invalid" );
 	}
 
-//DrawEdges( island );
-
-		// identify the third edge
-	if ( dmapGlobals.drawflag ) {
-		glColor3f(1,1,0);
-		glBegin( GL_LINES );
-		glVertex3fv( e1->v1->pv.ToFloatPtr() );
-		glVertex3fv( e1->v2->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
-		glColor3f(0,1,1);
-		glBegin( GL_LINES );
-		glVertex3fv( e2->v1->pv.ToFloatPtr() );
-		glVertex3fv( e2->v2->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
-	}
-
 	for ( opposite = second->edges ; opposite ; ) {
 		if ( opposite != e1 && ( opposite->v1 == third || opposite->v2 == third ) ) {
 			break;
@@ -992,15 +859,6 @@ static void CreateOptTri( optVertex_t *first, optEdge_t *e1, optEdge_t *e2, optI
 		return;
 	}
 
-	if ( dmapGlobals.drawflag ) {
-		glColor3f(1,0,1);
-		glBegin( GL_LINES );
-		glVertex3fv( opposite->v1->pv.ToFloatPtr() );
-		glVertex3fv( opposite->v2->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
-	}
-
 	// create new triangle
 	optTri = (optTri_t *)Mem_Alloc( sizeof( *optTri ) );
 	optTri->v[0] = first;
@@ -1009,15 +867,6 @@ static void CreateOptTri( optVertex_t *first, optEdge_t *e1, optEdge_t *e2, optI
 	optTri->midpoint = ( optTri->v[0]->pv + optTri->v[1]->pv + optTri->v[2]->pv ) * ( 1.0f / 3.0f );
 	optTri->next = island->tris;
 	island->tris = optTri;
-
-	if ( dmapGlobals.drawflag ) {
-		glColor3f( 1, 1, 1 );
-		glPointSize( 4 );
-		glBegin( GL_POINTS );
-		glVertex3fv( optTri->midpoint.ToFloatPtr() );
-		glEnd();
-		glFlush();
-	}
 
 	// find the midpoint, and scan through all the original triangles to
 	// see if it is inside any of them
@@ -1030,25 +879,6 @@ static void CreateOptTri( optVertex_t *first, optEdge_t *e1, optEdge_t *e2, optI
 		optTri->filled = true;
 	} else {
 		optTri->filled = false;
-	}
-	if ( dmapGlobals.drawflag ) {
-		if ( optTri->filled ) {
-			glColor3f( ( 128 + orandom.RandomInt( 127 ) )/ 255.0, 0, 0 );
-		} else {
-			glColor3f( 0, ( 128 + orandom.RandomInt( 127 ) ) / 255.0, 0 );
-		}
-		glBegin( GL_TRIANGLES );
-		glVertex3fv( optTri->v[0]->pv.ToFloatPtr() );
-		glVertex3fv( optTri->v[1]->pv.ToFloatPtr() );
-		glVertex3fv( optTri->v[2]->pv.ToFloatPtr() );
-		glEnd();
-		glColor3f( 1, 1, 1 );
-		glBegin( GL_LINE_LOOP );
-		glVertex3fv( optTri->v[0]->pv.ToFloatPtr() );
-		glVertex3fv( optTri->v[1]->pv.ToFloatPtr() );
-		glVertex3fv( optTri->v[2]->pv.ToFloatPtr() );
-		glEnd();
-		glFlush();
 	}
 
 	// link the triangle to it's edges
@@ -1109,23 +939,6 @@ static void BuildOptTriangles( optIsland_t *island ) {
 			continue;
 		}
 
-#if 0
-if ( dmapGlobals.drawflag && ov == (optVertex_t *)0x1845a60 ) {
-for ( e1 = ov->edges ; e1 ; e1 = e1Next ) {
-	glBegin( GL_LINES );
-	glColor3f( 0,1,0 );
-	glVertex3fv( e1->v1->pv.ToFloatPtr() );
-	glVertex3fv( e1->v2->pv.ToFloatPtr() );
-	glEnd();
-	glFlush();
-	if ( e1->v1 == ov ) {
-		e1Next = e1->v1link;
-	} else if ( e1->v2 == ov ) {
-		e1Next = e1->v2link;
-	}
-}
-}
-#endif
 		for ( e1 = ov->edges ; e1 ; e1 = e1Next ) {
 			if ( e1->v1 == ov ) {
 				second = e1->v2;
@@ -1346,33 +1159,6 @@ void AddEdgeIfNotAlready( optVertex_t *v1, optVertex_t *v2 ) {
 	LinkEdge( e );
 }
 
-
-
-/*
-=================
-DrawOriginalEdges
-=================
-*/
-static void DrawOriginalEdges( int numOriginalEdges, originalEdges_t *originalEdges ) {
-	int		i;
-
-	if ( !dmapGlobals.drawflag ) {
-		return;
-	}
-	Draw_ClearWindow();
-
-	glBegin( GL_LINES );
-	for ( i = 0 ; i < numOriginalEdges ; i++ ) {
-		glColor3f( 1, 0, 0 );
-		glVertex3fv( originalEdges[i].v1->pv.ToFloatPtr() );
-		glColor3f( 0, 0, 0 );
-		glVertex3fv( originalEdges[i].v2->pv.ToFloatPtr() );
-	}
-	glEnd();
-	glFlush();
-}
-
-
 typedef struct edgeCrossing_s {
 	struct edgeCrossing_s	*next;
 	optVertex_t		*ov;
@@ -1485,16 +1271,6 @@ void SplitOriginalEdgesAtCrossings( optimizeGroup_t *opt ) {
 	crossings = (edgeCrossing_t **)Mem_ClearedAlloc( numOriginalEdges * sizeof( *crossings ) );
 
 	for ( i = 0 ; i < numOriginalEdges ; i++ ) {
-		if ( dmapGlobals.drawflag ) {
-			DrawOriginalEdges( numOriginalEdges, originalEdges );
-			glBegin( GL_LINES );
-			glColor3f( 0, 1, 0 );
-			glVertex3fv( originalEdges[i].v1->pv.ToFloatPtr() );
-			glColor3f( 0, 0, 1 );
-			glVertex3fv( originalEdges[i].v2->pv.ToFloatPtr() );
-			glEnd();
-			glFlush();
-		}
 		for ( j = i+1 ; j < numOriginalEdges ; j++ ) {
 			optVertex_t	*v1, *v2, *v3, *v4;
 			optVertex_t	*newVert;
@@ -1713,7 +1489,6 @@ static void OptimizeIsland( optIsland_t *island ) {
 	// add space-filling fake edges so we have a complete
 	// triangulation of a convex hull before optimization
 	AddInteriorEdges( island );
-	DrawEdges( island );
 
 	// determine all the possible triangles, and decide if
 	// the are filled or empty
@@ -1722,19 +1497,16 @@ static void OptimizeIsland( optIsland_t *island ) {
 	// remove interior vertexes that have filled triangles
 	// between all their edges
 	RemoveInteriorEdges( island );
-	DrawEdges( island );
 
 	ValidateEdgeCounts( island );
 
 	// remove vertexes that only have two colinear edges
 	CombineColinearEdges( island );
 	CullUnusedVerts( island );
-	DrawEdges( island );
 
 	// add new internal edges between the remaining exterior edges
 	// to give us a full triangulation again
 	AddInteriorEdges( island );
-	DrawEdges( island );
 
 	// determine all the possible triangles, and decide if
 	// the are filled or empty
@@ -1787,8 +1559,6 @@ static void AddVertexToIsland_r( optVertex_t *vert, optIsland_t *island ) {
 static void DontSeparateIslands( optimizeGroup_t *opt ) {
 	int		i;
 	optIsland_t	island;
-
-	DrawAllEdges();
 
 	memset( &island, 0, sizeof( island ) );
 	island.group = opt;

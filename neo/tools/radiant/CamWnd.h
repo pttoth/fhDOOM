@@ -128,7 +128,6 @@ protected:
 	bool	soundMode;
 	void	FreeRendererState();
 	void	UpdateCaption();
-	bool	BuildBrushRenderData(brush_t *brush);
 
 	camera_t m_Camera;
 	int	m_nCambuttonstate;

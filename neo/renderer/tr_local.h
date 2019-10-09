@@ -36,8 +36,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "RenderProgram.h"
 #include "RenderMatrix.h"
 
-void testFramebuffer();
-
 class idRenderWorldLocal;
 
 const float	DEFAULT_FOG_DISTANCE = 500.0f;
@@ -1320,7 +1318,6 @@ void R_CheckForEntityDefsUsingModel( idRenderModel *model );
 
 void R_ClearEntityDefDynamicModel( idRenderEntityLocal *def );
 void R_FreeEntityDefDerivedData( idRenderEntityLocal *def, bool keepDecals, bool keepCachedDynamicModel );
-void R_FreeEntityDefCachedDynamicModel( idRenderEntityLocal *def );
 void R_FreeEntityDefDecals( idRenderEntityLocal *def );
 void R_FreeEntityDefOverlay( idRenderEntityLocal *def );
 void R_FreeEntityDefFadedDecals( idRenderEntityLocal *def, int time );
