@@ -2147,8 +2147,8 @@ AddPoint
 ==================
 */
 static void AddPoint( patchMesh_t *p,idVec3 *v,bool bWeldOrDrill = true ) {
-	int	nDim1	= (g_pParentWnd->ActiveXY()->GetViewType() == YZ) ? 1 : 0;
-	int	nDim2	= (g_pParentWnd->ActiveXY()->GetViewType() == XY) ? 1 : 2;
+	int	nDim1	= (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::YZ) ? 1 : 0;
+	int	nDim2	= (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XY) ? 1 : 2;
 	g_qeglobals.d_move_points[g_qeglobals.d_num_move_points++] = v;
 	if ( (g_bPatchWeld || g_bPatchDrillDown) && bWeldOrDrill ) {
 		for ( int i = 0 ; i < p->width ; i++ ) {
@@ -3798,8 +3798,8 @@ void Patch_BendHandleESC() {
 }
 
 void Patch_SetBendRotateOrigin( patchMesh_t *p ) {
-	int	nType	= g_pParentWnd->ActiveXY()->GetViewType();
-	int	nDim3	= (nType == XY) ? 2 : (nType == YZ) ? 0 : 1;
+	ViewType	nType	= g_pParentWnd->ActiveXY()->GetViewType();
+	int	nDim3	= (nType == ViewType::XY) ? 2 : (nType == ViewType::YZ) ? 0 : 1;
 	g_vBendOrigin[nDim3] = 0;
 	VectorCopy(g_vBendOrigin, g_pParentWnd->ActiveXY()->RotateOrigin());
 	return;
@@ -4029,8 +4029,8 @@ void Patch_SubdivideSelected( bool subdivide,int horz,int vert ) {
 
 
 static bool within( idVec3 vTest,idVec3 vTL,idVec3 vBR ) {
-	int	nDim1	= (g_pParentWnd->ActiveXY()->GetViewType() == YZ) ? 1 : 0;
-	int	nDim2	= (g_pParentWnd->ActiveXY()->GetViewType() == XY) ? 1 : 2;
+	int	nDim1	= (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::YZ) ? 1 : 0;
+	int	nDim2	= (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XY) ? 1 : 2;
 	if ( (vTest[nDim1] > vTL[nDim1] && vTest[nDim1] < vBR[nDim1]) || (vTest[nDim1] < vTL[nDim1] && vTest[nDim1] > vBR[nDim1]) ) {
 		if ( (vTest[nDim2] > vTL[nDim2] && vTest[nDim2] < vBR[nDim2]) || (vTest[nDim2] < vTL[nDim2] && vTest[nDim2] > vBR[nDim2]) ) {
 			return true;

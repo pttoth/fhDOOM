@@ -33,7 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "QE3.H"
 #include "../../renderer/ImmediateMode.h"
 
-void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, ViewType viewType);
 
 idCameraDef splineList;
 idCameraDef *g_splineList = &splineList;
@@ -55,7 +55,7 @@ void glLabeledPoint(idVec4 &color, idVec3 &point, float size, const char *label)
 	v.y += 1;
 	v.z += 1;
 
-  drawText(label, 1.0f, v, color.ToVec3(), 2);
+  drawText(label, 1.0f, v, color.ToVec3(), (ViewType)2);
 //	glRasterPos3fv( v.ToFloatPtr() );
 //	glCallLists( strlen(label), GL_UNSIGNED_BYTE, label );
 }

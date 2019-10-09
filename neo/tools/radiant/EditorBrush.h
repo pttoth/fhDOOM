@@ -102,7 +102,7 @@ brush_t *	Brush_Clone (brush_t *b);
 brush_t *	Brush_FullClone(brush_t *b);
 brush_t *	Brush_Create (idVec3 mins, idVec3 maxs, texdef_t *texdef);
 void		Brush_Draw( const brush_t *b, bool bSelected);
-void		Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color);
+void		Brush_DrawXY(brush_t *b, ViewType nViewType, bool bSelected, const idVec3& color);
 void		Brush_SplitBrushByFace (brush_t *in, face_t *f, brush_t **front, brush_t **back);
 void		Brush_SelectFaceForDragging (brush_t *b, face_t *f, bool shear);
 void		Brush_SetTexture (brush_t *b, texdef_t *texdef, brushprimit_texdef_t *brushprimit_texdef, bool bFitScale = false);
@@ -130,7 +130,7 @@ void		Face_MakePlane (face_t *f);
 class fhImmediateMode;
 void		Face_Draw( const face_t *face, const idVec4& color );
 void		Face_DrawOutline( const face_t *face, const idVec3& color );
-void    Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, int viewType);
+void		Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, ViewType viewType);
 
 void		Face_TextureVectors (face_t *f, float STfromXYZ[2][4]);
 void		Face_FitTexture( face_t * face, float height, float width );

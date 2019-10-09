@@ -63,7 +63,7 @@ public:
 		nType = type;
 	}
 
-	bool PointWithin(idVec3 p, int nView = -1);
+	bool PointWithin(idVec3 p, ViewType nView = (ViewType)-1);
 };
 
 

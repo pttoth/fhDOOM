@@ -213,7 +213,7 @@ void CCamWnd::OnPaint() {
 	g_pSplitList = NULL;
 	if (g_bClipMode) {
 		if (g_Clip1.Set() && g_Clip2.Set()) {
-			g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
+			g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
 		}
 	}
 

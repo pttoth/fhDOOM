@@ -145,15 +145,13 @@ public:
 
 
 	virtual ~CXYWnd();
-  void SetViewType(int n);
-  int GetViewType() {return  m_nViewType; };
+  void SetViewType(ViewType n);
+  ViewType GetViewType() {return  m_nViewType; };
   void SetScale(float f) {m_fScale = f;};
   float Scale() {return m_fScale;};
   int Width() {return m_nWidth;}
   int Height() {return m_nHeight;}
   bool m_bActive;
-
-	void UpdateViewDependencies( void );
 
 	void DrawPrecisionCrosshair();
 	void CyclePrecisionCrosshairMode();
@@ -205,7 +203,7 @@ protected:
   //friend C3DFXCamWnd;
 
   CMenu m_mnuDrop;
-  int m_nViewType;
+  ViewType m_nViewType;
   const char* m_sViewName;
 
   unsigned int m_nTimerID;

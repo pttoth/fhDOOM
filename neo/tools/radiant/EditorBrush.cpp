@@ -38,7 +38,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/ImmediateMode.h"
 
 void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam );
-void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, ViewType viewType);
 
 // globals
 static int		g_nBrushId = 0;
@@ -644,7 +644,7 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 		}
 	}
 
-	int viewType = g_pParentWnd->ActiveXY()->GetViewType();
+	ViewType viewType = g_pParentWnd->ActiveXY()->GetViewType();
 	float scale = g_pParentWnd->ActiveXY()->Scale();
 
 	if (g_qeglobals.d_savedinfo.show_names && scale >= 1.0f) {
@@ -661,15 +661,15 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 			float halfHeight = 4.0f / scale;
 
 			switch (viewType) {
-			case XY:
+			case ViewType::XY:
 				origin.x -= halfWidth;
 				origin.y += halfHeight;
 				break;
-			case XZ:
+			case ViewType::XZ:
 				origin.x -= halfWidth;
 				origin.z += halfHeight;
 				break;
-			case YZ:
+			case ViewType::YZ:
 				origin.y -= halfWidth;
 				origin.z += halfHeight;
 				break;
@@ -2012,13 +2012,13 @@ void Brush_MakeSided(int sides) {
 	if (g_pParentWnd->ActiveXY()) {
 		switch (g_pParentWnd->ActiveXY()->GetViewType())
 		{
-			case XY:
+			case ViewType::XY:
 				axis = 2;
 				break;
-			case XZ:
+			case ViewType::XZ:
 				axis = 1;
 				break;
-			case YZ:
+			case ViewType::YZ:
 				axis = 0;
 				break;
 		}
@@ -4325,7 +4325,7 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 Brush_DrawXY
 ================
 */
-void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {
+void Brush_DrawXY(brush_t *b, ViewType nViewType, bool bSelected, const idVec3& color) {
 	if ( b->hiddenBrush ) {
 		return;
 	}
@@ -4421,12 +4421,12 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
   int order;
 	for (face = b->brush_faces, order = 0; face; face = face->next, order++) {
 		// only draw polygons facing in a direction we care about
-		if (nViewType == XY) {
+		if (nViewType == ViewType::XY) {
 			if (face->plane[2] <= 0) {
 				continue;
 			}
 		} else {
-			if (nViewType == XZ) {
+			if (nViewType == ViewType::XZ) {
 				if (face->plane[1] <= 0) {
 					continue;
 				}
@@ -4775,7 +4775,7 @@ void Brush_GetBounds( brush_t *b, idBounds &bo ) {
 
 
 
-void Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, int viewType) {
+void Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, ViewType viewType) {
   for (; brush != end; brush = brush->next) {
     if (brush->hiddenBrush) {
       continue;
@@ -4787,13 +4787,13 @@ void Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_
 
     for (const face_t* face = brush->brush_faces; face; face = face->next) {
       // only draw polygons facing in a direction we care about
-      if (viewType == XY) {
+      if (viewType == ViewType::XY) {
         if (face->plane[2] <= 0) {
           continue;
         }
       }
       else {
-        if (viewType == XZ) {
+        if (viewType == ViewType::XZ) {
           if (face->plane[1] <= 0) {
             continue;
           }

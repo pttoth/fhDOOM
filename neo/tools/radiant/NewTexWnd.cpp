@@ -36,7 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../../renderer/tr_local.h"
 #include "../../renderer/ImmediateMode.h"
-void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, ViewType viewType);
 
 #ifdef _DEBUG
 	#define new DEBUG_NEW
@@ -355,7 +355,7 @@ void CNewTexWnd::OnPaint() {
 				else {
 					name++;
 				}
-        drawText(name, 0.8f, idVec3(draw.x, draw.y - labelHeight + 2, 0), idVec3(1,1,1), XY);
+        drawText(name, 0.8f, idVec3(draw.x, draw.y - labelHeight + 2, 0), idVec3(1,1,1), ViewType::XY);
 				//glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
 
 			}

@@ -299,6 +299,6 @@ extern	eclass_t	*eclass;
 #define	W_ALL			0xFFFFFFFF
 
 // used in some Drawing routines
-enum VIEWTYPE {YZ, XZ, XY};
+enum class ViewType {YZ, XZ, XY};
 
 #endif

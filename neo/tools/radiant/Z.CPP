@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "qe3.h"
 #include "../../renderer/ImmediateMode.h"
-void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, ViewType viewType);
 #define PAGEFLIPS	2
 
 z_t z;
@@ -104,15 +104,15 @@ void Z_MouseDown(int x, int y, int buttons) {
 			bReset  = (GetKeyState(VK_F4) & 0x8000) != 0;
 		}
 		else
-		{	
+		{
 			// 3 button mice...
 			//
 			bToggle = (buttons == (MK_RBUTTON|MK_SHIFT|MK_CONTROL));
 			bSetTop = (buttons == (MK_RBUTTON|MK_SHIFT));
 			bSetBot = (buttons == (MK_RBUTTON|MK_CONTROL));
 			bReset  = (GetKeyState(VK_F4) & 0x8000) != 0;
-		}				
-		
+		}
+
 		if (bToggle)
 		{
 			g_pParentWnd->GetZWnd()->m_pZClip->Enable(!(g_pParentWnd->GetZWnd()->m_pZClip->IsEnabled()));
@@ -126,7 +126,7 @@ void Z_MouseDown(int x, int y, int buttons) {
 		    Sys_UpdateWindows (W_ALL);
 			return;
 		}
-		
+
 		if (bSetBot)
 		{
 			g_pParentWnd->GetZWnd()->m_pZClip->SetBottom(org[2]);
@@ -213,7 +213,7 @@ void Z_MouseMoved(int x, int y, int buttons) {
 
 	// control mbutton = move camera
 	int nMouseButton = g_PrefsDlg.m_nMouseButtons == 2 ? MK_RBUTTON : MK_MBUTTON;
-	if ((buttons == (MK_CONTROL | nMouseButton)) || (buttons == (MK_CONTROL | MK_LBUTTON))) {	
+	if ((buttons == (MK_CONTROL | nMouseButton)) || (buttons == (MK_CONTROL | MK_LBUTTON))) {
 		g_pParentWnd->GetCamera()->Camera().origin[2] = z.origin[2] + (y - (z.height / 2)) / z.scale;
 		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
 	}
@@ -287,11 +287,11 @@ void Z_DrawGrid(void) {
 //	im.Color3fv(.ToFloatPtr());
 
 	for (zz = zb; zz < ze; zz += 64) {
-    
+
 //		glRasterPos2f(-w + 1, zz);
 		sprintf(text, "%i", (int)zz);
 
-    drawText(text, 0.8f, idVec3(-w +1, zz, 0), g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT], XY);
+    drawText(text, 0.8f, idVec3(-w +1, zz, 0), g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT], ViewType::XY);
 //		glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
 	}
 }
@@ -328,7 +328,7 @@ void ZDrawCameraIcon(void) {
 void ZDrawZClip()
 {
 	float x,y;
-	
+
 	x = 0;
 	y = g_pParentWnd->GetCamera()->Camera().origin[2];
 
@@ -345,7 +345,7 @@ GLbitfield	glbitClear = GL_COLOR_BUFFER_BIT;	// HACK
  =======================================================================================================================
  */
 void Z_Draw(void) {
-	brush_t		*brush;	
+	brush_t		*brush;
 	float		top, bottom;
 	idVec3		org_top, org_bottom, dir_up, dir_down;
 	int			xCam = z.width / 3;
@@ -443,7 +443,7 @@ void Z_Draw(void) {
 		im.Vertex2f(xCam, top);
 		im.Vertex2f(-xCam, top);
 		im.End();
-    
+
 		im.Color3f(1, 1, 1);
 		im.Begin(GL_LINE_LOOP);
 		im.Vertex2f(-xCam, bottom);

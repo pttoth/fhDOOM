@@ -1084,8 +1084,8 @@ void Select_CompleteTall(void) {
 	VectorCopy(selected_brushes.next->maxs, maxs);
 	Select_Delete();
 
-	int nDim1 = (g_pParentWnd->ActiveXY()->GetViewType() == YZ) ? 1 : 0;
-	int nDim2 = (g_pParentWnd->ActiveXY()->GetViewType() == XY) ? 1 : 2;
+	int nDim1 = (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::YZ) ? 1 : 0;
+	int nDim2 = (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XY) ? 1 : 2;
 
 	for (b = active_brushes.next; b != &active_brushes; b = next) {
 		next = b->next;
@@ -1130,8 +1130,8 @@ void Select_PartialTall(void) {
 	VectorCopy(selected_brushes.next->maxs, maxs);
 	Select_Delete();
 
-	int nDim1 = (g_pParentWnd->ActiveXY()->GetViewType() == YZ) ? 1 : 0;
-	int nDim2 = (g_pParentWnd->ActiveXY()->GetViewType() == XY) ? 1 : 2;
+	int nDim1 = (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::YZ) ? 1 : 0;
+	int nDim2 = (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XY) ? 1 : 2;
 
 	for (b = active_brushes.next; b != &active_brushes; b = next) {
 		next = b->next;

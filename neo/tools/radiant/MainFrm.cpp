@@ -1638,15 +1638,15 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext *pContext) {
 
 	m_pXYWnd = new CXYWnd();
 	m_pXYWnd->Create(XY_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1235);
-	m_pXYWnd->SetViewType(XY);
+	m_pXYWnd->SetViewType(ViewType::XY);
 
 	m_pXZWnd = new CXYWnd();
 	m_pXZWnd->Create(XY_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1236);
-	m_pXZWnd->SetViewType(XZ);
+	m_pXZWnd->SetViewType(ViewType::XZ);
 
 	m_pYZWnd = new CXYWnd();
 	m_pYZWnd->Create(XY_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1237);
-	m_pYZWnd->SetViewType(YZ);
+	m_pYZWnd->SetViewType(ViewType::YZ);
 
 	CRect	rctWork;
 
@@ -1886,7 +1886,7 @@ void CMainFrame::OnViewMediaBrowser() {
  =======================================================================================================================
  */
 void CMainFrame::OnViewFront() {
-	m_pXYWnd->SetViewType(YZ);
+	m_pXYWnd->SetViewType(ViewType::YZ);
 	m_pXYWnd->PositionView();
 	Sys_UpdateWindows(W_XY);
 }
@@ -2144,7 +2144,7 @@ void CMainFrame::OnViewUpfloor() {
  =======================================================================================================================
  */
 void CMainFrame::OnViewXy() {
-	m_pXYWnd->SetViewType(XY);
+	m_pXYWnd->SetViewType(ViewType::XY);
 	m_pXYWnd->PositionView();
 	Sys_UpdateWindows(W_XY);
 }
@@ -2247,7 +2247,7 @@ void CMainFrame::OnViewZzoomout() {
  =======================================================================================================================
  */
 void CMainFrame::OnViewSide() {
-	m_pXYWnd->SetViewType(XZ);
+	m_pXYWnd->SetViewType(ViewType::XZ);
 	m_pXYWnd->PositionView();
 	Sys_UpdateWindows(W_XY);
 }
@@ -3312,9 +3312,9 @@ void CMainFrame::OnViewCameraupdate() {
 
 	if (g_qeglobals.flatRotation) {
 		g_qeglobals.rotateAxis = 0;
-		if (ActiveXY()->GetViewType() == XY) {
+		if (ActiveXY()->GetViewType() == ViewType::XY) {
 			g_qeglobals.rotateAxis = 2;
-		} else if (ActiveXY()->GetViewType() == XZ) {
+		} else if (ActiveXY()->GetViewType() == ViewType::XZ) {
 			g_qeglobals.rotateAxis = 1;
 		}
 	}
@@ -3563,22 +3563,22 @@ void CMainFrame::OnEditEntityinfo() {
  =======================================================================================================================
  */
 void CMainFrame::OnViewNextview() {
-	if (m_pXYWnd->GetViewType() == XY) {
-		m_pXYWnd->SetViewType(XZ);
+	if (m_pXYWnd->GetViewType() == ViewType::XY) {
+		m_pXYWnd->SetViewType(ViewType::XZ);
 	}
-	else if (m_pXYWnd->GetViewType() == XZ) {
-		m_pXYWnd->SetViewType(YZ);
+	else if (m_pXYWnd->GetViewType() == ViewType::XZ) {
+		m_pXYWnd->SetViewType(ViewType::YZ);
 	}
 	else {
-		m_pXYWnd->SetViewType(XY);
+		m_pXYWnd->SetViewType(ViewType::XY);
 	}
 
 	m_pXYWnd->PositionView();
 	if (g_qeglobals.flatRotation) {
 		g_qeglobals.rotateAxis = 0;
-		if (ActiveXY()->GetViewType() == XY) {
+		if (ActiveXY()->GetViewType() == ViewType::XY) {
 			g_qeglobals.rotateAxis = 2;
-		} else if (ActiveXY()->GetViewType() == XZ) {
+		} else if (ActiveXY()->GetViewType() == ViewType::XZ) {
 			g_qeglobals.rotateAxis = 1;
 		}
 	}
@@ -4093,9 +4093,9 @@ void CMainFrame::OnSelectMouserotate() {
 			// may not work if no brush selected, see return value
 			if (ActiveXY()->SetRotateMode(true)) {
 				g_qeglobals.rotateAxis = 0;
-				if (ActiveXY()->GetViewType() == XY) {
+				if (ActiveXY()->GetViewType() == ViewType::XY) {
 					g_qeglobals.rotateAxis = 2;
-				} else if (ActiveXY()->GetViewType() == XZ) {
+				} else if (ActiveXY()->GetViewType() == ViewType::XZ) {
 					g_qeglobals.rotateAxis = 1;
 				}
 				m_wndToolBar.GetToolBarCtrl().CheckButton(ID_SELECT_MOUSEROTATE, TRUE);
@@ -4816,9 +4816,9 @@ void CMainFrame::OnSelectionSelectNudgeup() {
 void CMainFrame::NudgeSelection(int nDirection, float fAmount) {
 	if (ActiveXY()->RotateMode()) {
 		int nAxis = 0;
-		if (ActiveXY()->GetViewType() == XY) {
+		if (ActiveXY()->GetViewType() == ViewType::XY) {
 			nAxis = 2;
-		} else if (g_pParentWnd->ActiveXY()->GetViewType() == XZ) {
+		} else if (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XZ) {
 			nAxis = 1;
 			fAmount = -fAmount;
 		}
@@ -4873,17 +4873,17 @@ void CMainFrame::NudgeSelection(int nDirection, float fAmount) {
 		// 0 - left, 1 - up, 2 - right, 3 - down
 		int nDim;
 		if (nDirection == 0) {
-			nDim = ActiveXY()->GetViewType() == YZ ? 1 : 0;
+			nDim = ActiveXY()->GetViewType() == ViewType::YZ ? 1 : 0;
 			fAmount = -fAmount;
 		}
 		else if (nDirection == 1) {
-			nDim = ActiveXY()->GetViewType() == XY ? 1 : 2;
+			nDim = ActiveXY()->GetViewType() == ViewType::XY ? 1 : 2;
 		}
 		else if (nDirection == 2) {
-			nDim = ActiveXY()->GetViewType() == YZ ? 1 : 0;
+			nDim = ActiveXY()->GetViewType() == ViewType::YZ ? 1 : 0;
 		}
 		else {
-			nDim = ActiveXY()->GetViewType() == XY ? 1 : 2;
+			nDim = ActiveXY()->GetViewType() == ViewType::XY ? 1 : 2;
 			fAmount = -fAmount;
 		}
 

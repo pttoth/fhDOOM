@@ -518,12 +518,12 @@ static void MoveSelection( const idVec3 &orgMove ) {
 		float	fDeg = -move[2];
 		float	fAdj = move[2];
 	   	int axis = 0;
-		if (g_pParentWnd->ActiveXY()->GetViewType() == XY) {
+		if (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XY) {
 			fDeg = -move[1];
 			fAdj = move[1];
 			axis = 2;
 		}
-		else if (g_pParentWnd->ActiveXY()->GetViewType() == XZ) {
+		else if (g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XZ) {
 			fDeg = move[2];
 			fAdj = move[2];
 			axis = 1;
