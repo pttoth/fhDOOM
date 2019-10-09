@@ -1437,7 +1437,7 @@ void CMainFrame::OnDestroy() {
 		g_PrefsDlg.SavePrefs();
 	}
 
-	CleanUpEntities();
+	Eclass_Cleanup();
 
 	while (active_brushes.next != &active_brushes) {
 		Brush_Free(active_brushes.next, false);

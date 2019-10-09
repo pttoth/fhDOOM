@@ -259,11 +259,12 @@ struct evar_t {
 
 struct eclass_t
 {
-	eclass_t *next;
-	idStr	name;
+	eclass_t(const char* name, idVec3 color);
+
+	const idStr	name;
 	bool	fixedsize;
 	idVec3	mins, maxs;
-	idVec3	color;
+	const idVec3 color;
 	texdef_t texdef;
 	idStr	comments;
 	idStr	desc;
@@ -278,7 +279,8 @@ struct eclass_t
 	idList<evar_t> vars;
 };
 
-extern	eclass_t	*eclass;
+//extern	eclass_t	*eclass;
+extern idList<eclass_t*> eclasses;
 
 /*
 ** window bits

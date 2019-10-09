@@ -310,7 +310,6 @@ extern CFindTextureDlg& g_dlgFind;
 extern idCVar radiant_entityMode;
 
 // externs
-extern void CleanUpEntities();
 extern void QE_CountBrushesAndUpdateStatusBar();
 extern void	QE_CheckAutoSave();
 extern bool SaveWindowState(HWND hWnd, const char *pszName);

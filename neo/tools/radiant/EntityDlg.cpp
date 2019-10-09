@@ -116,10 +116,9 @@ int CEntityDlg::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 
 void CEntityDlg::AddClassNames() {
 	comboClass.ResetContent();
-	for (eclass_t *pec = eclass; pec; pec = pec->next) {
+	for (auto pec : eclasses) {
 		comboClass.AddString(pec->name);
 	}
-
 }
 
 BEGIN_MESSAGE_MAP(CEntityDlg, CDialog)

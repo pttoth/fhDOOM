@@ -1829,11 +1829,10 @@ void CXYWnd::HandleDrop() {
 
 		CMenu	*pChild = NULL;
 
-		eclass_t	*e;
 		CString		strActive;
 		CString		strLast;
 		CString		strName;
-		for (e = eclass; e; e = e->next) {
+		for (auto e : eclasses) {
 			strLast = strName;
 			strName = e->name;
 

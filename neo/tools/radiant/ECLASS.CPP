@@ -33,12 +33,29 @@ If you have questions concerning this license or the applicable additional terms
 #include "io.h"
 #include "../../renderer/tr_local.h"
 
+idList<eclass_t*> eclasses;
+
+eclass_t::eclass_t(const char* name, idVec3 color)
+	: name(name)
+	, color(color) {
+	fixedsize = false;
+	mins.Zero();
+	maxs.Zero();
+	color.Zero();
+	memset(&texdef, 0, sizeof(texdef));
+	modelHandle = NULL;
+	entityModel = NULL;
+	nShowFlags = 0;
+}
+
+namespace {
+
 struct evarPrefix_t {
 	int type;
 	const char *prefix;
 };
 
-const evarPrefix_t EvarPrefixes[] = {
+static const evarPrefix_t EvarPrefixes[] = {
 	{ EVAR_STRING,  "editor_var " },
 	{ EVAR_INT,		"editor_int " },
 	{ EVAR_FLOAT,	"editor_float " },
@@ -50,10 +67,8 @@ const evarPrefix_t EvarPrefixes[] = {
 	{ EVAR_SOUND,	"editor_snd "}
 };
 
-const int NumEvarPrefixes = sizeof(EvarPrefixes) / sizeof(evarPrefix_t);
-
-eclass_t	*eclass = NULL;
-eclass_t	*eclass_bad = NULL;
+static const int NumEvarPrefixes = sizeof(EvarPrefixes) / sizeof(evarPrefix_t);
+static eclass_t	*eclass_bad = NULL;
 
 /*
 
@@ -69,60 +84,9 @@ Flag names can follow the size description:
 
 */
 
-void CleanEntityList( eclass_t *&pList ) {
-	while (pList) {
-		eclass_t* pTemp = pList->next;
-		delete pList;
-		pList = pTemp;
-	}
-	pList = NULL;
-}
-
-
-void CleanUpEntities()
-{
-	CleanEntityList(eclass);
-
-	if ( eclass_bad ) {
-		delete eclass_bad;
-		eclass_bad = NULL;
-	}
-}
-
-bool LoadModel(const char *pLocation, eclass_t *e, idVec3 &vMin, idVec3 &vMax, const char *pSkin)
-{
-	vMin[0] = vMin[1] = vMin[2] = 999999;
-	vMax[0] = vMax[1] = vMax[2] = -999999;
-
-	if (strstr(pLocation, ".ase") != NULL)	// FIXME: not correct!
-	{
-		idBounds b;
-		e->modelHandle = renderModelManager->FindModel( pLocation );
-		b = e->modelHandle->Bounds( NULL );
-		VectorCopy(b[0], vMin);
-		VectorCopy(b[1], vMax);
-		return true;
-	}
-	return false;
-}
-
-eclass_t *EClass_Alloc( void ) {
-	eclass_t *e = new eclass_t;
-	e->fixedsize = false;
-	e->mins.Zero();
-	e->maxs.Zero();
-	e->color.Zero();
-	memset( &e->texdef, 0, sizeof( e->texdef ) );
-	e->modelHandle = NULL;
-	e->entityModel = NULL;
-	e->nShowFlags = 0;
-	e->next = NULL;
-	return e;
-}
 
 
 eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
-	eclass_t			*e;
 	const idKeyValue	*kv;
 
 	// only include entityDefs with "editor_" values in them
@@ -130,10 +94,7 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 		return NULL;
 	}
 
-	e = EClass_Alloc();
-	if ( !e ) {
-		return NULL;
-	}
+	auto e = new eclass_t(name, d->GetVector("editor_color", "0 0 1"));
 
 	e->defArgs = *d;
 
@@ -141,9 +102,6 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 	idStr text;
 	idStr varname;
 	idStr defaultStr;
-
-	e->name = name;
-	d->GetVector("editor_color", "0 0 1", e->color);
 
 	d->GetString("editor_mins", "", str);
 	if (str != "?") {
@@ -263,77 +221,23 @@ eclass_t *EClass_InitFromDict( const idDict *d, const char *name ) {
 	return e;
 }
 
-void EClass_InsertSortedList(eclass_t *&pList, eclass_t *e)
-{
-	eclass_t	*s;
-
-	if (!pList)
-	{
-		pList = e;
-		return;
-	}
-
-
-	s = pList;
-	if (stricmp (e->name, s->name) < 0)
-	{
-		e->next = s;
-		pList = e;
-		return;
-	}
-
-	do
-	{
-		if (!s->next || stricmp (e->name, s->next->name) < 0)
-		{
-			e->next = s->next;
-			s->next = e;
-			return;
-		}
-		s=s->next;
-	} while (1);
+static int cmp_eclass(eclass_t* const* _a, eclass_t* const* _b) {
+	const eclass_t* a = *_a;
+	const eclass_t* b = *_b;
+	assert(a);
+	assert(b);
+	return stricmp(a->name, b->name);
 }
 
-/*
-=================
-Eclass_InsertAlphabetized
-=================
-*/
-void Eclass_InsertAlphabetized (eclass_t *e)
-{
-#if 1
-  EClass_InsertSortedList(eclass, e);
-#else
-	eclass_t	*s;
-
-	if (!eclass)
-	{
-		eclass = e;
-		return;
-	}
-
-
-	s = eclass;
-	if (stricmp (e->name, s->name) < 0)
-	{
-		e->next = s;
-		eclass = e;
-		return;
-	}
-
-	do
-	{
-		if (!s->next || stricmp (e->name, s->next->name) < 0)
-		{
-			e->next = s->next;
-			s->next = e;
-			return;
-		}
-		s=s->next;
-	} while (1);
-#endif
 }
 
+void Eclass_Cleanup()
+{
+	eclasses.DeleteContents(true);
+
+	delete eclass_bad;
+	eclass_bad = NULL;
+}
 
 void Eclass_InitForSourceDirectory()
 {
@@ -343,51 +247,44 @@ void Eclass_InitForSourceDirectory()
 		if ( def ) {
 			eclass_t *e = EClass_InitFromDict( &def->dict, def->GetName() );
 			if ( e ) {
-				Eclass_InsertAlphabetized (e);
+				eclasses.Append(e);
 			}
 		}
 	}
 
-	eclass_bad = EClass_Alloc();
+	eclasses.Sort(cmp_eclass);
+
+	eclass_bad = new eclass_t("UKNOWN ENTITY CLASS", idVec3(0, 0.5f, 0));
 	if ( !eclass_bad ) {
 		return;
 	}
-	eclass_bad->color.x = 0.0f;
-	eclass_bad->color.y = 0.5f;
-	eclass_bad->color.z = 0.0f;
 	eclass_bad->fixedsize = false;
-	eclass_bad->name = Mem_CopyString( "UKNOWN ENTITY CLASS" );
 }
 
 eclass_t *Eclass_ForName (const char *name, bool has_brushes)
 {
-	eclass_t	*e;
-	char buff[1024];
-
 	if (!name) {
 		return eclass_bad;
 	}
 
-	for ( e = eclass; e; e = e->next ) {
-		if ( !strcmp( name, e->name ) ) {
+	for (auto e : eclasses) {
+		if (!strcmp(name, e->name)) {
 			return e;
 		}
 	}
 
-	e = EClass_Alloc();
-	if ( !e ) {
-		return NULL;
-	}
-	e->name = Mem_CopyString( name );
+	char buff[1024];
+
+	auto e = new eclass_t(name, idVec3(0, 0.5f, 0));
+
 	sprintf(buff, "%s not found in def/*.def\n", name);
 	e->comments = Mem_CopyString( buff );
-	e->color.x = 0.0f;
-	e->color.y = 0.5f;
-	e->color.z = 0.0f;
 	e->fixedsize = !has_brushes;
 	e->mins.x = e->mins.y = e->mins.z = -8.0f;
 	e->maxs.x = e->maxs.y = e->maxs.z = 8.0f;
-	Eclass_InsertAlphabetized( e );
+
+	eclasses.Append(e);
+	eclasses.Sort(cmp_eclass);
 
 	return e;
 }
