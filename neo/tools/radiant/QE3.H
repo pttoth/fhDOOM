@@ -329,7 +329,6 @@ extern brush_t g_brFrontSplits;
 extern brush_t g_brBackSplits;
 extern CClipPoint g_Clip1;
 extern CClipPoint g_Clip2;
-extern brush_t* g_pSplitList;
 extern bool g_bScreenUpdates;
 extern SCommandInfo g_Commands[];
 extern int g_nCommandCount;

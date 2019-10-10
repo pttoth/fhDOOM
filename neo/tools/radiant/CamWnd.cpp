@@ -34,22 +34,18 @@ If you have questions concerning this license or the applicable additional terms
 #include "XYWnd.h"
 #include "CamWnd.h"
 #include "splines.h"
-#include <GL/glu.h>
 
 #include "../../renderer/tr_local.h"
 #include "../../renderer/model_local.h"	// for idRenderModelMD5
 #include "../../renderer/ImmediateMode.h"
 
-#ifdef _DEBUG
-	#define new DEBUG_NEW
-	#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-extern void DrawPathLines();
+void DrawPathLines();
 
 int g_axialAnchor = -1;
 int g_axialDest = -1;
 bool g_bAxialMode = false;
+
+static brush_t *g_pSplitList = NULL;
 
 void ValidateAxialPoints() {
 	int faceCount = g_selectedFaces.Num();
@@ -186,7 +182,6 @@ void CCamWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 	g_pParentWnd->HandleKey(nChar, nRepCnt, nFlags);
 }
 
-brush_t *g_pSplitList = NULL;
 
 /*
  =======================================================================================================================
