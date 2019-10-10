@@ -68,7 +68,7 @@ static char		THIS_FILE[] = __FILE__;
 #endif
 
 // globals
-CString			g_strAppPath;						// holds the full path of the executable
+static CString	g_strAppPath;						// holds the full path of the executable
 CMainFrame		*g_pParentWnd = NULL;				// used to precast to CMainFrame
 CPrefsDlg		g_Preferences;						// global prefs instance
 CPrefsDlg		&g_PrefsDlg = g_Preferences;		// reference used throughout
@@ -1395,7 +1395,6 @@ void CMainFrame::OnDestroy() {
 	SaveWindowPlacement(m_pYZWnd->GetSafeHwnd(), "radiant_yzwindow");
 	SaveWindowPlacement(m_pCamWnd->GetSafeHwnd(), "radiant_camerawindow");
 	SaveWindowPlacement(m_pZWnd->GetSafeHwnd(), "radiant_zwindow");
-	SaveWindowState(g_Inspectors->texWnd.GetSafeHwnd(), "radiant_texwindow");
 
 	if (m_pXYWnd->GetSafeHwnd()) {
 		m_pXYWnd->SendMessage(WM_DESTROY, 0, 0);

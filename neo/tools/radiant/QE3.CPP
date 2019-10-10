@@ -229,7 +229,6 @@ void QE_Init(void) {
 }
 
 
-int g_numbrushes, g_numentities;
 
 /*
  =======================================================================================================================
@@ -242,8 +241,8 @@ void QE_CountBrushesAndUpdateStatusBar(void) {
 	// entity_t *e;
 	brush_t		*b, *next;
 
-	g_numbrushes = 0;
-	g_numentities = 0;
+	int g_numbrushes = 0;
+	int g_numentities = 0;
 
 	if (active_brushes.next != NULL) {
 		for (b = active_brushes.next; b != NULL && b != &active_brushes; b = next) {
@@ -264,7 +263,11 @@ void QE_CountBrushesAndUpdateStatusBar(void) {
 	 * g_numentities != MAX_MAP_ENTITIES ; e = e->next) { g_numentities++; } }
 	 */
 	if (((g_numbrushes != s_lastbrushcount) || (g_numentities != s_lastentitycount)) || (!s_didonce)) {
-		Sys_UpdateStatusBar();
+
+		char numbrushbuffer[100] = "";
+
+		sprintf(numbrushbuffer, "Brushes: %d Entities: %d", g_numbrushes, g_numentities);
+		Sys_Status(numbrushbuffer, 2);
 
 		s_lastbrushcount = g_numbrushes;
 		s_lastentitycount = g_numentities;

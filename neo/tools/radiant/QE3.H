@@ -106,7 +106,6 @@ typedef struct
 // system functions
 //
 // TTimo NOTE: WINAPI funcs can be accessed by plugins
-void    Sys_UpdateStatusBar( void );
 void    WINAPI Sys_UpdateWindows (int bits);
 void    Sys_Beep (void);
 double	Sys_DoubleTime (void);
@@ -178,9 +177,9 @@ typedef struct
 	idRenderWorld	*rw;
 	idSoundWorld	*sw;
 
-  fhLineBuffer lineBuffer;
-  fhSurfaceBuffer surfaceBuffer;
-  fhPointBuffer pointBuffer;
+	fhLineBuffer lineBuffer;
+	fhSurfaceBuffer surfaceBuffer;
+	fhPointBuffer pointBuffer;
 } QEGlobals_t;
 
 
@@ -220,12 +219,8 @@ void ConnectEntities (void);
 //
 // win_main.c
 //
-extern bool SaveWindowState(HWND hWnd, const char *pszName);
-extern bool LoadWindowState(HWND hWnd, const char *pszName);
-
-extern bool SaveRegistryInfo(const char *pszName, void *pvBuf, long lSize);
-extern bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
-
+bool SaveRegistryInfo(const char *pszName, void *pvBuf, long lSize);
+bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
 
 // win_dlg.c
@@ -259,10 +254,6 @@ int  WINAPI QEW_SetupPixelFormat(HDC hDC, bool zbuffer );
 extern QEGlobals_t   g_qeglobals;
 extern int mapModified;		// for quit confirmation (0 = clean, 1 = unsaved,
 
-//++timo clean (moved into qertypes.h)
-//enum VIEWTYPE {YZ, XZ, XY};
-
-
 extern bool g_bAxialMode;
 extern int g_axialAnchor;
 extern int g_axialDest;
@@ -287,11 +278,6 @@ void Face_MoveTexture_BrushPrimit(face_t *f, idVec3 delta);
 void Select_ShiftTexture_BrushPrimit( face_t *f, float x, float y, bool autoAdjust );
 void RotateFaceTexture_BrushPrimit(face_t *f, int nAxis, float fDeg, idVec3 vOrigin );
 void ApplyMatrix_BrushPrimit(face_t *f, idMat3 matrix, idVec3 origin);
-// low level functions .. put in mathlib?
-// apply a scale transformation to the BP matrix
-#define BPMatScale(m,sS,sT) {m[0][0]*=sS; m[1][0]*=sS; m[0][1]*=sT; m[1][1]*=sT;}
-// 2D homogeneous matrix product C = A*B
-void BPMatMul(float A[2][3], float B[2][3], float C[2][3]);
 
 extern bool g_bShowLightVolumes;
 extern bool g_bShowLightTextures;
@@ -304,15 +290,11 @@ void UniqueTargetName(idStr& rStr);
 #define MAP_VERSION 2.0
 
 extern CMainFrame* g_pParentWnd;
-extern CString g_strAppPath;
 extern CPrefsDlg& g_PrefsDlg;
 extern CFindTextureDlg& g_dlgFind;
 extern idCVar radiant_entityMode;
 
 // externs
-extern void QE_CountBrushesAndUpdateStatusBar();
-extern void	QE_CheckAutoSave();
-extern bool SaveWindowState(HWND hWnd, const char *pszName);
 extern void Map_Snapshot();
 extern bool g_bRotateMode;
 extern bool g_bClipMode;

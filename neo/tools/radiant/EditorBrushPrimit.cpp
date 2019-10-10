@@ -33,6 +33,17 @@ If you have questions concerning this license or the applicable additional terms
 
 #define ZERO_EPSILON	1.0E-6
 
+// low level functions .. put in mathlib?
+// apply a scale transformation to the BP matrix
+#define BPMatScale(m, sS, sT)                                                                                          \
+	{                                                                                                                  \
+		m[0][0] *= sS;                                                                                                 \
+		m[1][0] *= sS;                                                                                                 \
+		m[0][1] *= sT;                                                                                                 \
+		m[1][1] *= sT;                                                                                                 \
+	}
+
+
 class idVec3D {
 public:
 	double x, y, z;
@@ -904,7 +915,8 @@ void ApplyMatrix_BrushPrimit(face_t *f, idMat3 matrix, idVec3 origin) {
 //    don't do C==A!
 // =======================================================================================================================
 //
-void BPMatMul(float A[2][3], float B[2][3], float C[2][3]) {
+// 2D homogeneous matrix product C = A*B
+static void BPMatMul(float A[2][3], float B[2][3], float C[2][3]) {
 	C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0];
 	C[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0];
 	C[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1];

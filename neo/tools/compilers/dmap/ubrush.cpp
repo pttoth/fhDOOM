@@ -33,15 +33,9 @@ If you have questions concerning this license or the applicable additional terms
 
 int		c_active_brushes;
 
-int		c_nodes;
-
 // if a brush just barely pokes onto the other side,
 // let it slide by without chopping
 #define	PLANESIDE_EPSILON	0.001
-//0.1
-
-
-
 
 /*
 ================

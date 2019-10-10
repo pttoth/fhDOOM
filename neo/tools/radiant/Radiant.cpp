@@ -291,42 +291,6 @@ bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize)
 	return GetCvarBinary(pszName, pvBuf, *plSize);
 }
 
-bool SaveWindowState(HWND hWnd, const char *pszName)
-{
-	RECT rc;
-	GetWindowRect(hWnd, &rc);
-	if (hWnd != g_pParentWnd->GetSafeHwnd()) {
-	    if (::GetParent(hWnd) != g_pParentWnd->GetSafeHwnd()) {
-	      ::SetParent(hWnd, g_pParentWnd->GetSafeHwnd());
-	    }
-		MapWindowPoints(NULL, g_pParentWnd->GetSafeHwnd(), (POINT *)&rc, 2);
-	}
-	return SaveRegistryInfo(pszName, &rc, sizeof(rc));
-}
-
-
-bool LoadWindowState(HWND hWnd, const char *pszName)
-{
-	RECT rc;
-	LONG lSize = sizeof(rc);
-
-	if (LoadRegistryInfo(pszName, &rc, &lSize))
-	{
-		if (rc.left < 0)
-			rc.left = 0;
-		if (rc.top < 0)
-			rc.top = 0;
-		if (rc.right < rc.left + 16)
-			rc.right = rc.left + 16;
-		if (rc.bottom < rc.top + 16)
-			rc.bottom = rc.top + 16;
-
-		MoveWindow(hWnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, FALSE);
-		return true;
-	}
-
-	return false;
-}
 
 /*
 ===============================================================
@@ -335,16 +299,6 @@ bool LoadWindowState(HWND hWnd, const char *pszName)
 
 ===============================================================
 */
-
-void Sys_UpdateStatusBar( void )
-{
-	extern int   g_numbrushes, g_numentities;
-
-	char numbrushbuffer[100] = "";
-
-	sprintf( numbrushbuffer, "Brushes: %d Entities: %d", g_numbrushes, g_numentities );
-	Sys_Status( numbrushbuffer, 2 );
-}
 
 void Sys_Status(const char *psz, int part )
 {
