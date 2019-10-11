@@ -18,10 +18,5 @@ SET(SOURCES
 add_definitions(-DID_TYPEINFO -D__DOOM_DLL__ -DID_ENABLE_CURL=0)
 add_executable(TypeInfo ${SOURCES})
 target_link_libraries(TypeInfo idlib)
-SET_PROPERTY(TARGET TypeInfo                PROPERTY FOLDER exes)
-
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(TypeInfo PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF() 
+SET_PROPERTY(TARGET TypeInfo PROPERTY FOLDER exes)
+set_cpu_arch(TypeInfo)

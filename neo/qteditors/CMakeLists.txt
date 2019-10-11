@@ -36,9 +36,4 @@ if(MSVC)
   source_group(widgets widgets/.*)
 endif()
 
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()  
-
+set_cpu_arch(${TARGET_NAME}) 

@@ -4,6 +4,7 @@ project (fhDOOM)
 OPTION(ID_ALLOW_TOOLS "Compile Tools" ON)
 OPTION(ID_ALLOW_MAYA "Compile Maya Tools" ON)
 OPTION(ID_UNICODE "Use unicode version of WIN32 API" OFF)
+OPTION(ID_ENFORCE32BIT "Build 32bit on 64bit linux platform" ON)
 
 include(setup.cmake)
 

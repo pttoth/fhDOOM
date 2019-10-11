@@ -52,8 +52,6 @@ SET_PROPERTY(TARGET curl                PROPERTY FOLDER 3rdParty)
 IF(UNIX)
   add_definitions(-DHAVE_GETTIMEOFDAY)
   add_definitions(-DHAVE_HAVE_NETINET_IN_H)
-
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(curl PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
 ENDIF()  
+
+set_cpu_arch(curl)

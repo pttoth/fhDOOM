@@ -13,12 +13,7 @@ IF(MSVC)
   SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
 ENDIF()
 
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(glew PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()
-
+set_cpu_arch(glew)
 
 ###############################################################################
 ######################## JPEG #################################################
@@ -89,11 +84,7 @@ SET(SOURCES
 )
 add_library(jpeg-6 STATIC ${SOURCES})
 SET_PROPERTY(TARGET jpeg-6 PROPERTY FOLDER 3rdParty)
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(jpeg-6 PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()
+set_cpu_arch(jpeg-6)
 
 ###############################################################################
 ######################## OGG VORBIS ###########################################
@@ -182,11 +173,7 @@ add_library(oggvorbis STATIC ${SOURCES})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/sound/OggVorbis/vorbissrc")
 SET_PROPERTY(TARGET oggvorbis PROPERTY FOLDER 3rdParty)
 
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(oggvorbis PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()
+set_cpu_arch(oggvorbis)
 
 ###############################################################################
 ######################## QT TOOLS #############################################
@@ -1088,14 +1075,7 @@ if(MSVC)
   )
 endif()
 
-IF(UNIX)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-  ENDIF()
-ENDIF()
-
-
-
+set_cpu_arch(${TARGET_NAME})
 
 IF(WIN32)
 
