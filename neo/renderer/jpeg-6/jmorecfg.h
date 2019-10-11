@@ -151,7 +151,9 @@ typedef unsigned int UINT16;
 
 #ifndef __MWERKS__
 #ifndef _BASETSD_H_
+#ifndef XMD_H 
 typedef long INT32;
+#endif
 #endif
 #endif
 

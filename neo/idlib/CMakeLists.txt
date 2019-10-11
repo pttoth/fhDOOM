@@ -139,7 +139,4 @@ add_msvc_precompiled_header(precompiled.h SOURCES)
 
 add_library(idlib ${SOURCES})
 SET_PROPERTY(TARGET idlib                PROPERTY FOLDER libs)
-
-IF(UNIX)
-  set_target_properties(idlib PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
-ENDIF()  
+set_cpu_arch(idlib)
