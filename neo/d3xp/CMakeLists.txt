@@ -35,8 +35,7 @@ SET(SOURCES
   Game.def
   Game.h
   GameEdit.cpp
-  GameEdit.h
-  #gamesys/Callbacks.cpp
+  GameEdit.h  
   gamesys/Class.cpp
   gamesys/Class.h
   gamesys/DebugGraph.cpp

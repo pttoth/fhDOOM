@@ -958,30 +958,6 @@ bool idClass::ProcessEventArgPtr( const idEventDef *ev, int *data ) {
 
 	callback = c->eventMap[ num ];
 
-#if !CPU_EASYARGS
-
-/*
-on ppc architecture, floats are passed in a seperate set of registers
-the function prototypes must have matching float declaration
-
-http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/2rt_powerpc_abi/chapter_9_section_5.html
-*/
-
-	switch( ev->GetFormatspecIndex() ) {
-	case 1 << D_EVENT_MAXARGS :
-		( this->*callback )();
-		break;
-
-// generated file - see CREATE_EVENT_CODE
-#include "Callbacks.cpp"
-
-	default:
-		gameLocal.Warning( "Invalid formatspec on event '%s'", ev->GetName() );
-		break;
-	}
-
-#else
-
 	assert( D_EVENT_MAXARGS == 8 );
 
 	switch( ev->GetNumArgs() ) {
@@ -1033,8 +1009,6 @@ http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/
 		gameLocal.Warning( "Invalid formatspec on event '%s'", ev->GetName() );
 		break;
 	}
-
-#endif
 
 	return true;
 }

@@ -41,10 +41,10 @@ If you have questions concerning this license or the applicable additional terms
 // Win32
 #if defined(WIN32) || defined(_WIN32)
 
+static_assert(sizeof(void*) == 4, "need 32bit pointers");
 #define	BUILD_STRING					"win-x86"
 #define BUILD_OS_ID						0
 #define	CPUSTRING						"x86"
-#define CPU_EASYARGS					1
 
 #define ALIGN16( x )					__declspec(align(16)) x
 #define PACKED
@@ -61,58 +61,19 @@ If you have questions concerning this license or the applicable additional terms
 
 #endif
 
-// Mac OSX
-#if defined(MACOS_X) || defined(__APPLE__)
-
-#define BUILD_STRING				"MacOSX-universal"
-#define BUILD_OS_ID					1
-#ifdef __ppc__
-	#define	CPUSTRING					"ppc"
-	#define CPU_EASYARGS				0
-#elif defined(__i386__)
-	#define	CPUSTRING					"x86"
-	#define CPU_EASYARGS				1
-#endif
-
-#define ALIGN16( x )					x __attribute__ ((aligned (16)))
-
-#ifdef __MWERKS__
-#define PACKED
-#include <alloca.h>
-#else
-#define PACKED							__attribute__((packed))
-#endif
-
-#define _alloca							alloca
-#define _alloca16( x )					((void *)((((int)alloca( (x)+15 )) + 15) & ~15))
-
-#define PATHSEPERATOR_STR				"/"
-#define PATHSEPERATOR_CHAR				'/'
-
-#define __cdecl
-#define ASSERT							assert
-
-#define ID_INLINE						inline
-#define ID_STATIC_TEMPLATE
-
-#define assertmem( x, y )
-
-#endif
-
-
 // Linux
 #ifdef __linux__
 
-#if defined(__i386__) || defined(__amd64__)
-  static_assert(sizeof(void*) == 4, "need 32bit pointers");
+#if defined(__LP64__) || defined(_LP64)
+	static_assert(sizeof(void*) == 8, "need 64bit pointers");
+	#define	BUILD_STRING				"linux-x64"
+	#define BUILD_OS_ID					2
+	#define CPUSTRING					"x64"
+#else
+	static_assert(sizeof(void*) == 4, "need 32bit pointers");
 	#define	BUILD_STRING				"linux-x86"
 	#define BUILD_OS_ID					2
 	#define CPUSTRING					"x86"
-	#define CPU_EASYARGS				1
-#elif defined(__ppc__)
-	#define	BUILD_STRING				"linux-ppc"
-	#define CPUSTRING					"ppc"
-	#define CPU_EASYARGS				0
 #endif
 
 #define _alloca							alloca

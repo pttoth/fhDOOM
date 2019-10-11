@@ -38,7 +38,6 @@ Event are used for scheduling tasks and for linking script commands.
 #include "../Game_local.h"
 
 #define MAX_EVENTSPERFRAME			4096
-//#define CREATE_EVENT_CODE
 
 /***********************************************************************
 
@@ -563,12 +562,6 @@ void idEvent::Init( void ) {
 		gameLocal.Error( "%s", eventErrorMsg );
 	}
 
-#ifdef CREATE_EVENT_CODE
-	void CreateEventCallbackHandler();
-	CreateEventCallbackHandler();
-	gameLocal.Error( "Wrote event callback handler" );
-#endif
-
 	if ( initialized ) {
 		gameLocal.Printf( "...already initialized\n" );
 		ClearEventList();
@@ -816,63 +809,3 @@ void idEvent::SaveTrace( idSaveGame *savefile, const trace_t &trace ) {
 	savefile->WriteInt( trace.c.trmFeature );
 	savefile->WriteInt( trace.c.id );
 }
-
-
-
-#ifdef CREATE_EVENT_CODE
-/*
-================
-CreateEventCallbackHandler
-================
-*/
-void CreateEventCallbackHandler( void ) {
-	int num;
-	int count;
-	int i, j, k;
-	char argString[ D_EVENT_MAXARGS + 1 ];
-	idStr string1;
-	idStr string2;
-	idFile *file;
-
-	file = fileSystem->OpenFileWrite( "Callbacks.cpp" );
-
-	file->Printf( "// generated file - see CREATE_EVENT_CODE\n\n" );
-
-	for( i = 1; i <= D_EVENT_MAXARGS; i++ ) {
-
-		file->Printf( "\t/*******************************************************\n\n\t\t%d args\n\n\t*******************************************************/\n\n", i );
-
-		for ( j = 0; j < ( 1 << i ); j++ ) {
-			for ( k = 0; k < i; k++ ) {
-				argString[ k ] = j & ( 1 << k ) ? 'f' : 'i';
-			}
-			argString[ i ] = '\0';
-
-			string1.Empty();
-			string2.Empty();
-
-			for( k = 0; k < i; k++ ) {
-				if ( j & ( 1 << k ) ) {
-					string1 += "const float";
-					string2 += va( "*( float * )&data[ %d ]", k );
-				} else {
-					string1 += "const int";
-					string2 += va( "data[ %d ]", k );
-				}
-
-				if ( k < i - 1 ) {
-					string1 += ", ";
-					string2 += ", ";
-				}
-			}
-
-			file->Printf( "\tcase %d :\n\t\ttypedef void ( idClass::*eventCallback_%s_t )( %s );\n", ( 1 << ( i + D_EVENT_MAXARGS ) ) + j, argString, string1.c_str() );
-			file->Printf( "\t\t( this->*( eventCallback_%s_t )callback )( %s );\n\t\tbreak;\n\n", argString, string2.c_str() );
-
-		}
-	}
-
-	fileSystem->CloseFile( file );
-}
-
-#endif
