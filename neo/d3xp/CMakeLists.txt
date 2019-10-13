@@ -155,7 +155,12 @@ source_group(game\\GameSys gamesys/.*)
 source_group(game\\Physics physics/.*)  
 source_group(game\\Script script/.*) 
 
-set(TARGET_NAME "fhGame-roe-x86")
+IF(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ID_ENFORCE32BIT)
+  set(TARGET_NAME "fhGame-roe-x64")
+ELSE()
+  set(TARGET_NAME "fhGame-roe-x86")
+ENDIF()
+
 add_definitions(-D__DOOM__ -DGAME_DLL -D_D3XP)
 add_library(${TARGET_NAME} SHARED ${SOURCES})
 target_link_libraries(${TARGET_NAME} idlib)
